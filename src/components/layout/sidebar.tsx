@@ -16,12 +16,17 @@ import {
   Settings,
   ChevronDown,
   Menu,
-  X
+  X,
+  UserCog
 } from "lucide-react"
 import { useState } from "react"
 
 const navigationItems = [
-  { name: "Home", href: "/", icon: Home },
+  { name: "Dashboard", href: "/", icon: Home },
+  { name: "User Management", href: "/user-management", icon: UserCog, hasSubmenu: true, submenu: [
+    { name: "Support Admin", href: "/user-management/support-admin" },
+    { name: "Customer Admin", href: "/user-management/customer-admin" }
+  ] },
   { name: "Courses", href: "/courses", icon: BookOpen, hasSubmenu: true },
   { name: "Bootcamp", href: "/bootcamp", icon: Rocket, hasSubmenu: true },
   { name: "Team Training", href: "/team-training", icon: Users, hasSubmenu: true },
@@ -36,6 +41,15 @@ const navigationItems = [
 export function Sidebar() {
   const pathname = usePathname()
   const [isMobileOpen, setIsMobileOpen] = useState(false)
+  const [openDropdowns, setOpenDropdowns] = useState<string[]>([])
+
+  const toggleDropdown = (itemName: string) => {
+    setOpenDropdowns(prev => 
+      prev.includes(itemName) 
+        ? prev.filter(name => name !== itemName)
+        : [...prev, itemName]
+    )
+  }
 
   return (
     <>
@@ -78,33 +92,84 @@ export function Sidebar() {
           {navigationItems.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
+            const isDropdownOpen = openDropdowns.includes(item.name)
 
             return (
-              <Link
-                key={item.name}
-                href={item.href}
-                onClick={() => setIsMobileOpen(false)}
-                className={cn(
-                  "flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group",
-                  isActive
-                    ? "glass text-white"
-                    : "text-[var(--text-tertiary)] hover:text-white hover:bg-[rgba(255,255,255,var(--ui-opacity-10))]"
+              <div key={item.name}>
+                {item.hasSubmenu && item.submenu ? (
+                  <>
+                    <button
+                      onClick={() => toggleDropdown(item.name)}
+                      className={cn(
+                        "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group",
+                        isActive
+                          ? "glass text-white"
+                          : "text-[var(--text-tertiary)] hover:text-white hover:bg-[rgba(255,255,255,var(--ui-opacity-10))]"
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Icon className={cn(
+                          "w-5 h-5 transition-colors",
+                          isActive ? "text-white" : "text-[var(--text-muted)] group-hover:text-white"
+                        )} />
+                        <span className="font-medium">{item.name}</span>
+                      </div>
+                      <ChevronDown className={cn(
+                        "w-4 h-4 transition-transform duration-200",
+                        isActive ? "text-white" : "text-[var(--text-muted)]",
+                        isDropdownOpen ? "rotate-180" : ""
+                      )} />
+                    </button>
+                    {isDropdownOpen && (
+                      <div className="ml-8 mt-1 space-y-1">
+                        {item.submenu.map((subItem) => {
+                          const isSubActive = pathname === subItem.href
+                          return (
+                            <Link
+                              key={subItem.name}
+                              href={subItem.href}
+                              onClick={() => setIsMobileOpen(false)}
+                              className={cn(
+                                "block px-4 py-2 rounded-lg transition-all duration-200",
+                                isSubActive
+                                  ? "glass text-white"
+                                  : "text-[var(--text-tertiary)] hover:text-white hover:bg-[rgba(255,255,255,var(--ui-opacity-10))]"
+                              )}
+                            >
+                              {subItem.name}
+                            </Link>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <Link
+                    href={item.href}
+                    onClick={() => setIsMobileOpen(false)}
+                    className={cn(
+                      "flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group",
+                      isActive
+                        ? "glass text-white"
+                        : "text-[var(--text-tertiary)] hover:text-white hover:bg-[rgba(255,255,255,var(--ui-opacity-10))]"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon className={cn(
+                        "w-5 h-5 transition-colors",
+                        isActive ? "text-white" : "text-[var(--text-muted)] group-hover:text-white"
+                      )} />
+                      <span className="font-medium">{item.name}</span>
+                    </div>
+                    {item.hasSubmenu && (
+                      <ChevronDown className={cn(
+                        "w-4 h-4 transition-colors",
+                        isActive ? "text-white" : "text-[var(--text-muted)]"
+                      )} />
+                    )}
+                  </Link>
                 )}
-              >
-                <div className="flex items-center gap-3">
-                  <Icon className={cn(
-                    "w-5 h-5 transition-colors",
-                    isActive ? "text-white" : "text-[var(--text-muted)] group-hover:text-white"
-                  )} />
-                  <span className="font-medium">{item.name}</span>
-                </div>
-                {item.hasSubmenu && (
-                  <ChevronDown className={cn(
-                    "w-4 h-4 transition-colors",
-                    isActive ? "text-white" : "text-[var(--text-muted)]"
-                  )} />
-                )}
-              </Link>
+              </div>
             )
           })}
         </nav>

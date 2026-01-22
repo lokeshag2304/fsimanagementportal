@@ -16,7 +16,7 @@ const GlassModal = forwardRef<HTMLDivElement, GlassModalProps>(
     if (!isOpen) return null
 
     return (
-      <div className="fixed inset-0 z-40 flex items-center justify-center">
+      <div className="fixed inset-0 z-[60] flex items-center justify-center">
         <div
           className="absolute inset-0 bg-black/60 backdrop-blur-md"
           onClick={onClose}

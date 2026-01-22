@@ -12,6 +12,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { ThemeToggle } from "@/components/ui/theme-toggle"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,12 +48,17 @@ import {
   Book,
   UserPlus,
   Share2,
-  X
+  X,
+  UserCog
 } from "lucide-react"
 
 // Mobile navigation items
 const mobileNavItems = [
-  { name: "Home", href: "/", icon: Home },
+  { name: "Dashboard", href: "/", icon: Home },
+  { name: "User Management", href: "/user-management", icon: UserCog, hasSubmenu: true, submenu: [
+    { name: "Support Admin", href: "/user-management/support-admin" },
+    { name: "Customer Admin", href: "/user-management/customer-admin" }
+  ] },
   { name: "Courses", href: "/courses", icon: BookOpen },
   { name: "Bootcamp", href: "/bootcamp", icon: Rocket },
   { name: "Team Training", href: "/team-training", icon: Users },
@@ -68,6 +74,15 @@ interface Tab {
   name: string
   href: string
   hasDropdown?: boolean
+  submenu?: { name: string; href: string }[]
+}
+
+interface MobileNavItem {
+  name: string
+  href: string
+  icon: any
+  hasSubmenu?: boolean
+  submenu?: { name: string; href: string }[]
 }
 
 interface HeaderProps {
@@ -78,6 +93,15 @@ interface HeaderProps {
 export function Header({ title, tabs }: HeaderProps) {
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [openDropdowns, setOpenDropdowns] = useState<string[]>([])
+
+  const toggleDropdown = (itemName: string) => {
+    setOpenDropdowns(prev => 
+      prev.includes(itemName) 
+        ? prev.filter(name => name !== itemName)
+        : [...prev, itemName]
+    )
+  }
 
   return (
     <TooltipProvider>
@@ -89,11 +113,23 @@ export function Header({ title, tabs }: HeaderProps) {
             <div className="w-10 h-10 rounded-xl bg-theme-gradient flex items-center justify-center">
               <span className="text-white font-bold text-lg">C</span>
             </div>
-            <span className="text-xl font-bold text-white">Clasy</span>
+            <span className="text-xl font-bold text-[var(--text-primary)]">Clasy</span>
           </Link>
 
           {/* Right Icons */}
           <div className="flex items-center gap-1 sm:gap-1.5 lg:gap-2">
+            {/* Theme Toggle */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <ThemeToggle />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Toggle Theme</p>
+              </TooltipContent>
+            </Tooltip>
+
             {/* Settings - hidden on mobile */}
             <Tooltip>
               <TooltipTrigger asChild>
@@ -235,7 +271,7 @@ export function Header({ title, tabs }: HeaderProps) {
               <DropdownMenuContent className="w-56 glass-dropdown border-[rgba(255,255,255,var(--glass-border-opacity))]" align="end" sideOffset={12}>
                 <DropdownMenuLabel className="text-[var(--text-tertiary)]">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium text-white">John Doe</p>
+                    <p className="text-sm font-medium text-[var(--text-primary)]">John Doe</p>
                     <p className="text-xs text-[var(--text-muted)]">john@example.com</p>
                   </div>
                 </DropdownMenuLabel>
@@ -277,7 +313,7 @@ export function Header({ title, tabs }: HeaderProps) {
             </Button>
 
             {/* Title */}
-            <h1 className="text-base sm:text-lg md:text-xl font-semibold text-white whitespace-nowrap flex-shrink-0">
+            <h1 className="text-base sm:text-lg md:text-xl font-semibold text-[var(--text-primary)] whitespace-nowrap flex-shrink-0">
               {title}
             </h1>
 
@@ -287,7 +323,35 @@ export function Header({ title, tabs }: HeaderProps) {
                 {tabs.map((tab) => {
                   const isActive = pathname === tab.href || (tab.href !== "/" && pathname.startsWith(tab.href)) || (tab.href === "/" && pathname === "/")
 
-                  return (
+                  return tab.hasDropdown && tab.submenu ? (
+                    <DropdownMenu key={tab.name}>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          className={cn(
+                            "flex items-center gap-1 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300",
+                            isActive
+                              ? "bg-theme-gradient text-white"
+                              : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,var(--ui-opacity-10))]"
+                          )}
+                        >
+                          {tab.name}
+                          <ChevronDown className="w-4 h-4 ml-0.5" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="glass-dropdown border-[rgba(255,255,255,var(--glass-border-opacity))]" align="start" sideOffset={8}>
+                        {tab.submenu.map((subItem) => (
+                          <DropdownMenuItem key={subItem.name} asChild>
+                            <Link
+                              href={subItem.href}
+                              className="text-[var(--text-secondary)] focus:bg-[rgba(255,255,255,var(--ui-opacity-10))] focus:text-white cursor-pointer"
+                            >
+                              {subItem.name}
+                            </Link>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : (
                     <Link
                       key={tab.name}
                       href={tab.href}
@@ -295,7 +359,7 @@ export function Header({ title, tabs }: HeaderProps) {
                         "flex items-center gap-1 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300",
                         isActive
                           ? "bg-theme-gradient text-white"
-                          : "text-[var(--text-tertiary)] hover:text-white hover:bg-[rgba(255,255,255,var(--ui-opacity-10))]"
+                          : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,var(--ui-opacity-10))]"
                       )}
                     >
                       {tab.name}
@@ -327,13 +391,13 @@ export function Header({ title, tabs }: HeaderProps) {
                   <div className="w-10 h-10 rounded-xl bg-theme-gradient flex items-center justify-center">
                     <span className="text-white font-bold text-lg">C</span>
                   </div>
-                  <span className="text-xl font-bold text-white">Clasy</span>
+                  <span className="text-xl font-bold text-[var(--text-primary)]">Clasy</span>
                 </Link>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="text-[var(--text-tertiary)] hover:text-white hover:bg-[rgba(255,255,255,var(--ui-opacity-10))]"
+                  className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,var(--ui-opacity-10))]"
                 >
                   <X className="w-5 h-5" />
                 </Button>
@@ -344,25 +408,76 @@ export function Header({ title, tabs }: HeaderProps) {
                 {mobileNavItems.map((item) => {
                   const Icon = item.icon
                   const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
+                  const isDropdownOpen = openDropdowns.includes(item.name)
 
                   return (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={cn(
-                        "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
-                        isActive
-                          ? "glass text-white"
-                          : "text-[var(--text-tertiary)] hover:text-white hover:bg-[rgba(255,255,255,var(--ui-opacity-10))]"
+                    <div key={item.name}>
+                      {item.hasSubmenu && item.submenu ? (
+                        <>
+                          <button
+                            onClick={() => toggleDropdown(item.name)}
+                            className={cn(
+                              "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200",
+                              isActive
+                                ? "glass text-[var(--text-primary)]"
+                                : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,var(--ui-opacity-10))]"
+                            )}
+                          >
+                            <div className="flex items-center gap-3">
+                              <Icon className={cn(
+                                "w-5 h-5 transition-colors",
+                                isActive ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"
+                              )} />
+                              <span className="font-medium">{item.name}</span>
+                            </div>
+                            <ChevronDown className={cn(
+                              "w-4 h-4 transition-transform duration-200",
+                              isActive ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]",
+                              isDropdownOpen ? "rotate-180" : ""
+                            )} />
+                          </button>
+                          {isDropdownOpen && (
+                            <div className="ml-8 mt-1 space-y-1">
+                              {item.submenu.map((subItem) => {
+                                const isSubActive = pathname === subItem.href
+                                return (
+                                  <Link
+                                    key={subItem.name}
+                                    href={subItem.href}
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    className={cn(
+                                      "block px-4 py-2 rounded-lg transition-all duration-200",
+                                      isSubActive
+                                        ? "glass text-[var(--text-primary)]"
+                                        : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,var(--ui-opacity-10))]"
+                                    )}
+                                  >
+                                    {subItem.name}
+                                  </Link>
+                                )
+                              })}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <Link
+                          href={item.href}
+                          onClick={() => setMobileMenuOpen(false)}
+                          className={cn(
+                            "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
+                            isActive
+                              ? "glass text-[var(--text-primary)]"
+                              : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,var(--ui-opacity-10))]"
+                          )}
+                        >
+                          <Icon className={cn(
+                            "w-5 h-5 transition-colors",
+                            isActive ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"
+                          )} />
+                          <span className="font-medium">{item.name}</span>
+                        </Link>
                       )}
-                    >
-                      <Icon className={cn(
-                        "w-5 h-5 transition-colors",
-                        isActive ? "text-white" : "text-[var(--text-muted)]"
-                      )} />
-                      <span className="font-medium">{item.name}</span>
-                    </Link>
+                    </div>
                   )
                 })}
 
@@ -374,7 +489,7 @@ export function Header({ title, tabs }: HeaderProps) {
                   <Link
                     href="#"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-[var(--text-tertiary)] hover:text-white hover:bg-[rgba(255,255,255,var(--ui-opacity-10))] transition-all duration-200"
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,var(--ui-opacity-10))] transition-all duration-200"
                   >
                     <Sparkles className="w-5 h-5 text-[var(--text-muted)]" />
                     <span className="font-medium">AI Features</span>
@@ -382,7 +497,7 @@ export function Header({ title, tabs }: HeaderProps) {
                   <Link
                     href="#"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-[var(--text-tertiary)] hover:text-white hover:bg-[rgba(255,255,255,var(--ui-opacity-10))] transition-all duration-200"
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,var(--ui-opacity-10))] transition-all duration-200"
                   >
                     <Grid3X3 className="w-5 h-5 text-[var(--text-muted)]" />
                     <span className="font-medium">Applications</span>
@@ -390,7 +505,7 @@ export function Header({ title, tabs }: HeaderProps) {
                   <Link
                     href="#"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-[var(--text-tertiary)] hover:text-white hover:bg-[rgba(255,255,255,var(--ui-opacity-10))] transition-all duration-200"
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,var(--ui-opacity-10))] transition-all duration-200"
                   >
                     <HelpCircle className="w-5 h-5 text-[var(--text-muted)]" />
                     <span className="font-medium">Help & Support</span>

@@ -83,7 +83,7 @@ export function StatsRow({ stats, className }: StatsRowProps) {
           </svg>
 
           <button className="absolute top-[1px] right-[1px] z-10 w-10 h-10 rounded-full glass-button flex items-center justify-center">
-            <ArrowUpRight className="w-4 h-4 text-white/60 group-hover:text-white transition-colors" />
+            <ArrowUpRight className="w-4 h-4 text-[var(--text-muted)] group-hover:text-[var(--text-primary)] transition-colors" />
           </button>
 
           <div className="relative z-[1] p-6 pr-14">
@@ -94,14 +94,14 @@ export function StatsRow({ stats, className }: StatsRowProps) {
               <p className="text-[var(--text-tertiary)] text-sm">{stat.title}</p>
             </div>
 
-            <p className="text-[36px] font-bold text-white mb-5">{stat.value}</p>
+            <p className="text-[36px] font-bold text-[var(--text-primary)] mb-5">{stat.value}</p>
 
             {stat.subStats && (
               <div className="flex gap-4 sm:gap-6 lg:gap-10 pt-4 border-t border-[rgba(255,255,255,var(--glass-border-opacity))]">
                 {stat.subStats.map((subStat, subIndex) => (
                   <div key={subIndex} className="min-w-0">
                     <p className="text-[var(--text-muted)] text-[10px] sm:text-[11px] mb-1 truncate">{subStat.label}</p>
-                    <p className="text-white font-semibold text-sm sm:text-base">{subStat.value}</p>
+                    <p className="text-[var(--text-primary)] font-semibold text-sm sm:text-base">{subStat.value}</p>
                   </div>
                 ))}
               </div>

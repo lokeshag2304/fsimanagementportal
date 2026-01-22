@@ -211,13 +211,13 @@ export default function Dashboard() {
                       </Avatar>
                       <div className="min-w-0">
                         <p className="text-[var(--text-muted)] text-[10px] sm:text-xs truncate">{request.email}</p>
-                        <p className="text-white font-medium text-xs sm:text-sm truncate">{request.name}</p>
+                        <p className="text-[var(--text-primary)] font-medium text-xs sm:text-sm truncate">{request.name}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                       <div className="text-right">
                         <p className="text-[var(--text-muted)] text-[10px] sm:text-xs">Amount</p>
-                        <p className="text-white font-semibold text-sm sm:text-base">${request.amount.toFixed(2)}</p>
+                        <p className="text-[var(--text-primary)] font-semibold text-sm sm:text-base">${request.amount.toFixed(2)}</p>
                       </div>
                       <Button
                         variant="glass"
@@ -243,7 +243,7 @@ export default function Dashboard() {
                     onClick={() => setCourseTab('top')}
                     className={`font-medium text-xs sm:text-sm pb-2 border-b-2 transition-colors ${
                       courseTab === 'top'
-                        ? 'text-white border-white/60'
+                        ? 'text-[var(--text-primary)] border-[var(--text-primary)]/60'
                         : 'text-[var(--text-muted)] border-transparent hover:text-[var(--text-tertiary)]'
                     }`}
                   >
@@ -253,7 +253,7 @@ export default function Dashboard() {
                     onClick={() => setCourseTab('best')}
                     className={`font-medium text-xs sm:text-sm pb-2 border-b-2 transition-colors ${
                       courseTab === 'best'
-                        ? 'text-white border-white/60'
+                        ? 'text-[var(--text-primary)] border-[var(--text-primary)]/60'
                         : 'text-[var(--text-muted)] border-transparent hover:text-[var(--text-tertiary)]'
                     }`}
                   >
@@ -288,7 +288,7 @@ export default function Dashboard() {
                             className="w-full h-full object-cover"
                           />
                         </div>
-                        <span className="text-white font-medium text-xs sm:text-sm truncate">{course.name}</span>
+                        <span className="text-[var(--text-primary)] font-medium text-xs sm:text-sm truncate">{course.name}</span>
                       </div>
                       <Badge className="bg-[rgba(255,255,255,var(--ui-opacity-10))] text-[var(--text-secondary)] border-[rgba(255,255,255,var(--glass-border-opacity))] px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium flex-shrink-0">
                         {course.sales} Sales
@@ -303,7 +303,7 @@ export default function Dashboard() {
           <GlassCard variant="liquid" noPadding>
             <div className="p-4 sm:p-5">
               <div className="flex items-center justify-between mb-4 sm:mb-6">
-                <h3 className="text-white font-medium text-sm sm:text-base">Course Overview</h3>
+                <h3 className="text-[var(--text-primary)] font-medium text-sm sm:text-base">Course Overview</h3>
                 <div className="flex items-center gap-1 sm:gap-2">
                   <Button variant="glass" size="icon-sm" className="flex rounded-lg w-6 h-6 sm:w-8 sm:h-8">
                     <Maximize2 className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -330,7 +330,7 @@ export default function Dashboard() {
 
                   {/* Stats - Sağ */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-white font-medium text-sm">XII Crash Course</p>
+                    <p className="text-[var(--text-primary)] font-medium text-sm">XII Crash Course</p>
                     <div className="flex items-center gap-1.5 mt-1">
                       <TrendingUp className="w-4 h-4 text-[var(--text-muted)]" />
                       <span className="text-[var(--text-muted)] text-xs">Increased</span>
@@ -342,21 +342,21 @@ export default function Dashboard() {
                         <ShoppingCart className="w-3.5 h-3.5 text-white/30 flex-shrink-0" />
                         <div>
                           <p className="text-[var(--text-muted)] text-[10px]">Sell</p>
-                          <p className="text-white font-semibold text-sm">12</p>
+                          <p className="text-[var(--text-primary)] font-semibold text-sm">12</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <UserCircle className="w-3.5 h-3.5 text-white/30 flex-shrink-0" />
                         <div>
                           <p className="text-[var(--text-muted)] text-[10px]">Students</p>
-                          <p className="text-white font-semibold text-sm">8</p>
+                          <p className="text-[var(--text-primary)] font-semibold text-sm">8</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <BookMarked className="w-3.5 h-3.5 text-white/30 flex-shrink-0" />
                         <div>
                           <p className="text-[var(--text-muted)] text-[10px]">Lessons</p>
-                          <p className="text-white font-semibold text-sm">16/24</p>
+                          <p className="text-[var(--text-primary)] font-semibold text-sm">16/24</p>
                         </div>
                       </div>
                     </div>
@@ -379,7 +379,7 @@ export default function Dashboard() {
                   <div className="flex items-center gap-1.5 p-2 rounded-lg bg-[rgba(255,255,255,var(--ui-opacity-5))] border border-[rgba(255,255,255,var(--glass-border-opacity))] flex-shrink-0">
                     <BookOpen className="w-3.5 h-3.5 text-[var(--text-tertiary)]" />
                     <span className="text-[var(--text-tertiary)] text-[10px]">Pending</span>
-                    <span className="text-white font-bold text-sm">4</span>
+                    <span className="text-[var(--text-primary)] font-bold text-sm">4</span>
                   </div>
                 </div>
               </div>
@@ -389,7 +389,7 @@ export default function Dashboard() {
                 {/* Sol - İstatistikler */}
                 <div className="flex flex-col items-start gap-4">
                   <div>
-                    <p className="text-white font-medium text-base">XII Crash Course</p>
+                    <p className="text-[var(--text-primary)] font-medium text-base">XII Crash Course</p>
                     <div className="flex items-center gap-2 mt-2">
                       <TrendingUp className="w-5 h-5 text-[var(--text-muted)]" />
                       <span className="text-[var(--text-muted)] text-sm">Increased</span>
@@ -402,7 +402,7 @@ export default function Dashboard() {
                       <ShoppingCart className="w-5 h-5 text-white/30 flex-shrink-0" />
                       <div>
                         <p className="text-[var(--text-muted)] text-xs">New Sell</p>
-                        <p className="text-white font-semibold text-base">12</p>
+                        <p className="text-[var(--text-primary)] font-semibold text-base">12</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">

@@ -5,6 +5,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 export type ThemeColor = "slate" | "orange" | "indigo" | "purple" | "emerald" | "rose" | "amber" | "blue"
 export type ThemeFont = "inter" | "poppins" | "roboto" | "montserrat" | "space-grotesk"
 export type GlassPreset = "off" | "subtle" | "normal" | "strong" | "custom"
+export type ThemeMode = "light" | "dark"
 
 export interface GlassSettings {
   preset: GlassPreset
@@ -229,6 +230,9 @@ interface ThemeContextType {
   availableFonts: { key: ThemeFont; config: FontConfig }[]
   backgroundColor: string
   setBackgroundColor: (color: string) => void
+  // Theme mode
+  themeMode: ThemeMode
+  setThemeMode: (mode: ThemeMode) => void
   // Glass settings
   glassSettings: GlassSettings
   setGlassPreset: (preset: GlassPreset) => void
@@ -261,6 +265,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [themeColor, setThemeColorState] = useState<ThemeColor>("orange")
   const [themeFont, setThemeFontState] = useState<ThemeFont>("inter")
+  const [themeMode, setThemeModeState] = useState<ThemeMode>("dark")
   const [backgroundColor, setBackgroundColorState] = useState<string>("#0a0a0a")
   const [glassSettings, setGlassSettingsState] = useState<GlassSettings>(DEFAULT_GLASS_SETTINGS)
   const [uiOpacity, setUIOpacityState] = useState<UIOpacitySettings>(DEFAULT_UI_OPACITY)
@@ -280,21 +285,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (savedFont && fontMap[savedFont]) {
       setThemeFontState(savedFont)
     }
+    const savedMode = localStorage.getItem("theme-mode") as ThemeMode
+    if (savedMode && (savedMode === "light" || savedMode === "dark")) {
+      setThemeModeState(savedMode)
+    }
     const savedBgColor = localStorage.getItem("theme-bg-color")
     if (savedBgColor) {
-      // Prevent light colors - check if color is too bright
-      const hex = savedBgColor.replace("#", "")
-      const r = parseInt(hex.substring(0, 2), 16)
-      const g = parseInt(hex.substring(2, 4), 16)
-      const b = parseInt(hex.substring(4, 6), 16)
-      const brightness = (r * 299 + g * 587 + b * 114) / 1000
-      // If brightness > 50, reset to default dark
-      if (brightness > 50) {
-        setBackgroundColorState("#0a0a0a")
-        localStorage.setItem("theme-bg-color", "#0a0a0a")
-      } else {
-        setBackgroundColorState(savedBgColor)
-      }
+      setBackgroundColorState(savedBgColor)
+    } else {
+      // Set default based on theme mode
+      const defaultBg = savedMode === "light" ? "#f8fafc" : "#0a0a0a"
+      setBackgroundColorState(defaultBg)
     }
     // Load glass settings
     const savedGlass = localStorage.getItem("theme-glass")
@@ -409,16 +410,26 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("theme-ui-opacity", JSON.stringify(uiOpacity))
   }, [uiOpacity, mounted])
 
-  // Apply text color CSS variables
+  // Apply theme mode CSS variables
   useEffect(() => {
     if (!mounted) return
     const root = document.documentElement
-    root.style.setProperty("--text-primary", `rgba(255, 255, 255, ${textColors.primary})`)
-    root.style.setProperty("--text-secondary", `rgba(255, 255, 255, ${textColors.secondary})`)
-    root.style.setProperty("--text-tertiary", `rgba(255, 255, 255, ${textColors.tertiary})`)
-    root.style.setProperty("--text-muted", `rgba(255, 255, 255, ${textColors.muted})`)
-    localStorage.setItem("theme-text-colors", JSON.stringify(textColors))
-  }, [textColors, mounted])
+    root.setAttribute('data-theme', themeMode)
+    
+    if (themeMode === 'light') {
+      root.style.setProperty('--text-primary', 'rgba(15, 23, 42, 1)')
+      root.style.setProperty('--text-secondary', 'rgba(15, 23, 42, 0.80)')
+      root.style.setProperty('--text-tertiary', 'rgba(15, 23, 42, 0.60)')
+      root.style.setProperty('--text-muted', 'rgba(15, 23, 42, 0.40)')
+    } else {
+      root.style.setProperty('--text-primary', `rgba(255, 255, 255, ${textColors.primary})`)
+      root.style.setProperty('--text-secondary', `rgba(255, 255, 255, ${textColors.secondary})`)
+      root.style.setProperty('--text-tertiary', `rgba(255, 255, 255, ${textColors.tertiary})`)
+      root.style.setProperty('--text-muted', `rgba(255, 255, 255, ${textColors.muted})`)
+    }
+    
+    localStorage.setItem('theme-mode', themeMode)
+  }, [themeMode, textColors, mounted])
 
   // Apply BG gradient CSS variables
   useEffect(() => {
@@ -429,6 +440,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     root.style.setProperty("--bg-gradient-opacity-3", bgGradient.opacity3.toString())
     localStorage.setItem("theme-bg-gradient", JSON.stringify(bgGradient))
   }, [bgGradient, mounted])
+
+  // Apply text color CSS variables (only for dark mode custom settings)
+  useEffect(() => {
+    if (!mounted || themeMode === 'light') return
+    const root = document.documentElement
+    root.style.setProperty("--text-primary", `rgba(255, 255, 255, ${textColors.primary})`)
+    root.style.setProperty("--text-secondary", `rgba(255, 255, 255, ${textColors.secondary})`)
+    root.style.setProperty("--text-tertiary", `rgba(255, 255, 255, ${textColors.tertiary})`)
+    root.style.setProperty("--text-muted", `rgba(255, 255, 255, ${textColors.muted})`)
+    localStorage.setItem("theme-text-colors", JSON.stringify(textColors))
+  }, [textColors, themeMode, mounted])
 
   // Apply scrollbar CSS variables
   useEffect(() => {
@@ -452,6 +474,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const setThemeColor = (color: ThemeColor) => setThemeColorState(color)
   const setThemeFont = (font: ThemeFont) => setThemeFontState(font)
+  const setThemeMode = (mode: ThemeMode) => {
+    setThemeModeState(mode)
+    // Auto-adjust background color based on mode
+    const newBg = mode === 'light' ? '#f8fafc' : '#0a0a0a'
+    setBackgroundColorState(newBg)
+  }
   const setBackgroundColor = (color: string) => setBackgroundColorState(color)
 
   // Glass setter functions
@@ -528,6 +556,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         availableFonts,
         backgroundColor,
         setBackgroundColor,
+        themeMode,
+        setThemeMode,
         glassSettings,
         setGlassPreset,
         setGlassCustomValue,

@@ -115,7 +115,7 @@ export default function AffiliatePage() {
             </AvatarFallback>
           </Avatar>
           <div>
-            <p className="font-medium text-white">{affiliate.name}</p>
+            <p className="font-medium text-[var(--text-primary)]">{affiliate.name}</p>
             <p className="text-[var(--text-muted)] text-xs flex items-center gap-1">
               <Mail className="w-3 h-3" />
               {affiliate.email}
@@ -253,12 +253,12 @@ export default function AffiliatePage() {
           <div>
             <label className="block text-[var(--text-tertiary)] text-sm mb-2">Status</label>
             <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
-              <SelectTrigger className="w-full glass-input border-[rgba(255,255,255,var(--glass-border-opacity))] text-white">
+              <SelectTrigger className="w-full glass-input border-[rgba(255,255,255,var(--glass-border-opacity))] text-[var(--text-primary)]">
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent className="glass-dropdown border-[rgba(255,255,255,var(--glass-border-opacity))]">
-                <SelectItem value="active" className="text-[var(--text-secondary)] focus:bg-[rgba(255,255,255,var(--ui-opacity-10))] focus:text-white">Active</SelectItem>
-                <SelectItem value="pending" className="text-[var(--text-secondary)] focus:bg-[rgba(255,255,255,var(--ui-opacity-10))] focus:text-white">Pending</SelectItem>
+                <SelectItem value="active" className="text-[var(--text-secondary)] focus:bg-[rgba(255,255,255,var(--ui-opacity-10))] focus:text-[var(--text-primary)]">Active</SelectItem>
+                <SelectItem value="pending" className="text-[var(--text-secondary)] focus:bg-[rgba(255,255,255,var(--ui-opacity-10))] focus:text-[var(--text-primary)]">Pending</SelectItem>
               </SelectContent>
             </Select>
           </div>

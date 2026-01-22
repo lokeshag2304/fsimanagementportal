@@ -149,7 +149,7 @@ export const userActivityReport = [
 
 // Navigation Items
 export const navigationItems = [
-  { name: 'Home', href: '/', icon: 'Home' },
+  { name: 'Dashboard', href: '/', icon: 'Home' },
   { name: 'Courses', href: '/courses', icon: 'BookOpen', hasSubmenu: true },
   { name: 'Bootcamp', href: '/bootcamp', icon: 'Rocket', hasSubmenu: true },
   { name: 'Team Training', href: '/team-training', icon: 'Users', hasSubmenu: true },

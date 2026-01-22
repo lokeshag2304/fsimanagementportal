@@ -19,7 +19,9 @@ import {
   Type,
   Layers,
   ChevronDown,
-  Lock
+  Lock,
+  Sun,
+  Moon
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -33,6 +35,8 @@ export default function SettingsPage() {
     availableFonts,
     backgroundColor,
     setBackgroundColor,
+    themeMode,
+    setThemeMode,
     glassSettings,
     setGlassPreset,
     setGlassCustomValue,
@@ -244,6 +248,48 @@ export default function SettingsPage() {
             {/* Appearance Settings */}
             {activeTab === "appearance" && (
               <div className="space-y-6">
+                {/* Theme Mode Toggle */}
+                <GlassCard className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-[rgba(255,255,255,var(--ui-opacity-10))] flex items-center justify-center">
+                        {themeMode === 'light' ? (
+                          <Sun className="w-5 h-5 text-theme" />
+                        ) : (
+                          <Moon className="w-5 h-5 text-theme" />
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-medium text-[var(--text-primary)]">Theme Mode</h3>
+                        <p className="text-[var(--text-muted)] text-sm">Switch between light and dark mode</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setThemeMode('light')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all glass ${
+                          themeMode === 'light'
+                            ? "ring-1 ring-[rgba(var(--theme-primary-rgb),0.5)] text-theme"
+                            : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
+                        }`}
+                      >
+                        <Sun className="w-4 h-4" />
+                        Light
+                      </button>
+                      <button
+                        onClick={() => setThemeMode('dark')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all glass ${
+                          themeMode === 'dark'
+                            ? "ring-1 ring-[rgba(var(--theme-primary-rgb),0.5)] text-theme"
+                            : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
+                        }`}
+                      >
+                        <Moon className="w-4 h-4" />
+                        Dark
+                      </button>
+                    </div>
+                  </div>
+                </GlassCard>
                 {/* Theme Color Selection */}
                 <GlassCard className="p-6">
                   <div className="flex items-center justify-between">
@@ -252,7 +298,7 @@ export default function SettingsPage() {
                         <Palette className="w-5 h-5 text-theme" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-medium text-white">Theme Color</h3>
+                        <h3 className="text-lg font-medium text-[var(--text-primary)]">Theme Color</h3>
                         <p className="text-[var(--text-muted)] text-sm">Choose your accent color</p>
                       </div>
                     </div>
@@ -281,7 +327,7 @@ export default function SettingsPage() {
                       <Layers className="w-5 h-5 text-theme" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-medium text-white">Glass Effect</h3>
+                      <h3 className="text-lg font-medium text-[var(--text-primary)]">Glass Effect</h3>
                       <p className="text-[var(--text-muted)] text-sm">Control the glassmorphism intensity</p>
                     </div>
                   </div>
@@ -298,7 +344,7 @@ export default function SettingsPage() {
                             ? "ring-1 ring-[rgba(var(--theme-primary-rgb),0.5)] text-theme"
                             : preset === "custom"
                               ? "text-white/30 cursor-not-allowed"
-                              : "text-[var(--text-tertiary)] hover:text-white"
+                              : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
                         }`}
                       >
                         {preset.charAt(0).toUpperCase() + preset.slice(1)}
@@ -310,7 +356,7 @@ export default function SettingsPage() {
                   <div>
                     <button
                       onClick={() => setGlassAdvancedOpen(!glassAdvancedOpen)}
-                      className="flex items-center justify-between w-full text-[var(--text-tertiary)] hover:text-white transition-colors"
+                      className="flex items-center justify-between w-full text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"
                     >
                       <span className="text-sm font-medium">Advanced Settings</span>
                       <ChevronDown className={`w-4 h-4 transition-transform ${glassAdvancedOpen ? "rotate-180" : ""}`} />
@@ -382,12 +428,12 @@ export default function SettingsPage() {
                         <Palette className="w-5 h-5 text-theme" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-medium text-white">Background Color</h3>
+                        <h3 className="text-lg font-medium text-[var(--text-primary)]">Background Color</h3>
                         <p className="text-[var(--text-muted)] text-sm">Set the main background color</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {[
+                      {(themeMode === 'dark' ? [
                         { color: "#0a0a0a", name: "Midnight" },
                         { color: "#0d1117", name: "GitHub Dark" },
                         { color: "#1a1b26", name: "Tokyo Night" },
@@ -396,13 +442,24 @@ export default function SettingsPage() {
                         { color: "#1e1e2e", name: "Mocha" },
                         { color: "#0f172a", name: "Slate" },
                         { color: "#18181b", name: "Zinc" },
-                      ].map((preset) => (
+                      ] : [
+                        { color: "#f8fafc", name: "Slate" },
+                        { color: "#ffffff", name: "White" },
+                        { color: "#f9fafb", name: "Gray" },
+                        { color: "#fefefe", name: "Snow" },
+                        { color: "#f5f5f5", name: "Smoke" },
+                        { color: "#fafafa", name: "Ghost" },
+                        { color: "#f8f9fa", name: "Light" },
+                        { color: "#f1f5f9", name: "Cool" },
+                      ]).map((preset) => (
                         <button
                           key={preset.color}
                           onClick={() => setBackgroundColor(preset.color)}
-                          className={`w-6 h-6 rounded-full transition-all border border-white/20 ${
+                          className={`w-6 h-6 rounded-full transition-all border ${
+                            themeMode === 'dark' ? 'border-white/20' : 'border-black/20'
+                          } ${
                             backgroundColor === preset.color
-                              ? "ring-2 ring-white ring-offset-1 ring-offset-black/50 scale-110"
+                              ? "ring-2 ring-[var(--theme-gradient-from)] ring-offset-1 ring-offset-[var(--theme-bg-color)] scale-110"
                               : "hover:scale-110"
                           }`}
                           style={{ backgroundColor: preset.color }}
@@ -420,7 +477,7 @@ export default function SettingsPage() {
                       <Type className="w-5 h-5 text-theme" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-medium text-white">Font Family</h3>
+                      <h3 className="text-lg font-medium text-[var(--text-primary)]">Font Family</h3>
                       <p className="text-[var(--text-muted)] text-sm">Select your preferred font</p>
                     </div>
                   </div>

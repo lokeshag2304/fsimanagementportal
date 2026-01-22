@@ -1,10 +1,14 @@
 export const navigationTabs = [
-  { name: "Home", href: "/" },
-  { name: "Courses", href: "/courses", hasDropdown: true },
-  { name: "Bootcamp", href: "/bootcamp", hasDropdown: true },
-  { name: "Team Training", href: "/team-training", hasDropdown: true },
-  { name: "EBook", href: "/ebooks", hasDropdown: true },
-  { name: "Enrollments", href: "/enrollments", hasDropdown: true },
-  { name: "Reports", href: "/reports", hasDropdown: true },
-  { name: "Affiliate", href: "/affiliate" },
+  { name: "Dashboard", href: "/SuperAdmin" },
+  { name: "User Management", href: "/SuperAdmin/user-management", hasDropdown: true, submenu: [
+    { name: "Support Admin", href: "/user-management/support-admin" },
+    { name: "Customer Admin", href: "/user-management/customer-admin" }
+  ] },
+  { name: "Courses", href: "/SuperAdmin/courses", hasDropdown: true },
+  { name: "Bootcamp", href: "/SuperAdmin/bootcamp", hasDropdown: true },
+  { name: "Team Training", href: "/SuperAdmin/team-training", hasDropdown: true },
+  { name: "EBook", href: "/SuperAdmin/ebooks", hasDropdown: true },
+  { name: "Enrollments", href: "/SuperAdmin/enrollments", hasDropdown: true },
+  { name: "Reports", href: "/SuperAdmin/reports", hasDropdown: true },
+  { name: "Affiliate", href: "/SuperAdmin/affiliate" },
 ]
