@@ -1,5 +1,5 @@
 export const navigationTabs = [
-  { name: "Dashboard", href: "/SuperAdmin" },
+  { name: "Dashboard", href: "/" },
   { name: "User Management", href: "/SuperAdmin/user-management", hasDropdown: true, submenu: [
     { name: "Support Admin", href: "/user-management/support-admin" },
     { name: "Customer Admin", href: "/user-management/customer-admin" }

@@ -1,12 +1,11 @@
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
-import "./globals.css"
+import "../../globals.css"
 import { ThemeProvider } from "@/contexts/theme-context"
 import { ThemeScript } from "@/components/theme-script"
 import { HydrationFix } from "@/components/hydration-fix"
 import { AuthProvider } from "@/contexts/AuthContext"
-import { ToastProvider } from "@/components/shared/ToastProvider"
-import { Toaster } from "@/components/ui/toaster"
+import { ToastProvider } from "@radix-ui/react-toast"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -21,23 +20,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <ThemeScript />
-      </head>
-      <body className={inter.className} suppressHydrationWarning>
-        <HydrationFix />
-        <ThemeProvider>
-           <AuthProvider>
-             <ToastProvider>
           <main className="min-h-screen">
             {children}
           </main>
-          <Toaster />
-          </ToastProvider>
-          </AuthProvider>
-        </ThemeProvider>
-      </body>
-    </html>
   )
 }

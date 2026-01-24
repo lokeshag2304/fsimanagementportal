@@ -51,6 +51,8 @@ import {
   X,
   UserCog
 } from "lucide-react"
+import { useAuth } from "@/contexts/AuthContext"
+const ASSETS_URL = process.env.NEXT_PUBLIC_ASSETS_URL
 
 // Mobile navigation items
 const mobileNavItems = [
@@ -94,7 +96,8 @@ export function Header({ title, tabs }: HeaderProps) {
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [openDropdowns, setOpenDropdowns] = useState<string[]>([])
-
+  const {logout, user, token} = useAuth()
+  console.log(user, token)
   const toggleDropdown = (itemName: string) => {
     setOpenDropdowns(prev => 
       prev.includes(itemName) 
@@ -102,6 +105,7 @@ export function Header({ title, tabs }: HeaderProps) {
         : [...prev, itemName]
     )
   }
+
 
   return (
     <TooltipProvider>
@@ -262,17 +266,17 @@ export function Header({ title, tabs }: HeaderProps) {
               <DropdownMenuTrigger asChild>
                 <Avatar className="ml-2 border-2 border-[rgba(255,255,255,var(--glass-border-opacity))] hover:border-[rgba(255,255,255,var(--ui-opacity-20))] transition-colors cursor-pointer">
                   <AvatarImage
-                    src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face"
+                    src={`${ASSETS_URL}/${user?.profile}`  || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face"}
                     alt="User"
                   />
-                  <AvatarFallback>U</AvatarFallback>
+                  <AvatarFallback>{user?.name.charAt(0)}</AvatarFallback>
                 </Avatar>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56 glass-dropdown border-[rgba(255,255,255,var(--glass-border-opacity))]" align="end" sideOffset={12}>
                 <DropdownMenuLabel className="text-[var(--text-tertiary)]">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium text-[var(--text-primary)]">John Doe</p>
-                    <p className="text-xs text-[var(--text-muted)]">john@example.com</p>
+                    <p className="text-sm font-medium text-[var(--text-primary)]">{user?.name || 'Bablu'}</p>
+                    <p className="text-xs text-[var(--text-muted)]">{user?.email || ''}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-[rgba(255,255,255,var(--ui-opacity-10))]" />
@@ -289,7 +293,7 @@ export function Header({ title, tabs }: HeaderProps) {
                   <span>Settings</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-[rgba(255,255,255,var(--ui-opacity-10))]" />
-                <DropdownMenuItem className="text-red-400 focus:bg-[rgba(255,255,255,var(--ui-opacity-10))] focus:text-red-400 cursor-pointer">
+                <DropdownMenuItem className="text-red-400 focus:bg-[rgba(255,255,255,var(--ui-opacity-10))] focus:text-red-400 cursor-pointer" onClick={() => logout()}>
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log out</span>
                 </DropdownMenuItem>

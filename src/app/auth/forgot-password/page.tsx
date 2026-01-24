@@ -1,3 +1,4 @@
+// app/auth/forgot-password/page.tsx
 "use client"
 
 import { useState } from "react"
@@ -5,18 +6,30 @@ import { useRouter } from "next/navigation"
 import { GlassCard } from "@/components/glass/glass-card"
 import { GlassButton } from "@/components/glass/glass-button"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
-import { Mail, Phone, ArrowRight, ArrowLeft } from "lucide-react"
+import { useToast } from "@/hooks/useToast"
+import { Mail, Phone, MessageCircle, ArrowRight, ArrowLeft } from "lucide-react"
 
 export default function ForgotPasswordPage() {
-  const [selectedMethod, setSelectedMethod] = useState<'email' | 'phone' | null>(null)
+  const [selectedMethod, setSelectedMethod] = useState<'email' | 'sms' | 'whatsapp' | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const { toast } = useToast()
 
   const handleContinue = () => {
-    if (!selectedMethod) return
+    if (!selectedMethod) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please select a method"
+      })
+      return
+    }
     
-    // Store selected method in cookie
-    document.cookie = `reset_method=${selectedMethod}; path=/; max-age=600`
-    router.push('/forgot-password/send-code')
+    // Store selected method in localStorage
+    localStorage.setItem('reset_method', selectedMethod)
+    
+    // Redirect to contact input page
+    router.push('/auth/forgot-password/send-code')
   }
 
   const methods = [
@@ -27,10 +40,16 @@ export default function ForgotPasswordPage() {
       description: "We'll send a password reset link to your registered email address"
     },
     {
-      id: 'phone' as const,
+      id: 'sms' as const,
       icon: Phone,
-      title: 'Reset via Phone',
-      description: 'Receive a verification code via SMS or WhatsApp to reset your password'
+      title: 'Reset via SMS',
+      description: 'Receive a verification code via SMS to reset your password'
+    },
+    {
+      id: 'whatsapp' as const,
+      icon: MessageCircle,
+      title: 'Reset via WhatsApp',
+      description: 'Receive a verification code via WhatsApp to reset your password'
     }
   ]
 
@@ -53,12 +72,12 @@ export default function ForgotPasswordPage() {
               return (
                 <div
                   key={method.id}
-                  onClick={() => setSelectedMethod(method.id)}
+                  onClick={() => !isLoading && setSelectedMethod(method.id)}
                   className={`p-4 border-2 cursor-pointer transition-all ${
                     selectedMethod === method.id
                       ? 'rounded-xl border-[var(--theme-gradient-from)] bg-[rgba(var(--theme-primary-rgb),0.1)]'
-                      : 'rounded-2xl border-gray-200  hover:border-[rgba(89,18,18,0.3)]'
-                  }`}
+                      : 'rounded-2xl border-gray-200 hover:border-[rgba(89,18,18,0.3)]'
+                  } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <div className="flex items-start gap-4">
                     <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
@@ -89,13 +108,13 @@ export default function ForgotPasswordPage() {
             })}
           </div>
 
-          
           {/* Buttons */}
           <div className="flex gap-3 mt-6">
             <GlassButton
-              onClick={() => router.push('/login')}
-              variant="ghost"
+              onClick={() => router.push('/auth/login')}
+              variant="secondary"
               className="flex-1"
+              disabled={isLoading}
             >
               <div className="flex items-center gap-2">
                 <ArrowLeft className="w-4 h-4" />
@@ -107,12 +126,19 @@ export default function ForgotPasswordPage() {
               onClick={handleContinue}
               variant="primary"
               className="flex-1"
-              disabled={!selectedMethod}
+              disabled={!selectedMethod || isLoading}
             >
-              <div className="flex items-center gap-2">
-                Continue
-                <ArrowRight className="w-4 h-4" />
-              </div>
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Processing...
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  Continue
+                  <ArrowRight className="w-4 h-4" />
+                </div>
+              )}
             </GlassButton>
           </div>
         </GlassCard>

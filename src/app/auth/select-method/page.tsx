@@ -1,3 +1,4 @@
+// app/auth/select-method/page.tsx
 "use client"
 
 import { useState, useEffect } from "react"
@@ -5,49 +6,80 @@ import { useRouter } from "next/navigation"
 import { GlassCard } from "@/components/glass/glass-card"
 import { GlassButton } from "@/components/glass/glass-button"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
-import { useAuth } from "@/hooks/useAuth"
+import { useToast } from "@/hooks/useToast"
 import { Mail, Phone, MessageCircle, ArrowRight, ArrowLeft } from "lucide-react"
+import { authApi } from "@/components/shared/api"
 
 export default function SelectMethodPage() {
-  const [selectedMethod, setSelectedMethod] = useState<'email' | 'phone' | 'whatsapp' | null>(null)
+  const [selectedMethod, setSelectedMethod] = useState<'email' | 'sms' | 'whatsapp' | null>(null)
   const [userEmail, setUserEmail] = useState("")
+  const [userId, setUserId] = useState<number | null>(null)
+  const [authData, setAuthData] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
-  const { sendOTP } = useAuth()
+  const { toast } = useToast()
 
   useEffect(() => {
-    // Get email from cookie
-    const cookies = document.cookie.split(';')
-    const emailCookie = cookies.find(cookie => cookie.trim().startsWith('user_email='))
-    if (emailCookie) {
-      setUserEmail(emailCookie.split('=')[1])
+    // Get data from localStorage
+    const email = localStorage.getItem('user_email')
+    const userIdStr = localStorage.getItem('otp_user_id')
+    const authDataStr = localStorage.getItem('temp_user_data')
+    
+    if (email) setUserEmail(email)
+    if (userIdStr) setUserId(parseInt(userIdStr))
+    if (authDataStr) {
+      const data = JSON.parse(authDataStr)
+      setAuthData(data)
     }
   }, [])
 
-  const handleSendOTP = () => {
-    if (!selectedMethod || !userEmail) return
-    
-    setIsLoading(true)
-    
-    let contact = ""
-    switch (selectedMethod) {
-      case 'email':
-        contact = userEmail
-        break
-      case 'phone':
-        contact = "+91 98765 43210" // Demo number
-        break
-      case 'whatsapp':
-        contact = "+91 98765 43210" // Demo number
-        break
+  const handleMethodSelect = async (method: 'email' | 'sms' | 'whatsapp') => {
+    if (!userId) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "User information not found. Please login again."
+      })
+      router.push('/auth/login')
+      return
     }
     
-    setTimeout(() => {
-      const otp = sendOTP(selectedMethod, contact, userEmail)
-      console.log(`Demo OTP: ${otp}`) // Show OTP in console for testing
+    setSelectedMethod(method)
+    setIsLoading(true)
+    
+    try {
+      const response = await authApi.sendOtp(userId, method, userEmail)
+      
+      if (response.status) {
+        toast({
+          variant: "success",
+          title: "Success",
+          description: response.message || `OTP sent to your ${method}`
+        })
+        
+        // Store method for verification page
+        localStorage.setItem('otp_method', method)
+        
+        // Redirect to verify OTP page
+        setTimeout(() => {
+          router.push('/auth/verify-otp')
+        }, 500)
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: response.message || "Failed to send OTP"
+        })
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "An error occurred"
+      })
+    } finally {
       setIsLoading(false)
-      router.push('/auth/verify-otp')
-    }, 1000)
+    }
   }
 
   const methods = [
@@ -56,23 +88,44 @@ export default function SelectMethodPage() {
       icon: Mail,
       title: 'Email',
       description: 'Send OTP to your email address',
+      available: authData?.email_status === 1,
       contact: userEmail
     },
     {
-      id: 'phone' as const,
+      id: 'sms' as const,
       icon: Phone,
       title: 'SMS',
       description: 'Send OTP via SMS',
-      contact: '+91 98765 43210'
+      available: authData?.sms_status === 1,
+      contact: '+91 XXXXX XXXXX'
     },
     {
       id: 'whatsapp' as const,
       icon: MessageCircle,
       title: 'WhatsApp',
       description: 'Send OTP via WhatsApp',
-      contact: '+91 98765 43210'
+      available: authData?.whatsapp_status === 1,
+      contact: '+91 XXXXX XXXXX'
     }
-  ]
+  ].filter(method => method.available)
+
+  if (methods.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="absolute top-6 right-6">
+          <ThemeToggle />
+        </div>
+        <GlassCard className="p-6 w-full max-w-md">
+          <div className="text-center py-8">
+            <p className="text-[var(--text-muted)] mb-4">No 2FA methods available</p>
+            <GlassButton onClick={() => router.push('/auth/login')}>
+              Back to Login
+            </GlassButton>
+          </div>
+        </GlassCard>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
@@ -87,7 +140,7 @@ export default function SelectMethodPage() {
         </div>
 
         <GlassCard className="p-6">
-          {!userEmail ? (
+          {!userEmail || !authData ? (
             <div className="text-center py-8">
               <div className="w-8 h-8 border-2 border-[var(--theme-gradient-from)] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
               <p className="text-[var(--text-muted)]">Loading...</p>
@@ -100,12 +153,12 @@ export default function SelectMethodPage() {
                   return (
                     <div
                       key={method.id}
-                      onClick={() => setSelectedMethod(method.id)}
-                        className={`p-4 border-2 cursor-pointer transition-all ${
+                      onClick={() => !isLoading && setSelectedMethod(method.id)}
+                      className={`p-4 border-2 cursor-pointer transition-all ${
                         selectedMethod === method.id
                           ? 'rounded-xl border-[var(--theme-gradient-from)] bg-[rgba(var(--theme-primary-rgb),0.1)]'
                           : 'rounded-2xl border-gray-200 hover:border-[rgba(89,18,18,0.3)]'
-                      }`}
+                      } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       <div className="flex items-center gap-4">
                         <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
@@ -145,12 +198,13 @@ export default function SelectMethodPage() {
                   onClick={() => router.back()}
                   variant="secondary"
                   className="flex-1"
+                  disabled={isLoading}
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back
                 </GlassButton>
                 <GlassButton
-                  onClick={handleSendOTP}
+                  onClick={() => selectedMethod && handleMethodSelect(selectedMethod)}
                   variant="primary"
                   className="flex-1"
                   disabled={!selectedMethod || isLoading}
