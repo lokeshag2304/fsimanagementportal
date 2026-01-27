@@ -4,6 +4,8 @@ export const navigationTabs = [
     { name: "Support Admin", href: "/user-management/support-admin" },
     { name: "Customer Admin", href: "/user-management/customer-admin" }
   ] },
+    { name: "Products", href: "/SuperAdmin/products" },
+  { name: "Domain", href: "/SuperAdmin/domain" },
   { name: "Courses", href: "/SuperAdmin/courses", hasDropdown: true },
   { name: "Bootcamp", href: "/SuperAdmin/bootcamp", hasDropdown: true },
   { name: "Team Training", href: "/SuperAdmin/team-training", hasDropdown: true },

@@ -17,7 +17,9 @@ import {
   ChevronDown,
   Menu,
   X,
-  UserCog
+  UserCog,
+  Package,
+  Globe
 } from "lucide-react"
 import { useState } from "react"
 
@@ -27,6 +29,8 @@ const navigationItems = [
     { name: "Support Admin", href: "/user-management/support-admin" },
     { name: "Customer Admin", href: "/user-management/customer-admin" }
   ] },
+  { name: "Products", href: "/products", icon: Package },
+  { name: "Domain", href: "/domain", icon: Globe },
   { name: "Courses", href: "/courses", icon: BookOpen, hasSubmenu: true },
   { name: "Bootcamp", href: "/bootcamp", icon: Rocket, hasSubmenu: true },
   { name: "Team Training", href: "/team-training", icon: Users, hasSubmenu: true },
