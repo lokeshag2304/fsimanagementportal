@@ -538,7 +538,7 @@ export default function DomainsPage() {
                   placeholder="Search domains..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 py-2 w-full sm:w-64 bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.1)] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full sm:w-64 pl-10 pr-4 py-2 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-lg text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                 />
               </div>
               
@@ -1026,61 +1026,6 @@ export default function DomainsPage() {
 
             {/* Pagination */}
             {!loading && data.length > 0 && (
-              // <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 bg-[rgba(255,255,255,0.05)] border-t border-[rgba(255,255,255,0.1)]">
-              //   <div className="text-sm text-gray-400 mb-3 sm:mb-0">
-              //     Showing {startItem} to {endItem} of {totalItems} domain records
-              //   </div>
-              //   <div className="flex items-center gap-2">
-              //     <button
-              //       onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
-              //       disabled={pagination.page === 0}
-              //       className="p-2 rounded-lg bg-[rgba(255,255,255,0.05)] text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[rgba(255,255,255,0.1)] transition-colors"
-              //       title="Previous"
-              //     >
-              //       <ChevronLeft className="w-4 h-4" />
-              //     </button>
-                  
-              //     <div className="flex items-center gap-1">
-              //       {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              //         let pageNum
-              //         if (totalPages <= 5) {
-              //           pageNum = i
-              //         } else if (pagination.page <= 2) {
-              //           pageNum = i
-              //         } else if (pagination.page >= totalPages - 3) {
-              //           pageNum = totalPages - 5 + i
-              //         } else {
-              //           pageNum = pagination.page - 2 + i
-              //         }
-                      
-              //         if (pageNum >= totalPages) return null
-                      
-              //         return (
-              //           <button
-              //             key={pageNum}
-              //             onClick={() => setPagination(prev => ({ ...prev, page: pageNum }))}
-              //             className={`px-3 py-1 rounded text-sm transition-colors ${
-              //               pagination.page === pageNum
-              //                 ? 'bg-blue-600 text-white'
-              //                 : 'bg-[rgba(255,255,255,0.05)] text-gray-300 hover:bg-[rgba(255,255,255,0.1)]'
-              //             }`}
-              //           >
-              //             {pageNum + 1}
-              //           </button>
-              //         )
-              //       })}
-              //     </div>
-                  
-              //     <button
-              //       onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
-              //       disabled={pagination.page >= totalPages - 1}
-              //       className="p-2 rounded-lg bg-[rgba(255,255,255,0.05)] text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[rgba(255,255,255,0.1)] transition-colors"
-              //       title="Next"
-              //     >
-              //       <ChevronRight className="w-4 h-4" />
-              //     </button>
-              //   </div>
-              // </div>
               <Pagination
   page={pagination.page}
   rowsPerPage={pagination.rowsPerPage}
