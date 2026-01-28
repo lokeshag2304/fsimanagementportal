@@ -18,7 +18,7 @@ import {
 } from "lucide-react"
 
 export const navigationTabs = [
-  { name: "Dashboard", href: "/",  icon: Home },
+  { name: "Dashboard", href: "/SuperAdmin/dashboard",  icon: Home },
   { name: "User Management", href: "/SuperAdmin/user-management", icon: UserCog, hasDropdown: true, hasSubmenu: true, submenu: [
     { name: "Client", href: "/SuperAdmin/clients" },
     { name: "User Admin", href: "/SuperAdmin/users" }

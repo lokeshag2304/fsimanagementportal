@@ -656,7 +656,7 @@ export default function EmailsPage() {
                     <tr>
                       <td colSpan={14} className="text-center">
                         <div className="flex flex-col items-center justify-center">
-                         <DashboardLoader label="Loading email records..." />
+                         <DashboardLoader label="Loading email records..." />postman
                         </div>
                       </td>
                     </tr>
