@@ -22,31 +22,33 @@ import {
   Globe
 } from "lucide-react"
 import { useState } from "react"
+import { navigationTabs } from "@/lib/navigation"
 
-const navigationItems = [
-  { name: "Dashboard", href: "/", icon: Home },
-  { name: "User Management", href: "/user-management", icon: UserCog, hasSubmenu: true, submenu: [
-    { name: "Support Admin", href: "/user-management/support-admin" },
-    { name: "Customer Admin", href: "/user-management/customer-admin" }
-  ] },
-  { name: "Products", href: "/products", icon: Package },
-  { name: "Domain", href: "/domain", icon: Globe },
-  { name: "Courses", href: "/courses", icon: BookOpen, hasSubmenu: true },
-  { name: "Bootcamp", href: "/bootcamp", icon: Rocket, hasSubmenu: true },
-  { name: "Team Training", href: "/team-training", icon: Users, hasSubmenu: true },
-  { name: "EBook", href: "/ebooks", icon: Book, hasSubmenu: true },
-  { name: "Enrollments", href: "/enrollments", icon: UserPlus, hasSubmenu: true },
-  { name: "Reports", href: "/reports", icon: BarChart3, hasSubmenu: true },
-  { name: "Affiliate", href: "/affiliate", icon: Share2, hasSubmenu: true },
-  { name: "Users", href: "/users", icon: User },
-  { name: "Settings", href: "/settings", icon: Settings },
-]
+
+// const navigationItems = [
+//   { name: "Dashboard", href: "/", icon: Home },
+//   { name: "User Management", href: "/user-management", icon: UserCog, hasSubmenu: true, submenu: [
+//     { name: "Support Admin", href: "/user-management/support-admin" },
+//     { name: "Customer Admin", href: "/user-management/customer-admin" }
+//   ] },
+//   { name: "Products", href: "/products", icon: Package },
+//   { name: "Domain", href: "/domain", icon: Globe },
+//   { name: "Courses", href: "/courses", icon: BookOpen, hasSubmenu: true },
+//   { name: "Bootcamp", href: "/bootcamp", icon: Rocket, hasSubmenu: true },
+//   { name: "Team Training", href: "/team-training", icon: Users, hasSubmenu: true },
+//   { name: "EBook", href: "/ebooks", icon: Book, hasSubmenu: true },
+//   { name: "Enrollments", href: "/enrollments", icon: UserPlus, hasSubmenu: true },
+//   { name: "Reports", href: "/reports", icon: BarChart3, hasSubmenu: true },
+//   { name: "Affiliate", href: "/affiliate", icon: Share2, hasSubmenu: true },
+//   { name: "Users", href: "/users", icon: User },
+//   { name: "Settings", href: "/settings", icon: Settings },
+// ]
 
 export function Sidebar() {
   const pathname = usePathname()
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const [openDropdowns, setOpenDropdowns] = useState<string[]>([])
-
+ 
   const toggleDropdown = (itemName: string) => {
     setOpenDropdowns(prev => 
       prev.includes(itemName) 
@@ -93,7 +95,7 @@ export function Sidebar() {
 
         {/* Navigation */}
         <nav className="p-4 space-y-1 overflow-y-auto h-[calc(100vh-88px)]">
-          {navigationItems.map((item) => {
+          {navigationTabs.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
             const isDropdownOpen = openDropdowns.includes(item.name)

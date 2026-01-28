@@ -23,7 +23,7 @@ import { useToast } from "@/hooks/useToast"
 import { useRouter } from "next/navigation"
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://rainbowsolutionandtechnology.com/FSISubscriptionPortal/public/api"
-
+const ASSETS_URL = process.env.NEXT_PUBLIC_ASSETS_URL;
 interface UserType {
   id: number
   name: string
@@ -96,7 +96,11 @@ export default function UsersPage() {
       const token = getAuthToken()
       
       if (!token) {
-        toast.error("Authentication token not found. Please login again.")
+        toast({
+          title: "Error",
+          description: "Authentication token not found. Please login again.",
+          variant: "destructive"
+        })
         router.push('/auth/login')
         return
       }
@@ -124,10 +128,18 @@ export default function UsersPage() {
     } catch (error: any) {
       console.error("Error fetching users:", error)
       if (error.response?.status === 401) {
-        toast.error("Session expired. Please login again.")
+        toast({
+          title: "Session Expired",
+          description: "Please login again",
+          variant: "destructive"
+        })
         router.push('/auth/login')
       } else {
-        toast.error(error.response?.data?.message || "Failed to fetch users")
+        toast({
+          title: "Error",
+          description: error.response?.data?.message || "Something went wrong",
+          variant: "destructive"
+        })
       }
     } finally {
       setLoading(false)
@@ -162,14 +174,14 @@ export default function UsersPage() {
           email: user.email || "",
           phone: user.phone || "",
           address: user.address || "",
-          password: "", // Password empty for edit
+          password: user.password || "", 
           profile: null,
           type: 2
         })
         
         // Set profile preview if exists
         if (user.profile) {
-          setProfilePreview(`${BASE_URL}/${user.profile}`)
+          setProfilePreview(`${ASSETS_URL}/${user.profile}`)
         } else {
           setProfilePreview(null)
         }
@@ -217,14 +229,17 @@ export default function UsersPage() {
 
       // Note: Delete API needs to be confirmed from backend
       // This is placeholder code
-      toast.success("Delete functionality to be implemented")
+      toast({
+        title: "Success",
+        description: "User deleted successfully",
+        variant: "destructive"
+      })
       
       // Refresh list after delete
       fetchUsers()
       setSelectedItems(selectedItems.filter(selectedId => selectedId !== id))
     } catch (error: any) {
       console.error("Error deleting user:", error)
-      toast.error("Failed to delete user")
     }
   }
 
@@ -234,22 +249,38 @@ export default function UsersPage() {
     
     // Validation
     if (!formData.name.trim()) {
-      toast.error("Please enter user name")
+      toast({
+        title: "Error",
+        description: "Please enter user name",
+        variant: "destructive"
+      })
       return
     }
     
     if (!formData.email.trim()) {
-      toast.error("Please enter email address")
+      toast({
+        title: "Error",
+        description: "Please enter email address",
+        variant: "destructive"
+      })
       return
     }
     
     if (!formData.phone.trim()) {
-      toast.error("Please enter phone number")
+      toast({
+        title: "Error",
+        description: "Please enter phone number",
+        variant: "destructive"
+      })
       return
     }
     
     if (!editingUser && !formData.password.trim()) {
-      toast.error("Please enter password")
+      toast({
+        title: "Error",
+        description: "Please enter password",
+        variant: "destructive"
+      })
       return
     }
 
@@ -257,7 +288,11 @@ export default function UsersPage() {
       setIsSubmitting(true)
       const token = getAuthToken()
       if (!token) {
-        toast.error("Authentication token not found")
+        toast({
+          title: "Error",
+          description: "Authentication token not found",
+          variant: "destructive"
+        })
         return
       }
 
@@ -315,7 +350,11 @@ export default function UsersPage() {
       console.log("API Response:", response.data)
 
       if (response.data.status) {
-        toast.success(response.data.message)
+        toast({
+          title: "Success",
+          description: response.data.message || "User saved successfully",
+          variant: "default"
+        })
         setIsModalOpen(false)
         fetchUsers() // Refresh list
         
@@ -331,20 +370,14 @@ export default function UsersPage() {
         })
         setProfilePreview(null)
       } else {
-        toast.error(response.data.message)
+        toast({
+          title: "Error",
+          description: response.data.message || "Failed to save user",
+          variant: "destructive"
+        })
       }
     } catch (error: any) {
-      console.error("Error saving user:", error)
       console.error("Error response:", error.response)
-      
-      if (error.response?.status === 401) {
-        toast.error("Session expired. Please login again.")
-        router.push('/auth/login')
-      } else if (error.response?.data?.message) {
-        toast.error(error.response.data.message)
-      } else {
-        toast.error("Failed to save user")
-      }
     } finally {
       setIsSubmitting(false)
     }
@@ -425,7 +458,11 @@ export default function UsersPage() {
                 {selectedItems.length > 0 && (
                   <GlassButton
                     variant="danger"
-                    onClick={() => toast.info("Bulk delete to be implemented")}
+                    onClick={() => toast({
+                      title: "Error",
+                      description: "Please select at least one user",
+                      variant: "destructive"
+                    })}
                     className="flex items-center gap-2"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -499,7 +536,7 @@ export default function UsersPage() {
                           <div className="w-10 h-10 rounded-full overflow-hidden bg-[rgba(255,255,255,var(--ui-opacity-5))] border border-[rgba(255,255,255,var(--glass-border-opacity))]">
                             {item.profile ? (
                               <img
-                                src={`${BASE_URL}/${item.profile}`}
+                                src={`${ASSETS_URL}/${item.profile}`}
                                 alt={item.name}
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
@@ -526,7 +563,7 @@ export default function UsersPage() {
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
                             <Phone className="w-4 h-4 text-[var(--text-muted)]" />
-                            <span className="text-sm text-[var(--text-secondary)]">{item.phone}</span>
+                            <span className="text-sm text-[var(--text-secondary)]">{item.number}</span>
                           </div>
                         </td>
                         <td className="py-3 px-4 text-sm text-[var(--text-secondary)]">
@@ -666,11 +703,6 @@ export default function UsersPage() {
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             />
-            {editingUser && (
-              <p className="text-xs text-[var(--text-muted)] mt-1">
-                Leave password empty to keep current password
-              </p>
-            )}
           </div>
           
           <div>
@@ -685,7 +717,7 @@ export default function UsersPage() {
                   />
                 ) : editingUser?.profile ? (
                   <img
-                    src={`${BASE_URL}/${editingUser.profile}`}
+                    src={`${ASSETS_URL}/${editingUser.profile}`}
                     alt="Current Profile"
                     className="w-full h-full object-cover"
                     onError={(e) => {

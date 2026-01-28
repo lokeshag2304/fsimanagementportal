@@ -52,25 +52,26 @@ import {
   UserCog
 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
+import { navigationTabs } from "@/lib/navigation"
 const ASSETS_URL = process.env.NEXT_PUBLIC_ASSETS_URL
 
 // Mobile navigation items
-const mobileNavItems = [
-  { name: "Dashboard", href: "/", icon: Home },
-  { name: "User Management", href: "/user-management", icon: UserCog, hasSubmenu: true, submenu: [
-    { name: "Support Admin", href: "/user-management/support-admin" },
-    { name: "Customer Admin", href: "/user-management/customer-admin" }
-  ] },
-  { name: "Courses", href: "/courses", icon: BookOpen },
-  { name: "Bootcamp", href: "/bootcamp", icon: Rocket },
-  { name: "Team Training", href: "/team-training", icon: Users },
-  { name: "EBook", href: "/ebooks", icon: Book },
-  { name: "Enrollments", href: "/enrollments", icon: UserPlus },
-  { name: "Reports", href: "/reports", icon: BarChart3 },
-  { name: "Affiliate", href: "/affiliate", icon: Share2 },
-  { name: "Users", href: "/users", icon: User },
-  { name: "Settings", href: "/settings", icon: Settings },
-]
+// const mobileNavItems = [
+//   { name: "Dashboard", href: "/", icon: Home },
+//   { name: "User Management", href: "/user-management", icon: UserCog, hasSubmenu: true, submenu: [
+//     { name: "Support Admin", href: "/user-management/support-admin" },
+//     { name: "Customer Admin", href: "/user-management/customer-admin" }
+//   ] },
+//   { name: "Courses", href: "/courses", icon: BookOpen },
+//   { name: "Bootcamp", href: "/bootcamp", icon: Rocket },
+//   { name: "Team Training", href: "/team-training", icon: Users },
+//   { name: "EBook", href: "/ebooks", icon: Book },
+//   { name: "Enrollments", href: "/enrollments", icon: UserPlus },
+//   { name: "Reports", href: "/reports", icon: BarChart3 },
+//   { name: "Affiliate", href: "/affiliate", icon: Share2 },
+//   { name: "Users", href: "/users", icon: User },
+//   { name: "Settings", href: "/settings", icon: Settings },
+// ]
 
 interface Tab {
   name: string
@@ -409,10 +410,10 @@ export function Header({ title, tabs }: HeaderProps) {
 
               {/* Navigation Links */}
               <nav className="p-4 space-y-1 overflow-y-auto h-[calc(100vh-88px)]">
-                {mobileNavItems.map((item) => {
-                  const Icon = item.icon
-                  const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
-                  const isDropdownOpen = openDropdowns.includes(item.name)
+                {navigationTabs.map((item) => {
+                    const Icon = item?.icon
+                  const isActive = pathname === item?.href || (item.href !== "/" && pathname?.startsWith(item.href))
+                  const isDropdownOpen = openDropdowns?.includes(item.name)
 
                   return (
                     <div key={item.name}>
@@ -428,10 +429,15 @@ export function Header({ title, tabs }: HeaderProps) {
                             )}
                           >
                             <div className="flex items-center gap-3">
-                              <Icon className={cn(
-                                "w-5 h-5 transition-colors",
-                                isActive ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"
-                              )} />
+                             {Icon && (
+  <Icon
+    className={cn(
+      "w-5 h-5 transition-colors",
+      isActive ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"
+    )}
+  />
+)}
+
                               <span className="font-medium">{item.name}</span>
                             </div>
                             <ChevronDown className={cn(
@@ -474,10 +480,15 @@ export function Header({ title, tabs }: HeaderProps) {
                               : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,var(--ui-opacity-10))]"
                           )}
                         >
-                          <Icon className={cn(
-                            "w-5 h-5 transition-colors",
-                            isActive ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"
-                          )} />
+                          {Icon && (
+  <Icon
+    className={cn(
+      "w-5 h-5 transition-colors",
+      isActive ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"
+    )}
+  />
+)}
+
                           <span className="font-medium">{item.name}</span>
                         </Link>
                       )}

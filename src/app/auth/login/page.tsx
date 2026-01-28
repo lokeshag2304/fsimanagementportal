@@ -135,7 +135,7 @@ export default function LoginPage() {
           localStorage.setItem('authToken', response.token || '')
           
           toast({
-            variant: "success",
+            variant: "destructive",
             title: "Success",
             description: "Login successful!"
           })
@@ -196,13 +196,13 @@ export default function LoginPage() {
             <div>
               <label className="block text-[var(--text-tertiary)] text-sm mb-2">Email</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[var(--text-muted)]" />
+                {/* <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[var(--text-muted)]" /> */}
                 <GlassInput
                   type="email"
                   placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-11"
+                  className=""
                   required
                   disabled={isLoading}
                 />
@@ -213,13 +213,13 @@ export default function LoginPage() {
             <div>
               <label className="block text-[var(--text-tertiary)] text-sm mb-2">Password</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[var(--text-muted)]" />
+                {/* <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[var(--text-muted)]" /> */}
                 <GlassInput
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-11 pr-11"
+                  className=""
                   required
                   disabled={isLoading}
                 />

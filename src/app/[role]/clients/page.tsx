@@ -23,7 +23,8 @@ import { useToast } from "@/hooks/useToast"
 import { useRouter } from "next/navigation"
 import Select from 'react-select'
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://rainbowsolutionandtechnology.com/FSISubscriptionPortal/public/api"
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "";
+const ASSETS_URL = process.env.NEXT_PUBLIC_ASSETS_URL;
 
 interface Domain {
   id: number
@@ -725,7 +726,7 @@ export default function ClientsPage() {
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto">
               <div className="relative flex-1 sm:flex-initial">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
+                <GlassInput
                   type="text"
                   placeholder="Search clients..."
                   defaultValue={searchQuery}
@@ -862,7 +863,7 @@ export default function ClientsPage() {
                           <div className="w-10 h-10 rounded-full overflow-hidden bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)]">
                             {item.profile ? (
                               <img
-                                src={`${BASE_URL}/${item.profile}`}
+                                src={`${ASSETS_URL}/${item.profile}`}
                                 alt={item.name}
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
