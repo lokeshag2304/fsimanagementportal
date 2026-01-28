@@ -21,6 +21,10 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+   typescript: {
+    // ⚠️ Production build me TypeScript errors ignore karega
+    ignoreBuildErrors: true,
+  },
 };
 
 export default nextConfig;

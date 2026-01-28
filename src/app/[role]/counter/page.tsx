@@ -17,7 +17,8 @@ import {
   XCircle,
   AlertCircle,
   MessageSquare,
-  RefreshCw
+  RefreshCw,
+  LucideChartColumnStacked
 } from "lucide-react"
 import { navigationTabs } from "@/lib/navigation"
 
@@ -345,7 +346,15 @@ export default function CounterPage() {
         <GlassCard className="p-6">
           {/* Header with Search and Add Button */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-            <h2 className="text-xl font-semibold text-white">Counters</h2>
+            <div>
+            <div className="flex items-center gap-2">            
+                <LucideChartColumnStacked className="w-6 h-6 text-[#CB8959]" />
+                <h2 className="text-xl font-semibold text-white">Counters</h2>
+              </div>
+              <p className="text-sm text-gray-400 mt-1">
+                Manage your counters and track their usage.
+              </p>
+            </div>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
@@ -517,13 +526,13 @@ export default function CounterPage() {
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center justify-end gap-2">
-                        <button
+                        {/* <button
                           onClick={() => handleRefresh(item.id)}
                           className="p-2 rounded-lg hover:bg-blue-500/20 transition-colors"
                           title="Refresh"
                         >
                           <RefreshCw className="w-4 h-4 text-blue-400" />
-                        </button>
+                        </button> */}
                         <button
                           onClick={() => handleEdit(item)}
                           className="p-2 rounded-lg hover:bg-[rgba(255,255,255,var(--ui-opacity-10))] transition-colors"

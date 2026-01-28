@@ -29,6 +29,8 @@ import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/useToast"
 import { useRouter } from "next/navigation"
 import { apiService } from "@/common/services/apiService"
+import Pagination from "@/common/Pagination"
+import DashboardLoader from "@/common/DashboardLoader"
 
 interface Subscription {
   id: number
@@ -450,6 +452,10 @@ export default function SubscriptionsPage() {
     { name: 'remarks', label: 'Remarks', type: 'text' as const, className: 'min-w-[180px]' }
   ]
 
+  const handlePageChange = (page: number) => {
+    setPagination(prev => ({ ...prev, page }))
+  }
+
   return (
     <div className="min-h-screen pb-8">
       <Header title="Subscription Management" tabs={navigationTabs} />
@@ -460,7 +466,7 @@ export default function SubscriptionsPage() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
             <div>
               <div className="flex items-center gap-2">
-                <Package className="w-6 h-6 text-blue-500" />
+                <Package className="w-6 h-6 text-[#BC8969]" />
                 <h2 className="text-xl font-semibold text-white">Subscriptions</h2>
               </div>
               <p className="text-sm text-gray-400 mt-1">
@@ -560,8 +566,7 @@ export default function SubscriptionsPage() {
                     <tr>
                       <td colSpan={10} className="py-8 text-center">
                         <div className="flex flex-col items-center justify-center gap-2">
-                          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-                          <span className="text-gray-400">Loading subscriptions...</span>
+                          <DashboardLoader label="Fetch Subscriptions..." />
                         </div>
                       </td>
                     </tr>
@@ -885,61 +890,67 @@ export default function SubscriptionsPage() {
 
             {/* Pagination */}
             {!loading && data.length > 0 && (
-              <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 bg-[rgba(255,255,255,0.05)] border-t border-[rgba(255,255,255,0.1)]">
-                <div className="text-sm text-gray-400 mb-3 sm:mb-0">
-                  Showing {startItem} to {endItem} of {totalItems} subscriptions
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
-                    disabled={pagination.page === 0}
-                    className="p-2 rounded-lg bg-[rgba(255,255,255,0.05)] text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[rgba(255,255,255,0.1)] transition-colors"
-                    title="Previous"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
+              // <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 bg-[rgba(255,255,255,0.05)] border-t border-[rgba(255,255,255,0.1)]">
+              //   <div className="text-sm text-gray-400 mb-3 sm:mb-0">
+              //     Showing {startItem} to {endItem} of {totalItems} subscriptions
+              //   </div>
+              //   <div className="flex items-center gap-2">
+              //     <button
+              //       onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+              //       disabled={pagination.page === 0}
+              //       className="p-2 rounded-lg bg-[rgba(255,255,255,0.05)] text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[rgba(255,255,255,0.1)] transition-colors"
+              //       title="Previous"
+              //     >
+              //       <ChevronLeft className="w-4 h-4" />
+              //     </button>
                   
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      let pageNum
-                      if (totalPages <= 5) {
-                        pageNum = i
-                      } else if (pagination.page <= 2) {
-                        pageNum = i
-                      } else if (pagination.page >= totalPages - 3) {
-                        pageNum = totalPages - 5 + i
-                      } else {
-                        pageNum = pagination.page - 2 + i
-                      }
+              //     <div className="flex items-center gap-1">
+              //       {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              //         let pageNum
+              //         if (totalPages <= 5) {
+              //           pageNum = i
+              //         } else if (pagination.page <= 2) {
+              //           pageNum = i
+              //         } else if (pagination.page >= totalPages - 3) {
+              //           pageNum = totalPages - 5 + i
+              //         } else {
+              //           pageNum = pagination.page - 2 + i
+              //         }
                       
-                      if (pageNum >= totalPages) return null
+              //         if (pageNum >= totalPages) return null
                       
-                      return (
-                        <button
-                          key={pageNum}
-                          onClick={() => setPagination(prev => ({ ...prev, page: pageNum }))}
-                          className={`px-3 py-1 rounded text-sm transition-colors ${
-                            pagination.page === pageNum
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-[rgba(255,255,255,0.05)] text-gray-300 hover:bg-[rgba(255,255,255,0.1)]'
-                          }`}
-                        >
-                          {pageNum + 1}
-                        </button>
-                      )
-                    })}
-                  </div>
+              //         return (
+              //           <button
+              //             key={pageNum}
+              //             onClick={() => setPagination(prev => ({ ...prev, page: pageNum }))}
+              //             className={`px-3 py-1 rounded text-sm transition-colors ${
+              //               pagination.page === pageNum
+              //                 ? 'bg-blue-600 text-white'
+              //                 : 'bg-[rgba(255,255,255,0.05)] text-gray-300 hover:bg-[rgba(255,255,255,0.1)]'
+              //             }`}
+              //           >
+              //             {pageNum + 1}
+              //           </button>
+              //         )
+              //       })}
+              //     </div>
                   
-                  <button
-                    onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
-                    disabled={pagination.page >= totalPages - 1}
-                    className="p-2 rounded-lg bg-[rgba(255,255,255,0.05)] text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[rgba(255,255,255,0.1)] transition-colors"
-                    title="Next"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
+              //     <button
+              //       onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+              //       disabled={pagination.page >= totalPages - 1}
+              //       className="p-2 rounded-lg bg-[rgba(255,255,255,0.05)] text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[rgba(255,255,255,0.1)] transition-colors"
+              //       title="Next"
+              //     >
+              //       <ChevronRight className="w-4 h-4" />
+              //     </button>
+              //   </div>
+              // </div>
+              <Pagination
+                page={pagination.page}
+                rowsPerPage={pagination.rowsPerPage}
+                totalItems={totalItems}
+                onPageChange={handlePageChange}
+                />
             )}
           </div>
 

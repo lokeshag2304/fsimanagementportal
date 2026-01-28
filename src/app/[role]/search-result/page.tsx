@@ -15,7 +15,8 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
-  Eye
+  Eye,
+  SearchCheckIcon
 } from "lucide-react"
 import { navigationTabs } from "@/lib/navigation"
 
@@ -285,7 +286,15 @@ export default function SearchResultsPage() {
         <GlassCard className="p-6">
           {/* Header with Search and Add Button */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-            <h2 className="text-xl font-semibold text-white">Search Results</h2>
+           <div>
+              <div className="flex items-center gap-2">
+                <SearchCheckIcon className="w-6 h-6 text-[#CB8969]" />
+                <h2 className="text-xl font-semibold text-white">Search Results</h2>
+              </div>
+              <p className="text-sm text-gray-400 mt-1">
+                Manage and track your search results.
+              </p>
+            </div>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
@@ -449,6 +458,7 @@ export default function SearchResultsPage() {
                 ))}
               </tbody>
             </table>
+            
           </div>
 
           {/* Selected Items Info */}

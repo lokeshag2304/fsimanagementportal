@@ -31,7 +31,7 @@ export const navigationTabs = [
   { name: "Hosting", href: "/SuperAdmin/hosting", hasDropdown: false, hasSubmenu: false },
   { name: "Search Result", href: "/SuperAdmin/search-result", hasDropdown: false, hasSubmenu: false, icon: Users, },
   { name: "SSL", href: "/SuperAdmin/ssl", hasDropdown: false, icon: Book },
-  { name: "Subcription", href: "/SuperAdmin/subcription", hasDropdown: false, icon: UserPlus },
+  { name: "Subcription", href: "/SuperAdmin/subscription", hasDropdown: false, icon: UserPlus },
   // { name: "Team Training", href: "/SuperAdmin/team-training", hasDropdown: true },
   // { name: "EBook", href: "/SuperAdmin/ebooks", hasDropdown: true },
   // { name: "Enrollments", href: "/SuperAdmin/enrollments", hasDropdown: true },

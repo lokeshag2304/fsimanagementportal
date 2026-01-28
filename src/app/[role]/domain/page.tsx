@@ -21,6 +21,8 @@ import axios from "axios"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/useToast"
 import { useRouter } from "next/navigation"
+import Pagination from "@/common/Pagination"
+import DashboardLoader from "@/common/DashboardLoader"
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://rainbowsolutionandtechnology.com/FSISubscriptionPortal/public/api"
 
@@ -500,7 +502,7 @@ export default function DomainPage() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
             <div>
               <div className="flex items-center gap-2">
-                <Globe className="w-6 h-6 text-blue-500" />
+                <Globe className="w-6 h-6 text-[#CB8959]" />
                 <h2 className="text-xl font-semibold text-white">Domains</h2>
               </div>
               <p className="text-sm text-gray-400 mt-1">
@@ -662,8 +664,7 @@ export default function DomainPage() {
                     <tr>
                       <td colSpan={5} className="py-8 text-center">
                         <div className="flex flex-col items-center justify-center gap-2">
-                          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-                          <span className="text-gray-400">Loading domains...</span>
+                          <DashboardLoader label="Loading domains..." />
                         </div>
                       </td>
                     </tr>
@@ -791,61 +792,67 @@ export default function DomainPage() {
 
             {/* Pagination */}
             {!loading && data.length > 0 && (
-              <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 bg-[rgba(255,255,255,0.05)] border-t border-[rgba(255,255,255,0.1)]">
-                <div className="text-sm text-gray-400 mb-3 sm:mb-0">
-                  Showing {startItem} to {endItem} of {totalDomains} domains
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handlePageChange(pagination.page - 1)}
-                    disabled={pagination.page === 0}
-                    className="p-2 rounded-lg bg-[rgba(255,255,255,0.05)] text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[rgba(255,255,255,0.1)] transition-colors"
-                    title="Previous"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
+              // <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 bg-[rgba(255,255,255,0.05)] border-t border-[rgba(255,255,255,0.1)]">
+              //   <div className="text-sm text-gray-400 mb-3 sm:mb-0">
+              //     Showing {startItem} to {endItem} of {totalDomains} domains
+              //   </div>
+              //   <div className="flex items-center gap-2">
+              //     <button
+              //       onClick={() => handlePageChange(pagination.page - 1)}
+              //       disabled={pagination.page === 0}
+              //       className="p-2 rounded-lg bg-[rgba(255,255,255,0.05)] text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[rgba(255,255,255,0.1)] transition-colors"
+              //       title="Previous"
+              //     >
+              //       <ChevronLeft className="w-4 h-4" />
+              //     </button>
                   
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      let pageNum
-                      if (totalPages <= 5) {
-                        pageNum = i
-                      } else if (pagination.page <= 2) {
-                        pageNum = i
-                      } else if (pagination.page >= totalPages - 3) {
-                        pageNum = totalPages - 5 + i
-                      } else {
-                        pageNum = pagination.page - 2 + i
-                      }
+              //     <div className="flex items-center gap-1">
+              //       {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              //         let pageNum
+              //         if (totalPages <= 5) {
+              //           pageNum = i
+              //         } else if (pagination.page <= 2) {
+              //           pageNum = i
+              //         } else if (pagination.page >= totalPages - 3) {
+              //           pageNum = totalPages - 5 + i
+              //         } else {
+              //           pageNum = pagination.page - 2 + i
+              //         }
                       
-                      if (pageNum >= totalPages) return null
+              //         if (pageNum >= totalPages) return null
                       
-                      return (
-                        <button
-                          key={pageNum}
-                          onClick={() => handlePageChange(pageNum)}
-                          className={`px-3 py-1 rounded text-sm transition-colors ${
-                            pagination.page === pageNum
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-[rgba(255,255,255,0.05)] text-gray-300 hover:bg-[rgba(255,255,255,0.1)]'
-                          }`}
-                        >
-                          {pageNum + 1}
-                        </button>
-                      )
-                    })}
-                  </div>
+              //         return (
+              //           <button
+              //             key={pageNum}
+              //             onClick={() => handlePageChange(pageNum)}
+              //             className={`px-3 py-1 rounded text-sm transition-colors ${
+              //               pagination.page === pageNum
+              //                 ? 'bg-blue-600 text-white'
+              //                 : 'bg-[rgba(255,255,255,0.05)] text-gray-300 hover:bg-[rgba(255,255,255,0.1)]'
+              //             }`}
+              //           >
+              //             {pageNum + 1}
+              //           </button>
+              //         )
+              //       })}
+              //     </div>
                   
-                  <button
-                    onClick={() => handlePageChange(pagination.page + 1)}
-                    disabled={pagination.page >= totalPages - 1}
-                    className="p-2 rounded-lg bg-[rgba(255,255,255,0.05)] text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[rgba(255,255,255,0.1)] transition-colors"
-                    title="Next"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
+              //     <button
+              //       onClick={() => handlePageChange(pagination.page + 1)}
+              //       disabled={pagination.page >= totalPages - 1}
+              //       className="p-2 rounded-lg bg-[rgba(255,255,255,0.05)] text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[rgba(255,255,255,0.1)] transition-colors"
+              //       title="Next"
+              //     >
+              //       <ChevronRight className="w-4 h-4" />
+              //     </button>
+              //   </div>
+              // </div>
+              <Pagination
+  page={pagination.page}
+  rowsPerPage={pagination.rowsPerPage}
+  totalItems={totalDomains}
+  onPageChange={handlePageChange}
+/>
             )}
           </div>
 
