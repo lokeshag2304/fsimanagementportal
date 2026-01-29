@@ -26,13 +26,13 @@ import {
   X,
   Lock
 } from "lucide-react"
-import { navigationTabs } from "@/lib/navigation"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/useToast"
 import { useRouter } from "next/navigation"
 import { apiService } from "@/common/services/apiService"
 import Pagination from "@/common/Pagination"
 import DashboardLoader from "@/common/DashboardLoader"
+import { getNavigationByRole } from "@/lib/getNavigationByRole"
 
 interface DomainRecord {
   id: number
@@ -66,7 +66,8 @@ interface AddEditDomain {
 }
 
 export default function DomainsPage() {
-  const { user } = useAuth()
+   const {user} = useAuth()
+  const navigationTabs = getNavigationByRole(user?.role)
   const { toast } = useToast()
   const router = useRouter()
   
@@ -253,7 +254,7 @@ export default function DomainsPage() {
 
       const response = await apiService.addRecord(payload as any)
       
-      if (response.success) {
+      if (response.status) {
         toast({
           title: "Success",
           description: response.message || "Domain record added successfully",
@@ -325,7 +326,7 @@ export default function DomainsPage() {
 
       const response = await apiService.editRecord(payload as any)
       
-      if (response.success) {
+      if (response.status) {
         toast({
           title: "Success",
           description: response.message || "Domain record updated successfully",
@@ -405,7 +406,7 @@ export default function DomainsPage() {
       
       const response = await apiService.deleteRecords(idsToDelete, 4)
       
-      if (response.success) {
+      if (response.status) {
         toast({
           title: "Success",
           description: response.message || "Record(s) deleted successfully",

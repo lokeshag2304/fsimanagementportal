@@ -1,8 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-
-const API_URL = "https://rainbowsolutionandtechnology.com/FSISubscriptionPortal/public/api/getLogo"
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL
+const API_URL = `${BASE_URL}/getLogo`
 const ASSETS_URL = process.env.NEXT_PUBLIC_ASSETS_URL
 
 interface BrandAssets {

@@ -113,7 +113,7 @@ useEffect(() => {
       if (response.status) {
         setShowSuccessMessage(true)
         toast({
-          variant: "success",
+          variant: "destructive",
           title: "Success",
           description: response.message || "Password changed successfully!"
         })

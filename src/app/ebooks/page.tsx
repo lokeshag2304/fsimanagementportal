@@ -15,7 +15,6 @@ import {
   ShoppingCart,
   User
 } from "lucide-react"
-import { navigationTabs } from "@/lib/navigation"
 
 interface Ebook {
   id: number
@@ -186,7 +185,7 @@ export default function EbooksPage() {
 
   return (
     <div className="min-h-screen pb-8">
-      <Header title="E-Books" tabs={navigationTabs} />
+      {/* <Header title="E-Books" tabs={navigationTabs} /> */}
 
       <div className="px-4 sm:px-6">
         <PageLayout

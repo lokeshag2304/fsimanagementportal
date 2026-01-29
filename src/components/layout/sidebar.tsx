@@ -22,7 +22,8 @@ import {
   Globe
 } from "lucide-react"
 import { useState } from "react"
-import { navigationTabs } from "@/lib/navigation"
+import { useAuth } from "@/contexts/AuthContext"
+import { getNavigationByRole } from "@/lib/getNavigationByRole"
 
 
 // const navigationItems = [
@@ -45,6 +46,8 @@ import { navigationTabs } from "@/lib/navigation"
 // ]
 
 export function Sidebar() {
+   const {user} = useAuth()
+  const navigationTabs = getNavigationByRole(user?.role)
   const pathname = usePathname()
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const [openDropdowns, setOpenDropdowns] = useState<string[]>([])

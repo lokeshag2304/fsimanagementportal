@@ -25,13 +25,13 @@ import {
   X,
   Shield
 } from "lucide-react"
-import { navigationTabs } from "@/lib/navigation"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/useToast"
 import { useRouter } from "next/navigation"
 import { apiService } from "@/common/services/apiService"
 import Pagination from "@/common/Pagination"
 import DashboardLoader from "@/common/DashboardLoader"
+import { getNavigationByRole } from "@/lib/getNavigationByRole"
 
 interface SSLRecord {
   id: number
@@ -65,7 +65,8 @@ interface AddEditSSL {
 }
 
 export default function SSLPage() {
-  const { user } = useAuth()
+   const {user} = useAuth()
+  const navigationTabs = getNavigationByRole(user?.role)
   const { toast } = useToast()
   const router = useRouter()
   
@@ -246,7 +247,7 @@ export default function SSLPage() {
 
       const response = await apiService.addRecord(payload as any)
       
-      if (response.success) {
+      if (response.status) {
         toast({
           title: "Success",
           description: response.message || "SSL record added successfully",
@@ -318,7 +319,7 @@ export default function SSLPage() {
 
       const response = await apiService.editRecord(payload as any)
       
-      if (response.success) {
+      if (response.status) {
         toast({
           title: "Success",
           description: response.message || "SSL record updated successfully",
@@ -398,7 +399,7 @@ export default function SSLPage() {
       
       const response = await apiService.deleteRecords(idsToDelete, 2)
       
-      if (response.success) {
+      if (response.status) {
         toast({
           title: "Success",
           description: response.message || "Record(s) deleted successfully",

@@ -1,5 +1,5 @@
 {
-  "name": "glassmorphism-admin-panel-ui",
+  "name": "Sbcription-management-system",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -24,6 +24,7 @@
     "axios": "^1.13.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "cookies-next": "^6.1.1",
     "framer-motion": "^11.15.0",
     "js-cookie": "^3.0.5",
     "lucide-react": "^0.468.0",

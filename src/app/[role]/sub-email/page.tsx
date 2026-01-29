@@ -27,13 +27,13 @@ import {
   Save,
   X
 } from "lucide-react"
-import { navigationTabs } from "@/lib/navigation"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/useToast"
 import { useRouter } from "next/navigation"
 import { apiService } from "@/common/services/apiService"
 import Pagination from "@/common/Pagination"
 import DashboardLoader from "@/common/DashboardLoader"
+import { getNavigationByRole } from "@/lib/getNavigationByRole"
 
 interface EmailRecord {
   id: number
@@ -73,7 +73,8 @@ interface AddEditEmail {
 }
 
 export default function EmailsPage() {
-  const { user } = useAuth()
+   const {user} = useAuth()
+  const navigationTabs = getNavigationByRole(user?.role)
   const { toast } = useToast()
   const router = useRouter()
   
@@ -274,7 +275,7 @@ export default function EmailsPage() {
 
       const response = await apiService.addRecord(payload as any)
       
-      if (response.success) {
+      if (response.status) {
         toast({
           title: "Success",
           description: response.message || "Email record added successfully",
@@ -349,7 +350,7 @@ export default function EmailsPage() {
 
       const response = await apiService.editRecord(payload as any)
       
-      if (response.success) {
+      if (response.status) {
         toast({
           title: "Success",
           description: response.message || "Email record updated successfully",
@@ -429,7 +430,7 @@ export default function EmailsPage() {
       
       const response = await apiService.deleteRecords(idsToDelete, 5)
       
-      if (response.success) {
+      if (response.status) {
         toast({
           title: "Success",
           description: response.message || "Record(s) deleted successfully",

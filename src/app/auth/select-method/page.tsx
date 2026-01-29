@@ -52,7 +52,7 @@ export default function SelectMethodPage() {
       
       if (response.status) {
         toast({
-          variant: "success",
+          variant: "destructive",
           title: "Success",
           description: response.message || `OTP sent to your ${method}`
         })

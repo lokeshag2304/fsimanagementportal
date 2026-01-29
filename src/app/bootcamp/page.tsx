@@ -16,7 +16,6 @@ import {
   Clock,
   CheckCircle
 } from "lucide-react"
-import { navigationTabs } from "@/lib/navigation"
 import {
   Select,
   SelectContent,
@@ -211,7 +210,7 @@ export default function BootcampPage() {
 
   return (
     <div className="min-h-screen pb-8">
-      <Header title="Bootcamp Programs" tabs={navigationTabs} />
+      {/* <Header title="Bootcamp Programs" tabs={navigationTabs} /> */}
 
       <div className="px-4 sm:px-6">
         <PageLayout

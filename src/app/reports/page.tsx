@@ -17,7 +17,6 @@ import {
   Activity
 } from "lucide-react"
 import { useTheme } from "@/contexts/theme-context"
-import { navigationTabs } from "@/lib/navigation"
 import {
   Select,
   SelectContent,
@@ -43,7 +42,7 @@ export default function ReportsPage() {
 
   return (
     <div className="min-h-screen pb-8">
-      <Header title="Reports & Analytics" tabs={navigationTabs} />
+      {/* <Header title="Reports & Analytics" tabs={navigationTabs} /> */}
 
       <div className="px-4 sm:px-6 space-y-4 sm:space-y-6">
         {/* Stats */}

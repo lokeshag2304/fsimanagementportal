@@ -17,7 +17,6 @@ import {
   Copy,
   CheckCircle
 } from "lucide-react"
-import { navigationTabs } from "@/lib/navigation"
 import {
   Select,
   SelectContent,
@@ -202,7 +201,7 @@ export default function AffiliatePage() {
 
   return (
     <div className="min-h-screen pb-8">
-      <Header title="Affiliate Program" tabs={navigationTabs} />
+      {/* <Header title="Affiliate Program" tabs={navigationTabs} /> */}
 
       <div className="px-4 sm:px-6">
         <PageLayout

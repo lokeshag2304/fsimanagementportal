@@ -23,7 +23,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { navigationTabs } from "@/lib/navigation"
 
 interface UserData {
   id: number
@@ -199,7 +198,7 @@ export default function UsersPage() {
 
   return (
     <div className="min-h-screen pb-8">
-      <Header title="User Management" tabs={navigationTabs} />
+      {/* <Header title="User Management" tabs={navigationTabs} /> */}
 
       <div className="px-4 sm:px-6">
         <PageLayout

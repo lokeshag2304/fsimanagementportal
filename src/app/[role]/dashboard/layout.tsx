@@ -10,8 +10,8 @@ import { ToastProvider } from "@radix-ui/react-toast"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Clasy - Admin Dashboard",
-  description: "Modern glassmorphism admin dashboard",
+  title: "Flying ⭐",
+  description: "Sbcription management system",
 }
 
 export default function RootLayout({

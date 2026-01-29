@@ -22,7 +22,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { navigationTabs } from "@/lib/navigation"
 
 interface SupportAdmin {
   id: number
@@ -233,7 +232,7 @@ export default function SupportAdminPage() {
 
   return (
     <div className="min-h-screen pb-8">
-      <Header title="Support Admin Management" tabs={navigationTabs} />
+      {/* <Header title="Support Admin Management" tabs={navigationTabs} /> */}
 
       <div className="px-4 sm:px-6">
         <PageLayout

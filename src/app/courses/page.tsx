@@ -22,7 +22,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { navigationTabs } from "@/lib/navigation"
 
 interface Course {
   id: number
@@ -211,7 +210,7 @@ export default function CoursesPage() {
 
   return (
     <div className="min-h-screen pb-8">
-      <Header title="Courses Management" tabs={navigationTabs} />
+      {/* <Header title="Courses Management" tabs={navigationTabs} /> */}
 
       <div className="px-4 sm:px-6">
         <PageLayout

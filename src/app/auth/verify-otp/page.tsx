@@ -501,7 +501,7 @@ interface User {
   email: string;
   profile?: string;
   login_type: number;
-  role: 'superadmin' | 'useradmin' | 'clientadmin';
+  role: 'SuperAdmin' | 'UserAdmin' | 'ClientAdmin';
   whatsapp_status: number;
   email_status: number;
   sms_status: number;
@@ -622,7 +622,7 @@ export default function VerifyOTPPage() {
 
         if (response.status && response.changepasswordurl) {
           toast({
-            variant: "success",
+            variant: "destructive",
             title: "Success",
             description: response.message || "OTP verified successfully!",
           });
@@ -662,7 +662,7 @@ export default function VerifyOTPPage() {
 
         if (response.status && response.route_access_token) {
           toast({
-            variant: "success",
+            variant: "destructive",
             title: "Success",
             description: response.message || "OTP verified successfully!",
           });
@@ -678,10 +678,10 @@ export default function VerifyOTPPage() {
               profile: apiUser.profile,
               login_type: apiUser.login_type,
               role: apiUser.login_type === 1 
-                ? 'superadmin' 
+                ? 'SuperAdmin' 
                 : apiUser.login_type === 2 
-                ? 'useradmin' 
-                : 'clientadmin',
+                ? 'UserAdmin' 
+                : 'ClientAdmin',
               whatsapp_status: 1,
               email_status: 1,
               sms_status: 1,
@@ -754,7 +754,7 @@ export default function VerifyOTPPage() {
 
         if (response?.status) {
           toast({
-            variant: "success",
+            variant: "destructive",
             title: "Success",
             description: response.message || "OTP resent successfully!",
           });
@@ -773,7 +773,7 @@ export default function VerifyOTPPage() {
 
         if (response.status) {
           toast({
-            variant: "success",
+            variant: "destructive",
             title: "Success",
             description: response.message || "OTP resent successfully!",
           });

@@ -25,13 +25,13 @@ import {
   Save,
   X
 } from "lucide-react"
-import { navigationTabs } from "@/lib/navigation"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/useToast"
 import { useRouter } from "next/navigation"
 import { apiService } from "@/common/services/apiService"
 import Pagination from "@/common/Pagination"
 import DashboardLoader from "@/common/DashboardLoader"
+import { getNavigationByRole } from "@/lib/getNavigationByRole"
 
 interface HostingRecord {
   id: number
@@ -63,7 +63,8 @@ interface AddEditHosting {
 }
 
 export default function HostingPage() {
-  const { user } = useAuth()
+   const {user} = useAuth()
+  const navigationTabs = getNavigationByRole(user?.role)
   const { toast } = useToast()
   const router = useRouter()
   
@@ -243,7 +244,7 @@ export default function HostingPage() {
 
       const response = await apiService.addRecord(payload as any)
       
-      if (response.success) {
+      if (response.status) {
         toast({
           title: "Success",
           description: response.message || "Hosting record added successfully",
@@ -314,7 +315,7 @@ export default function HostingPage() {
 
       const response = await apiService.editRecord(payload as any)
       
-      if (response.success) {
+      if (response.status) {
         toast({
           title: "Success",
           description: response.message || "Hosting record updated successfully",
@@ -394,7 +395,7 @@ export default function HostingPage() {
       
       const response = await apiService.deleteRecords(idsToDelete, 3)
       
-      if (response.success) {
+      if (response.status) {
         toast({
           title: "Success",
           description: response.message || "Record(s) deleted successfully",

@@ -96,7 +96,7 @@ export default function LoginPage() {
             
             if (otpResponse.status) {
               toast({
-                variant: "success",
+                variant: "destructive",
                 title: "Success",
                 description: otpResponse.message || `OTP sent to your ${activeMethods[0]}`
               })

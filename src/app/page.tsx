@@ -24,7 +24,6 @@ import {
   topCourses,
   courseOverviewData
 } from "@/lib/mock-data"
-import { navigationTabs } from "@/lib/navigation"
 import { useTheme } from "@/contexts/theme-context"
 import {
   GraduationCap,
@@ -41,6 +40,8 @@ import {
   UserCircle,
   BookMarked
 } from "lucide-react"
+import { useAuth } from "@/contexts/AuthContext"
+import { getNavigationByRole } from "@/lib/getNavigationByRole"
 
 const bestSellingCourses = [...topCourses].sort((a, b) => b.sales - a.sales)
 
@@ -77,7 +78,8 @@ const itemVariants = {
 export default function Dashboard() {
   const [courseTab, setCourseTab] = useState<'top' | 'best'>('top')
   const { colors } = useTheme()
-
+  const {user} = useAuth()
+const navigationTabs = getNavigationByRole(user?.role)
   const displayedCourses = courseTab === 'top' ? topCourses : bestSellingCourses
 
   // Legend colors from theme

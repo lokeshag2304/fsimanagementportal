@@ -16,13 +16,13 @@ import {
   ChevronRight,
   ProjectorIcon
 } from "lucide-react"
-import { navigationTabs } from "@/lib/navigation"
 import axios from "axios"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/useToast"
 import DashboardLoader from "@/common/DashboardLoader"
 import Pagination from "@/common/Pagination"
 import { DeleteConfirmationModal } from "@/common/services/DeleteConfirmationModal"
+import { getNavigationByRole } from "@/lib/getNavigationByRole"
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL
 
@@ -45,6 +45,7 @@ interface ApiResponse {
 
 export default function ProductsPage() {
   const { user, getToken } = useAuth()
+  const navigationTabs = getNavigationByRole(user?.role)
   const { toast } = useToast()
   const [data, setData] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)

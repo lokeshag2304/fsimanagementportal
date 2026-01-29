@@ -14,7 +14,6 @@ import {
   XCircle,
   Clock
 } from "lucide-react"
-import { navigationTabs } from "@/lib/navigation"
 
 interface Enrollment {
   id: number
@@ -146,7 +145,7 @@ export default function EnrollmentsPage() {
 
   return (
     <div className="min-h-screen pb-8">
-      <Header title="Enrollments" tabs={navigationTabs} />
+      {/* <Header title="Enrollments" tabs={navigationTabs} /> */}
 
       <div className="px-4 sm:px-6">
         <PageLayout

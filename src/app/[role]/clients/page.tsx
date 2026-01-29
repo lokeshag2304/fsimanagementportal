@@ -18,13 +18,15 @@ import {
   Eye,
   EyeOff
 } from "lucide-react"
-import { navigationTabs } from "@/lib/navigation"
 import axios from "axios"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/useToast"
 import { useRouter } from "next/navigation"
 import Select from 'react-select'
 import { GlassSelect } from "@/components/glass/GlassSelect"
+import { getNavigationByRole } from "@/lib/getNavigationByRole"
+import Pagination from "@/common/Pagination"
+import DashboardLoader from "@/common/DashboardLoader"
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://rainbowsolutionandtechnology.com/FSISubscriptionPortal/public/api"
 const ASSETS_URL = process.env.NEXT_PUBLIC_ASSETS_URL || BASE_URL
@@ -78,7 +80,8 @@ interface ApiResponse {
 }
 
 export default function ClientsPage() {
-  const { user } = useAuth()
+   const {user} = useAuth()
+  const navigationTabs = getNavigationByRole(user?.role)
   const { toast } = useToast()
   const router = useRouter()
   const [data, setData] = useState<Client[]>([])
@@ -760,7 +763,7 @@ export default function ClientsPage() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
             <div>
               <div className="flex items-center gap-2">
-                <User className="w-6 h-6 text-blue-500" />
+                <User className="w-6 h-6 text-[#BC8969]" />
                 <h2 className="text-xl font-semibold text-white">Clients</h2>
               </div>
               <p className="text-sm text-gray-400 mt-1">
@@ -856,8 +859,7 @@ export default function ClientsPage() {
                     <tr>
                       <td colSpan={9} className="py-8 text-center">
                         <div className="flex flex-col items-center justify-center gap-2">
-                          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-                          <span className="text-gray-400">Loading clients...</span>
+                          <DashboardLoader label="Loading clients..." />
                         </div>
                       </td>
                     </tr>
@@ -994,61 +996,67 @@ export default function ClientsPage() {
 
             {/* Pagination */}
             {!loading && data.length > 0 && (
-              <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 bg-[rgba(255,255,255,0.05)] border-t border-[rgba(255,255,255,0.1)]">
-                <div className="text-sm text-gray-400 mb-3 sm:mb-0">
-                  Showing {startItem} to {endItem} of {totalClients} clients
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handlePageChange(pagination.page - 1)}
-                    disabled={pagination.page === 0}
-                    className="p-2 rounded-lg bg-[rgba(255,255,255,0.05)] text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[rgba(255,255,255,0.1)] transition-colors"
-                    title="Previous"
-                  >
-                    Previous
-                  </button>
+              // <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 bg-[rgba(255,255,255,0.05)] border-t border-[rgba(255,255,255,0.1)]">
+              //   <div className="text-sm text-gray-400 mb-3 sm:mb-0">
+              //     Showing {startItem} to {endItem} of {totalClients} clients
+              //   </div>
+              //   <div className="flex items-center gap-2">
+              //     <button
+              //       onClick={() => handlePageChange(pagination.page - 1)}
+              //       disabled={pagination.page === 0}
+              //       className="p-2 rounded-lg bg-[rgba(255,255,255,0.05)] text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[rgba(255,255,255,0.1)] transition-colors"
+              //       title="Previous"
+              //     >
+              //       Previous
+              //     </button>
                   
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      let pageNum
-                      if (totalPages <= 5) {
-                        pageNum = i
-                      } else if (pagination.page <= 2) {
-                        pageNum = i
-                      } else if (pagination.page >= totalPages - 3) {
-                        pageNum = totalPages - 5 + i
-                      } else {
-                        pageNum = pagination.page - 2 + i
-                      }
+              //     <div className="flex items-center gap-1">
+              //       {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              //         let pageNum
+              //         if (totalPages <= 5) {
+              //           pageNum = i
+              //         } else if (pagination.page <= 2) {
+              //           pageNum = i
+              //         } else if (pagination.page >= totalPages - 3) {
+              //           pageNum = totalPages - 5 + i
+              //         } else {
+              //           pageNum = pagination.page - 2 + i
+              //         }
                       
-                      if (pageNum >= totalPages) return null
+              //         if (pageNum >= totalPages) return null
                       
-                      return (
-                        <button
-                          key={pageNum}
-                          onClick={() => handlePageChange(pageNum)}
-                          className={`px-3 py-1 rounded text-sm transition-colors ${
-                            pagination.page === pageNum
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-[rgba(255,255,255,0.05)] text-gray-300 hover:bg-[rgba(255,255,255,0.1)]'
-                          }`}
-                        >
-                          {pageNum + 1}
-                        </button>
-                      )
-                    })}
-                  </div>
+              //         return (
+              //           <button
+              //             key={pageNum}
+              //             onClick={() => handlePageChange(pageNum)}
+              //             className={`px-3 py-1 rounded text-sm transition-colors ${
+              //               pagination.page === pageNum
+              //                 ? 'bg-blue-600 text-white'
+              //                 : 'bg-[rgba(255,255,255,0.05)] text-gray-300 hover:bg-[rgba(255,255,255,0.1)]'
+              //             }`}
+              //           >
+              //             {pageNum + 1}
+              //           </button>
+              //         )
+              //       })}
+              //     </div>
                   
-                  <button
-                    onClick={() => handlePageChange(pagination.page + 1)}
-                    disabled={pagination.page >= totalPages - 1}
-                    className="p-2 rounded-lg bg-[rgba(255,255,255,0.05)] text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[rgba(255,255,255,0.1)] transition-colors"
-                    title="Next"
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
+              //     <button
+              //       onClick={() => handlePageChange(pagination.page + 1)}
+              //       disabled={pagination.page >= totalPages - 1}
+              //       className="p-2 rounded-lg bg-[rgba(255,255,255,0.05)] text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[rgba(255,255,255,0.1)] transition-colors"
+              //       title="Next"
+              //     >
+              //       Next
+              //     </button>
+              //   </div>
+              // </div>
+              <Pagination
+              page={pagination.page}
+                rowsPerPage={pagination.rowsPerPage}
+                totalItems={totalClients}
+                onPageChange={handlePageChange}
+              />
             )}
           </div>
 

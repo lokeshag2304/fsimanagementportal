@@ -24,13 +24,13 @@ import {
   Save,
   X
 } from "lucide-react"
-import { navigationTabs } from "@/lib/navigation"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/useToast"
 import { useRouter } from "next/navigation"
 import { apiService } from "@/common/services/apiService"
 import Pagination from "@/common/Pagination"
 import DashboardLoader from "@/common/DashboardLoader"
+import { getNavigationByRole } from "@/lib/getNavigationByRole"
 
 interface Subscription {
   id: number
@@ -59,10 +59,12 @@ interface AddEditSubscription {
   expiry_date: string
   status: 0 | 1
   remarks: string
+  product_name: string
 }
 
 export default function SubscriptionsPage() {
-  const { user } = useAuth()
+ const {user} = useAuth()
+const navigationTabs = getNavigationByRole(user?.role)
   const { toast } = useToast()
   const router = useRouter()
   
@@ -197,7 +199,8 @@ export default function SubscriptionsPage() {
 
       const payload: AddEditSubscription = {
         record_type: 1,
-        s_id: user?.id || 6,
+        s_id: user?.id || 0,
+        product_name: newRecordData.product_name || "",
         product_id: Number(newRecordData.product_id || 1),
         renewal_date: newRecordData.renewal_date,
         amount: parseFloat(newRecordData.amount) || 0,
@@ -205,10 +208,10 @@ export default function SubscriptionsPage() {
         status: parseInt(newRecordData.status) as 0 | 1,
         remarks: newRecordData.remarks
       }
-
+  console.log("kya gya", payload)
       const response = await apiService.addRecord(payload)
       
-      if (response.success) {
+      if (response.status) {
         toast({
           title: "Success",
           description: response.message || "Subscription added successfully",
@@ -216,6 +219,14 @@ export default function SubscriptionsPage() {
         })
         setAddingNew(false)
         fetchSubscriptions()
+         setNewRecordData({
+      product_name: "",
+      renewal_date: "",
+      amount: "",
+      expiry_date: "",
+      status: "1",
+      remarks: ""
+    })
       } else {
         toast({
           title: "Error",
@@ -256,6 +267,7 @@ export default function SubscriptionsPage() {
         id,
         s_id: user?.id || 6,
         product_id: Number(updatedData.product_id || 1),
+        product_name: updatedData.product_name || "",
         renewal_date: updatedData.renewal_date || "",
         amount: updatedData.amount || 0,
         expiry_date: updatedData.expiry_date || "",
@@ -265,7 +277,7 @@ export default function SubscriptionsPage() {
 
       const response = await apiService.editRecord(payload)
       
-      if (response.success) {
+      if (response.status) {
         toast({
           title: "Success",
           description: response.message || "Subscription updated successfully",
@@ -317,7 +329,6 @@ export default function SubscriptionsPage() {
       [field]: value
     }))
   }
-
   // Handle Delete
   const handleDeleteClick = (id: number) => {
     setItemToDelete(id)
@@ -345,7 +356,7 @@ export default function SubscriptionsPage() {
       
       const response = await apiService.deleteRecords(idsToDelete, 1)
       
-      if (response.success) {
+      if (response.status) {
         toast({
           title: "Success",
           description: response.message || "Record(s) deleted successfully",
@@ -420,7 +431,7 @@ export default function SubscriptionsPage() {
   }
 
   const formatCurrency = (amount: number | null) => {
-    if (amount === null) return "$0.00"
+    if (amount === null) return "0.00"
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD'
@@ -767,8 +778,7 @@ export default function SubscriptionsPage() {
                                 </td>
                                 <td className="py-3 px-4 text-sm text-gray-300">
                                   <div className="flex items-center gap-2">
-                                    <DollarSign className="w-4 h-4 text-gray-400" />
-                                    {formatCurrency(item.amount)}
+                                    {item.amount}
                                   </div>
                                 </td>
                                 <td className="py-3 px-4 text-sm text-gray-300">
@@ -785,7 +795,7 @@ export default function SubscriptionsPage() {
                                     ? 'bg-yellow-500/20 text-yellow-400'
                                     : 'bg-green-500/20 text-green-400'
                               }`}>
-                                <Clock className="w-3 h-3" />
+                                {/* <Clock className="w-3 h-3" /> */}
                                 {calculateDays(item.expiry_date)} days
                               </div>
                             </td>

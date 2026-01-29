@@ -116,7 +116,7 @@ class ApiService {
         ...data,
         s_id: this.getUserId()
       }
-      
+      console.log(requestData)
       const response = await axios.post<ApiResponse>(
         `${BASE_URL}/secure/Categories/edit-categories`,
         requestData,

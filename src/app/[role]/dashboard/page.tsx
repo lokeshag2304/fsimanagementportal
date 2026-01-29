@@ -1,23 +1,22 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { Header } from "@/components/layout"
-import { StatsRow } from "@/components/shared"
-import { AreaChart, DonutChart } from "@/components/charts"
-import { GlassCard } from "@/components/glass/glass-card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
-import { navigationTabs } from "@/lib/navigation"
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Header } from "@/components/layout";
+import { StatsRow } from "@/components/shared";
+import { AreaChart, DonutChart } from "@/components/charts";
+import { GlassCard } from "@/components/glass/glass-card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { useTheme } from "@/contexts/theme-context"
+} from "@/components/ui/select";
+import { useTheme } from "@/contexts/theme-context";
 import {
   GraduationCap,
   BookOpen,
@@ -35,11 +34,14 @@ import {
   Calendar,
   Filter,
   ChevronLeft,
-  ChevronRight
-} from "lucide-react"
-import axios from "axios"
-import { useAuth } from "@/contexts/AuthContext"
-import Pagination from "@/common/Pagination"
+  ChevronRight,
+} from "lucide-react";
+import axios from "axios";
+import { useAuth } from "@/contexts/AuthContext";
+import Pagination from "@/common/Pagination";
+import { getNavigationByRole } from "@/lib/getNavigationByRole";
+import DashboardLoader from "@/common/DashboardLoader";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
@@ -50,16 +52,16 @@ const containerVariants = {
     opacity: 1,
     transition: {
       staggerChildren: 0.08,
-      delayChildren: 0.05
-    }
-  }
-}
+      delayChildren: 0.05,
+    },
+  },
+};
 
 const itemVariants = {
   hidden: {
     opacity: 0,
     y: -15,
-    scale: 0.95
+    scale: 0.95,
   },
   visible: {
     opacity: 1,
@@ -68,74 +70,87 @@ const itemVariants = {
     transition: {
       type: "spring",
       stiffness: 300,
-      damping: 24
-    }
-  }
-}
+      damping: 24,
+    },
+  },
+};
 
 // API types
 interface DynamicStats {
-  total_clients: number
-  total_users: number
-  total_domains: number
-  total_products: number
+  total_clients: number;
+  total_users: number;
+  total_domains: number;
+  total_products: number;
 }
 
 interface CategoryItem {
-  id: number
-  record_type: string
-  status: "Active" | "Deactive" | string
-  created_at: string
-  days_to_expired: number
-  today_date: string
+  id: number;
+  record_type: string;
+  status: "Active" | "Deactive" | string;
+  created_at: string;
+  days_to_expired: number;
+  today_date: string;
 }
 
 interface RecentCategoriesResponse {
-  total: number
-  page: number
-  rowsPerPage: number
-  data: CategoryItem[]
+  total: number;
+  page: number;
+  rowsPerPage: number;
+  data: CategoryItem[];
 }
 
 interface DashboardResponse {
-  status: boolean
+  status: boolean;
   filters: {
-    start_date: string
-    end_date: string
-  }
-  stats: DynamicStats
-  recent_categories: RecentCategoriesResponse
+    start_date: string;
+    end_date: string;
+  };
+  stats: DynamicStats;
+  recent_categories: RecentCategoriesResponse;
 }
 
 interface PaginationState {
-  page: number
-  rowsPerPage: number
-  total: number
+  page: number;
+  rowsPerPage: number;
+  total: number;
 }
 
 export default function Dashboard() {
-  const [startDate, setStartDate] = useState<string>("")
-  const [endDate, setEndDate] = useState<string>("")
-  const [loading, setLoading] = useState(false)
-  const [dashboardData, setDashboardData] = useState<DashboardResponse | null>(null)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [orderBy, setOrderBy] = useState<string>("id")
-  const [orderDir, setOrderDir] = useState<"asc" | "desc">("desc")
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
+  const [loading, setLoading] = useState(false);
+  const [Mainloading, setMainLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState<DashboardResponse | null>(
+    null,
+  );
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
+  const [orderBy, setOrderBy] = useState<string>("id");
+  const [orderDir, setOrderDir] = useState<"asc" | "desc">("desc");
   const [pagination, setPagination] = useState<PaginationState>({
     page: 0,
     rowsPerPage: 10,
-    total: 0
-  })
-  
-  const { colors } = useTheme()
-  const { user, getToken } = useAuth()
+    total: 0,
+  });
+
+  const { colors } = useTheme();
+  const { user, getToken } = useAuth();
   const token = getToken();
+  const navigationTabs = getNavigationByRole(user?.role);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 500); // ⏱️ debounce delay
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Fetch dashboard data
   const fetchDashboardData = async () => {
     try {
-      setLoading(true)
-      
+      setLoading(true);
+
       const payload = {
         start_date: startDate,
         end_date: endDate,
@@ -144,104 +159,128 @@ export default function Dashboard() {
         search: searchQuery,
         orderBy: orderBy,
         orderDir: orderDir,
-        s_id: user?.id || ""
-      }
+        s_id: user?.id || "",
+      };
 
       const response = await axios.post<DashboardResponse>(
         `${BASE_URL}/secure/dashboard/counting`,
         payload,
         {
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      )
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
 
-      if (response.data.status) {
-        setDashboardData(response.data)
-        setPagination(prev => ({
+      if (
+        response.data.status &&
+        response.data.recent_categories?.data?.length > 0
+      ) {
+        setDashboardData(response.data);
+        setPagination((prev) => ({
           ...prev,
-          total: response.data.recent_categories.total
-        }))
+          total: response.data.recent_categories.total,
+        }));
+      } else {
+        setDashboardData(null);
+        setPagination((prev) => ({
+          ...prev,
+          total: 0,
+        }));
       }
     } catch (error) {
-      console.error("Error fetching dashboard data:", error)
+      console.error("Error fetching dashboard data:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
+      setMainLoading(false);
     }
-  }
+  };
 
   // Initial fetch on component mount
   useEffect(() => {
-    fetchDashboardData()
-  }, [pagination.page, pagination.rowsPerPage, orderBy, orderDir])
+    fetchDashboardData();
+  }, [
+    pagination.page,
+    pagination.rowsPerPage,
+    orderBy,
+    orderDir,
+    debouncedSearch,
+  ]);
 
   // Handle page change
   const handlePageChange = (newPage: number) => {
-    setPagination(prev => ({ ...prev, page: newPage }))
-  }
+    setPagination((prev) => ({ ...prev, page: newPage }));
+  };
 
   // Handle search
   const handleSearch = () => {
-    setPagination(prev => ({ ...prev, page: 0 }))
-    fetchDashboardData()
-  }
+    setPagination((prev) => ({ ...prev, page: 0 }));
+    fetchDashboardData();
+  };
 
   // Handle sort
   const handleSort = (column: string) => {
     if (orderBy === column) {
-      setOrderDir(orderDir === "asc" ? "desc" : "asc")
+      setOrderDir(orderDir === "asc" ? "desc" : "asc");
     } else {
-      setOrderBy(column)
-      setOrderDir("desc")
+      setOrderBy(column);
+      setOrderDir("desc");
     }
-  }
+  };
 
   // Format date for display
   const formatDateForDisplay = (dateString: string) => {
-    if (!dateString) return "N/A"
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
-  }
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
 
   // Get status badge variant
   const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'active':
-        return 'success'
-      case 'deactive':
-        return 'destructive'
+      case "active":
+        return "success";
+      case "deactive":
+        return "secondary";
       default:
-        return 'default'
+        return "outline";
     }
-  }
+  };
 
   // Dynamic stats
   const statsData = {
     courses: {
       total: dashboardData?.stats.total_products || 0,
       active: 0,
-      upcoming: 0
+      upcoming: 0,
     },
     lessons: {
       total: dashboardData?.stats.total_domains || 0,
       active: 0,
-      upcoming: 0
+      upcoming: 0,
     },
     enrollments: {
       total: dashboardData?.stats.total_users || 0,
       passed: 0,
-      new: 0
+      new: 0,
     },
     students: {
       total: dashboardData?.stats.total_clients || 0,
       active: 0,
-      new: 0
-    }
+      new: 0,
+    },
+  };
+
+  if (Mainloading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <DashboardLoader />
+      </div>
+    );
   }
 
   return (
@@ -250,67 +289,60 @@ export default function Dashboard() {
 
       <div className="px-4 sm:px-6 space-y-6 mt-6">
         {/* Date Filter Section */}
-        <GlassCard variant="liquid" className="p-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-[var(--text-muted)]" />
-              <span className="text-[var(--text-primary)] text-sm font-medium">Filter Dashboard Data</span>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
-              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="pl-10 w-full sm:w-40 glass-input border-white/[0.08]"
-                    placeholder="Start Date"
-                  />
-                </div>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="pl-10 w-full sm:w-40 glass-input border-white/[0.08]"
-                    placeholder="End Date"
-                  />
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
-                <Calendar className="w-3 h-3" />
-                <span>
-                  {startDate && endDate 
-                    ? `${formatDateForDisplay(startDate)} - ${formatDateForDisplay(endDate)}`
-                    : "All time"
-                  }
-                </span>
-              </div>
-              
-              <Button
-                onClick={fetchDashboardData}
-                disabled={loading}
-                variant="glass"
-                size="sm"
-                className="w-full sm:w-auto"
-              >
-                {loading ? "Loading..." : "Apply Filter"}
-              </Button>
-            </div>
+        {/* <GlassCard variant="liquid" className="p-4"> */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            {/* <Filter className="w-4 h-4 text-[var(--text-muted)]" />
+              <span className="text-[var(--text-primary)] text-sm font-medium">Filter Dashboard Data</span> */}
           </div>
-        </GlassCard>
+
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <div className="relative">
+                {/* <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" /> */}
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="p-1 w-full sm:w-40 glass-input border-white/[0.08]"
+                  placeholder="Start Date"
+                />
+              </div>
+              <div className="relative">
+                {/* <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" /> */}
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="p-1 w-full sm:w-40 glass-input border-white/[0.08]"
+                  placeholder="End Date"
+                />
+              </div>
+            </div>
+
+            <Button
+              onClick={fetchDashboardData}
+              disabled={loading}
+              variant="glass"
+              size="sm"
+              className="w-full p-1 sm:w-auto"
+            >
+              {loading ? "Loading..." : "Apply Filter"}
+            </Button>
+          </div>
+        </div>
 
         {/* Dynamic Stats Row */}
+        <GlassCard variant="liquid" noPadding className="overflow-hidden p-5">
         <StatsRow
           stats={[
             {
               title: "Products",
               value: statsData.courses.total,
-              icon: <GraduationCap className="w-5 h-5 text-[var(--text-muted)]" />,
+              icon: (
+                <GraduationCap className="w-5 h-5 text-[var(--text-muted)]" />
+              ),
+              url: `${user?.role}/products`,
               // subStats: [
               //   { label: "Active", value: statsData.courses.active },
               //   { label: "Upcoming", value: statsData.courses.upcoming },
@@ -320,6 +352,7 @@ export default function Dashboard() {
               title: "Domains",
               value: statsData.lessons.total,
               icon: <BookOpen className="w-5 h-5 text-[var(--text-muted)]" />,
+              url: `${user?.role}/domains`,
               // subStats: [
               //   { label: "Active", value: statsData.lessons.active },
               //   { label: "Upcoming", value: statsData.lessons.upcoming },
@@ -329,6 +362,7 @@ export default function Dashboard() {
               title: "Users",
               value: statsData.enrollments.total,
               icon: <UserCheck className="w-5 h-5 text-[var(--text-muted)]" />,
+              url: `${user?.role}/users`,
               // subStats: [
               //   { label: "Active", value: statsData.enrollments.passed },
               //   { label: "New", value: statsData.enrollments.new },
@@ -338,6 +372,7 @@ export default function Dashboard() {
               title: "Clients",
               value: statsData.students.total,
               icon: <Users className="w-5 h-5 text-[var(--text-muted)]" />,
+              url: `${user?.role}/clients`,
               // subStats: [
               //   { label: "Active", value: statsData.students.active },
               //   { label: "New", value: statsData.students.new },
@@ -345,34 +380,41 @@ export default function Dashboard() {
             },
           ]}
         />
-
+</GlassCard>
         {/* Recent Categories Table */}
         <GlassCard variant="liquid" noPadding className="overflow-hidden">
           <div className="p-4 sm:p-5">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
               <div>
-                <h3 className="text-[var(--text-tertiary)] font-medium text-sm sm:text-base">Recent Categories</h3>
+                <h3 className="text-[var(--text-tertiary)] font-medium text-sm sm:text-base">
+                  Recent Categories
+                </h3>
                 <p className="text-[var(--text-muted)] text-xs mt-1">
                   Total: {dashboardData?.recent_categories.total || 0} records
                 </p>
               </div>
-              
+
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
                 <div className="relative w-full sm:w-64">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+                  {/* <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" /> */}
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                     placeholder="Search categories..."
-                    className="pl-10 w-full glass-input border-white/[0.08]"
+                    className="pl-2 p-2 w-full glass-input border-white/[0.08]"
                   />
                 </div>
-                
+
                 <Select
                   value={pagination.rowsPerPage.toString()}
-                  onValueChange={(value) => setPagination(prev => ({ ...prev, rowsPerPage: parseInt(value), page: 0 }))}
+                  onValueChange={(value) =>
+                    setPagination((prev) => ({
+                      ...prev,
+                      rowsPerPage: parseInt(value),
+                      page: 0,
+                    }))
+                  }
                 >
                   <SelectTrigger className="w-32 glass-input border-white/[0.08]">
                     <SelectValue placeholder="Rows per page" />
@@ -392,18 +434,11 @@ export default function Dashboard() {
               <table className="w-full">
                 <thead className="bg-[rgba(255,255,255,0.03)] border-b border-white/[0.08]">
                   <tr>
-                    <th 
+                    <th
                       className="py-3 px-4 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider cursor-pointer hover:bg-[rgba(255,255,255,0.05)]"
                       // onClick={() => handleSort("id")}
                     >
-                      <div className="flex items-center gap-1">
-                        Sr No
-                        {/* {orderBy === "id" && (
-                          <span className="text-[10px]">
-                            {orderDir === "asc" ? "↑" : "↓"}
-                          </span>
-                        )} */}
-                      </div>
+                      <div className="flex items-center gap-1">Sr No</div>
                     </th>
                     <th className="py-3 px-4 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">
                       Record Type
@@ -422,14 +457,18 @@ export default function Dashboard() {
                 <tbody className="divide-y divide-white/[0.08]">
                   {loading ? (
                     <tr>
-                      <td colSpan={5} className="py-8 text-center text-[var(--text-muted)]">
-                        Loading...
+                      <td
+                        colSpan={5}
+                        className="py-8 text-center text-[var(--text-muted)]"
+                      >
+                        <DashboardLoader label="Loading..." />
                       </td>
                     </tr>
-                  ) : dashboardData?.recent_categories.data && dashboardData.recent_categories.data.length > 0 ? (
+                  ) : dashboardData?.recent_categories.data &&
+                    dashboardData.recent_categories.data.length > 0 ? (
                     dashboardData.recent_categories.data.map((item, index) => (
-                      <tr 
-                        key={item.id} 
+                      <tr
+                        key={item.id}
                         className="hover:bg-[rgba(255,255,255,0.03)] transition-colors duration-200"
                       >
                         <td className="py-3 px-4 text-sm text-[var(--text-primary)] font-medium">
@@ -439,7 +478,10 @@ export default function Dashboard() {
                           {item.record_type}
                         </td>
                         <td className="py-3 px-4">
-                          <Badge variant={getStatusVariant(item.status)} className="text-xs">
+                          <Badge
+                            variant={getStatusVariant(item.status)}
+                            className="text-xs"
+                          >
                             {item.status}
                           </Badge>
                         </td>
@@ -447,13 +489,15 @@ export default function Dashboard() {
                           {item.created_at}
                         </td>
                         <td className="py-3 px-4">
-                          <div className={`text-sm font-medium ${
-                            item.days_to_expired < 0 
-                              ? 'text-red-400' 
-                              : item.days_to_expired < 30 
-                                ? 'text-amber-400' 
-                                : 'text-green-400'
-                          }`}>
+                          <div
+                            className={`text-sm font-medium ${
+                              item.days_to_expired < 0
+                                ? "text-red-400"
+                                : item.days_to_expired < 30
+                                  ? "text-amber-400"
+                                  : "text-green-400"
+                            }`}
+                          >
                             {item.days_to_expired} days
                           </div>
                         </td>
@@ -461,7 +505,10 @@ export default function Dashboard() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={5} className="py-8 text-center text-[var(--text-muted)]">
+                      <td
+                        colSpan={5}
+                        className="py-8 text-center text-[var(--text-muted)]"
+                      >
                         No data available
                       </td>
                     </tr>
@@ -471,32 +518,28 @@ export default function Dashboard() {
             </div>
 
             {/* Pagination */}
-            {dashboardData?.recent_categories && dashboardData.recent_categories.total > 0 && (
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t border-white/[0.08]">
-                <div className="text-sm text-[var(--text-muted)]">
-                  Showing {dashboardData.recent_categories.data.length} of {dashboardData.recent_categories.total} entries
+            {dashboardData?.recent_categories &&
+              dashboardData.recent_categories.total > 0 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t border-white/[0.08]">
+                  <div className="text-sm text-[var(--text-muted)]">
+                    Showing {dashboardData.recent_categories.data.length} of{" "}
+                    {dashboardData.recent_categories.total} entries
+                  </div>
+
+                  <Pagination
+                    page={pagination.page}
+                    rowsPerPage={pagination.rowsPerPage}
+                    totalItems={pagination.total}
+                    onPageChange={handlePageChange}
+                  />
                 </div>
-                
-                <Pagination
-                  page={pagination.page}
-                  rowsPerPage={pagination.rowsPerPage}
-                  totalItems={pagination.total}
-                  onPageChange={handlePageChange}
-                />
-              </div>
-            )}
+              )}
           </div>
         </GlassCard>
       </div>
     </div>
-  )
+  );
 }
-
-
-
-
-
-
 
 // "use client"
 

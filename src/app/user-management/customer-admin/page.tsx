@@ -22,7 +22,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { navigationTabs } from "@/lib/navigation"
 
 interface CustomerAdmin {
   id: number
@@ -241,7 +240,7 @@ export default function CustomerAdminPage() {
 
   return (
     <div className="min-h-screen pb-8">
-      <Header title="Customer Admin Management" tabs={navigationTabs} />
+      {/* <Header title="Customer Admin Management" tabs={navigationTabs} /> */}
 
       <div className="px-4 sm:px-6">
         <PageLayout

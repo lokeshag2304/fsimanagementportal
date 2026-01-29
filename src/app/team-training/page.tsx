@@ -14,7 +14,7 @@ import {
   Trash2,
   TrendingUp
 } from "lucide-react"
-import { navigationTabs } from "@/lib/navigation"
+// import { navigationTabs } from "@/lib/navigation"
 
 interface TeamTraining {
   id: number
@@ -180,7 +180,7 @@ export default function TeamTrainingPage() {
 
   return (
     <div className="min-h-screen pb-8">
-      <Header title="Team Training" tabs={navigationTabs} />
+      {/* <Header title="Team Training" tabs={navigationTabs} /> */}
 
       <div className="px-4 sm:px-6">
         <PageLayout

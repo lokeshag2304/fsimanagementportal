@@ -76,7 +76,7 @@ export default function SendCodePage() {
         
         if (response.status) {
           toast({
-            variant: "success",
+            variant: "destructive",
             title: "Success",
             description: response.message || "Password reset link has been sent to your email"
           })
@@ -108,7 +108,7 @@ export default function SendCodePage() {
         
         if (response.status && response.Data?.id) {
           toast({
-            variant: "success",
+            variant: "destructive",
             title: "Success",
             description: response.message || "OTP sent to your phone via SMS"
           })
@@ -139,7 +139,7 @@ export default function SendCodePage() {
         
         if (response.status && response.Data?.id) {
           toast({
-            variant: "success",
+            variant: "destructive",
             title: "Success",
             description: response.message || "OTP sent to your WhatsApp"
           })

@@ -16,7 +16,6 @@ import {
   ChevronLeft,
   ChevronRight
 } from "lucide-react"
-import { navigationTabs } from "@/lib/navigation"
 import axios from "axios"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/useToast"
@@ -24,6 +23,7 @@ import { useRouter } from "next/navigation"
 import Pagination from "@/common/Pagination"
 import DashboardLoader from "@/common/DashboardLoader"
 import {DeleteConfirmationModal} from "@/common/services/DeleteConfirmationModal"
+import { getNavigationByRole } from "@/lib/getNavigationByRole"
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://rainbowsolutionandtechnology.com/FSISubscriptionPortal/public/api"
 
@@ -45,7 +45,8 @@ interface ApiResponse {
 }
 
 export default function DomainPage() {
-  const { user } = useAuth()
+  const {user} = useAuth()
+ const navigationTabs = getNavigationByRole(user?.role)
   const { toast } = useToast()
   const router = useRouter()
   const [data, setData] = useState<Domain[]>([])
