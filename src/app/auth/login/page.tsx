@@ -1,7 +1,7 @@
 // app/auth/login/page.tsx
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, use } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { GlassCard } from "@/components/glass/glass-card"
@@ -21,6 +21,13 @@ export default function LoginPage() {
   const router = useRouter()
   const { isAuthenticated, isLoading: authLoading, updateUser } = useAuth()
   const { toast } = useToast()
+  const { user } = useAuth()
+
+  useEffect(() => {
+    if (user) {
+      router.push('/')
+    }
+  }, [user, router])
 
   // Redirect if already authenticated
   useEffect(() => {

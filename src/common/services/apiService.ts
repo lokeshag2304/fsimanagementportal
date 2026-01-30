@@ -132,6 +132,26 @@ class ApiService {
     }
   }
 
+    async getDropdownOptions(endpoint: string) {
+    try {
+      const requestData = {}
+      console.log(requestData)
+      const response = await axios.post<ApiResponse>(
+        `${BASE_URL}/secure/Dropdowns/${endpoint}`,
+        requestData,
+        { headers: this.getHeaders() }
+      )
+      return response.data
+    } catch (error: any) {
+      console.error('Error editing record:', error)
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to edit record',
+        data: []
+      }
+    }
+  }
+
   async deleteRecords(ids: number[], record_type: number): Promise<ApiResponse> {
     try {
       const response = await axios.post<ApiResponse>(

@@ -29,6 +29,7 @@ import { apiService } from "@/common/services/apiService"
 import Pagination from "@/common/Pagination"
 import DashboardLoader from "@/common/DashboardLoader"
 import { getNavigationByRole } from "@/lib/getNavigationByRole"
+import { ApiDropdown } from "@/common/DynamicDropdown"
 
 interface CounterRecord {
   id: number
@@ -36,25 +37,24 @@ interface CounterRecord {
   client_id?: number
   product_name: string
   product_id?: number
-  count: number
-  validity_date: string
+  counter_count: number
+  valid_till: string
   days_to_expire: number
   today_date: string
   status: 0 | 1
   remarks: string
-  last_updated: string
-  created_at: string
   updated_at: string
+  created_at: string
 }
 
 interface AddEditCounter {
-  record_type: 6 // Changed to 6 for Counter
+  record_type: 6
   id?: number
   s_id: number
   product_id: number
   client_id: number
-  count: number
-  validity_date: string
+  counter_count: number
+  valid_till: string
   status: 0 | 1
   remarks: string
 }
@@ -77,10 +77,12 @@ export default function CounterPage() {
   const [itemToDelete, setItemToDelete] = useState<number | null>(null)
   
   const [newRecordData, setNewRecordData] = useState({
+    client_id: null as number | null,
     client_name: "",
+    product_id: null as number | null,
     product_name: "",
-    count: "",
-    validity_date: "",
+    counter_count: "",
+    valid_till: "",
     status: "1" as "1" | "0",
     remarks: ""
   })
@@ -90,29 +92,11 @@ export default function CounterPage() {
   const [pagination, setPagination] = useState({
     page: 0,
     rowsPerPage: 10,
-    orderBy: "id" as "id" | "validity_date" | "client_name" | "product_name",
+    orderBy: "id" as "id" | "valid_till" | "client_name" | "product_name",
     orderDir: "desc" as "asc" | "desc"
   })
   
   const [totalItems, setTotalItems] = useState(0)
-  
-  // Sample data for dropdowns (fetch from APIs in real implementation)
-  const clientOptions = [
-    { id: 1, name: "John Smith" },
-    { id: 2, name: "Sarah Johnson" },
-    { id: 3, name: "Mike Wilson" },
-    { id: 4, name: "David Brown" },
-    { id: 5, name: "Emma Davis" }
-  ]
-
-  const productOptions = [
-    { id: 1, name: "Premium API Calls" },
-    { id: 2, name: "SMS Credits" },
-    { id: 3, name: "Email Quota" },
-    { id: 4, name: "Cloud Storage" },
-    { id: 5, name: "Database Queries" },
-    { id: 6, name: "File Uploads" }
-  ]
 
   const searchTimeoutRef = useRef<NodeJS.Timeout>()
   const isMountedRef = useRef(true)
@@ -138,7 +122,6 @@ export default function CounterPage() {
           setData(response.data || [])
           setTotalItems(response.total || 0)
         } else {
-          // Backend से error message मिला तो उसे दिखाएं
           toast({
             title: "Error",
             description: response.message || "Failed to fetch counter records",
@@ -192,10 +175,12 @@ export default function CounterPage() {
     const today = new Date().toISOString().split('T')[0]
     setAddingNew(true)
     setNewRecordData({
+      client_id: null,
       client_name: "",
+      product_id: null,
       product_name: "",
-      count: "",
-      validity_date: today,
+      counter_count: "",
+      valid_till: today,
       status: "1",
       remarks: ""
     })
@@ -204,6 +189,16 @@ export default function CounterPage() {
   // Cancel Add New
   const handleCancelAdd = () => {
     setAddingNew(false)
+    setNewRecordData({
+      client_id: null,
+      client_name: "",
+      product_id: null,
+      product_name: "",
+      counter_count: "",
+      valid_till: "",
+      status: "1",
+      remarks: ""
+    })
   }
 
   // Save New Record
@@ -211,8 +206,8 @@ export default function CounterPage() {
     try {
       setIsSaving(true)
       
-      if (!newRecordData.client_name || !newRecordData.product_name || 
-          !newRecordData.count || !newRecordData.validity_date) {
+      if (!newRecordData.client_id || !newRecordData.product_id || 
+          !newRecordData.counter_count || !newRecordData.valid_till) {
         toast({
           title: "Error",
           description: "Please fill all required fields",
@@ -221,34 +216,20 @@ export default function CounterPage() {
         return
       }
 
-      // Find IDs for selected names
-      const selectedClient = clientOptions.find(c => c.name === newRecordData.client_name)
-      const selectedProduct = productOptions.find(p => p.name === newRecordData.product_name)
-
-      if (!selectedClient || !selectedProduct) {
-        toast({
-          title: "Error",
-          description: "Please select valid options from the dropdowns",
-          variant: "destructive"
-        })
-        return
-      }
-
       const payload: AddEditCounter = {
-        record_type: 6, // Counter
+        record_type: 6,
         s_id: user?.id || 6,
-        product_id: selectedProduct.id,
-        client_id: selectedClient.id,
-        count: parseInt(newRecordData.count),
-        validity_date: newRecordData.validity_date,
+        product_id: newRecordData.product_id!,
+        client_id: newRecordData.client_id!,
+        counter_count: parseInt(newRecordData.counter_count),
+        valid_till: newRecordData.valid_till,
         status: parseInt(newRecordData.status) as 0 | 1,
         remarks: newRecordData.remarks
       }
 
       const response = await apiService.addRecord(payload as any)
       
-      if (response.success) {
-        // Backend से message मिला तो उसे दिखाएं, नहीं तो static message
+      if (response.status) {
         toast({
           title: "Success",
           description: response.message || "Counter record added successfully",
@@ -256,8 +237,18 @@ export default function CounterPage() {
         })
         setAddingNew(false)
         fetchCounterRecords()
+        // Reset form
+        setNewRecordData({
+          client_id: null,
+          client_name: "",
+          product_id: null,
+          product_name: "",
+          counter_count: "",
+          valid_till: new Date().toISOString().split('T')[0],
+          status: "1",
+          remarks: ""
+        })
       } else {
-        // Backend से error message मिला तो उसे दिखाएं
         toast({
           title: "Error",
           description: response.message || "Failed to add counter record",
@@ -280,7 +271,14 @@ export default function CounterPage() {
   const handleEdit = (record: CounterRecord) => {
     setEditingId(record.id)
     setEditData({
-      [record.id]: { ...record }
+      [record.id]: { 
+        ...record,
+        client_id: record.client_id || undefined,
+        product_id: record.product_id || undefined,
+        counter_count: record.counter_count || 0,
+        valid_till: record.valid_till || "",
+        remarks: record.remarks || ""
+      }
     })
   }
 
@@ -292,14 +290,11 @@ export default function CounterPage() {
       
       if (!updatedData) return
       
-      // Find IDs for selected names
-      const selectedClient = clientOptions.find(c => c.name === updatedData.client_name)
-      const selectedProduct = productOptions.find(p => p.name === updatedData.product_name)
-
-      if (!selectedClient || !selectedProduct) {
+      if (!updatedData.client_id || !updatedData.product_id || 
+          !updatedData.counter_count || !updatedData.valid_till) {
         toast({
           title: "Error",
-          description: "Please select valid options from the dropdowns",
+          description: "Please fill all required fields",
           variant: "destructive"
         })
         return
@@ -309,18 +304,17 @@ export default function CounterPage() {
         record_type: 6,
         id,
         s_id: user?.id || 6,
-        product_id: selectedProduct.id,
-        client_id: selectedClient.id,
-        count: updatedData.count || 0,
-        validity_date: updatedData.validity_date || "",
-        status: updatedData.status || 1,
+        product_id: updatedData.product_id!,
+        client_id: updatedData.client_id!,
+        counter_count: updatedData.counter_count || 0,
+        valid_till: updatedData.valid_till!,
+        status: updatedData.status ?? 1,
         remarks: updatedData.remarks || ""
       }
 
       const response = await apiService.editRecord(payload as any)
       
-      if (response.success) {
-        // Backend से message मिला तो उसे दिखाएं, नहीं तो static message
+      if (response.success || response.status) {
         toast({
           title: "Success",
           description: response.message || "Counter record updated successfully",
@@ -330,7 +324,6 @@ export default function CounterPage() {
         setEditData({})
         fetchCounterRecords()
       } else {
-        // Backend से error message मिला तो उसे दिखाएं
         toast({
           title: "Error",
           description: response.message || "Failed to update counter record",
@@ -399,10 +392,9 @@ export default function CounterPage() {
       
       const idsToDelete = itemToDelete ? [itemToDelete] : selectedItems
       
-      const response = await apiService.deleteRecords(idsToDelete, 6) // record_type: 6 for Counter
+      const response = await apiService.deleteRecords(idsToDelete, 6)
       
-      if (response.success) {
-        // Backend से message मिला तो उसे दिखाएं, नहीं तो हमारा custom message
+      if (response.success || response.status) {
         const successMessage = response.message || 
           (idsToDelete.length === 1 
             ? "Counter record deleted successfully"
@@ -418,7 +410,6 @@ export default function CounterPage() {
         setItemToDelete(null)
         fetchCounterRecords()
       } else {
-        // Backend से error message मिला तो उसे दिखाएं
         toast({
           title: "Error",
           description: response.message || "Failed to delete counter record(s)",
@@ -506,16 +497,14 @@ export default function CounterPage() {
     return 'text-green-400'
   }
 
-  const totalPages = Math.ceil(totalItems / pagination.rowsPerPage)
   const startItem = pagination.page * pagination.rowsPerPage + 1
-  const endItem = Math.min((pagination.page + 1) * pagination.rowsPerPage, totalItems)
 
   return (
     <div className="min-h-screen pb-8">
       <Header title="Counter Management" tabs={navigationTabs} />
 
       <div className="px-4 sm:px-6 mt-6">
-        <GlassCard className="p-6">
+        <GlassCard className="p-6 backdrop-blur-xl bg-gradient-to-br from-gray-900/80 via-black/80 to-gray-900/80 border border-white/10 shadow-2xl">
           {/* Header with Search and Add Button */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
             <div>
@@ -536,7 +525,7 @@ export default function CounterPage() {
                   placeholder="Search counters..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 py-2 w-full sm:w-64 bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.1)] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="pl-10 pr-4 py-2 w-full sm:w-64 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm transition-all"
                 />
               </div>
               
@@ -572,18 +561,18 @@ export default function CounterPage() {
           </div>
 
           {/* Table Container */}
-          <div className="overflow-hidden rounded-lg border border-[rgba(255,255,255,0.1)]">
+          <div className="overflow-hidden rounded-xl border border-white/10 backdrop-blur-sm">
             {/* Table */}
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="bg-[rgba(255,255,255,0.05)] border-b border-[rgba(255,255,255,0.1)]">
+                  <tr className="bg-white/5 border-b border-white/10">
                     <th className="py-3 px-4 text-left w-12">
                       <input
                         type="checkbox"
                         checked={isAllSelected}
                         onChange={(e) => handleSelectAll(e.target.checked)}
-                        className="w-4 h-4 rounded border-gray-300 bg-gray-700 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        className="w-4 h-4 rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500/50 cursor-pointer"
                       />
                     </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[80px]">
@@ -634,47 +623,67 @@ export default function CounterPage() {
                     <>
                       {/* Add New Row */}
                       {addingNew && (
-                        <tr className="border-b border-[rgba(255,255,255,0.05)] bg-[rgba(59,130,246,0.05)]">
+                        <tr className="border-b border-white/5 bg-blue-500/5">
                           <td className="py-3 px-4"></td>
                           <td className="py-3 px-4 text-sm text-gray-300">
                             New
                           </td>
                           <td className="py-3 px-4">
-                            <select
-                              value={newRecordData.client_name}
-                              onChange={(e) => handleNewRecordChange('client_name', e.target.value)}
-                              className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                              style={{ minHeight: '32px' }}
-                            >
-                              <option value="" className="bg-gray-800 text-white">Select Client</option>
-                              {clientOptions.map(option => (
-                                <option key={option.id} value={option.name} className="bg-gray-800 text-white">
-                                  {option.name}
-                                </option>
-                              ))}
-                            </select>
+                            <ApiDropdown
+                              endpoint="get-clients"
+                              value={
+                                newRecordData.client_id
+                                  ? {
+                                      value: newRecordData.client_id,
+                                      label: newRecordData.client_name,
+                                    }
+                                  : null
+                              }
+                              onChange={(option) => {
+                                handleNewRecordChange(
+                                  "client_id",
+                                  option?.value ?? null,
+                                );
+                                handleNewRecordChange(
+                                  "client_name",
+                                  option?.label ?? "",
+                                );
+                              }}
+                              placeholder="Client"
+                              className="min-h-[32px]"
+                            />
                           </td>
                           <td className="py-3 px-4">
-                            <select
-                              value={newRecordData.product_name}
-                              onChange={(e) => handleNewRecordChange('product_name', e.target.value)}
-                              className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                              style={{ minHeight: '32px' }}
-                            >
-                              <option value="" className="bg-gray-800 text-white">Select Product</option>
-                              {productOptions.map(option => (
-                                <option key={option.id} value={option.name} className="bg-gray-800 text-white">
-                                  {option.name}
-                                </option>
-                              ))}
-                            </select>
+                            <ApiDropdown
+                              endpoint="get-products"
+                              value={
+                                newRecordData.product_id
+                                  ? {
+                                      value: newRecordData.product_id,
+                                      label: newRecordData.product_name,
+                                    }
+                                  : null
+                              }
+                              onChange={(option) => {
+                                handleNewRecordChange(
+                                  "product_id",
+                                  option?.value ?? null,
+                                );
+                                handleNewRecordChange(
+                                  "product_name",
+                                  option?.label ?? "",
+                                );
+                              }}
+                              placeholder="Product"
+                              className="min-h-[32px]"
+                            />
                           </td>
                           <td className="py-3 px-4">
                             <input
                               type="number"
-                              value={newRecordData.count}
-                              onChange={(e) => handleNewRecordChange('count', e.target.value)}
-                              className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                              value={newRecordData.counter_count}
+                              onChange={(e) => handleNewRecordChange('counter_count', e.target.value)}
+                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
                               style={{ minHeight: '32px' }}
                               min="0"
                               placeholder="0"
@@ -683,27 +692,39 @@ export default function CounterPage() {
                           <td className="py-3 px-4">
                             <input
                               type="date"
-                              value={newRecordData.validity_date}
-                              onChange={(e) => handleNewRecordChange('validity_date', e.target.value)}
-                              className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                              value={newRecordData.valid_till}
+                              onChange={(e) => handleNewRecordChange('valid_till', e.target.value)}
+                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                              style={{ minHeight: '32px' }}
+                            />
+                          </td>
+                          <td className="py-3 px-4">
+                            <input
+                              type="number"
+                              value={calculateDays(newRecordData.valid_till)}
+                              readOnly
+                              className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-sm cursor-not-allowed"
                               style={{ minHeight: '32px' }}
                             />
                           </td>
                           <td className="py-3 px-4 text-sm text-gray-300">
-                            {newRecordData.validity_date ? calculateDays(newRecordData.validity_date) : "--"} days
-                          </td>
-                          <td className="py-3 px-4 text-sm text-gray-300">
-                            {formatDate(new Date().toISOString().split('T')[0])}
+                            <input
+                              type="date"
+                              value={new Date().toISOString().split('T')[0]}
+                              readOnly
+                              className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-sm cursor-not-allowed"
+                              style={{ minHeight: '32px' }}
+                            />
                           </td>
                           <td className="py-3 px-4">
                             <select
                               value={newRecordData.status}
                               onChange={(e) => handleNewRecordChange('status', e.target.value as "1" | "0")}
-                              className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
                               style={{ minHeight: '32px' }}
                             >
-                              <option value="1" className="bg-gray-800 text-white">Active</option>
-                              <option value="0" className="bg-gray-800 text-white">Inactive</option>
+                              <option value="1" className="bg-gray-900 text-white">Active</option>
+                              <option value="0" className="bg-gray-900 text-white">Inactive</option>
                             </select>
                           </td>
                           <td className="py-3 px-4">
@@ -711,20 +732,26 @@ export default function CounterPage() {
                               type="text"
                               value={newRecordData.remarks}
                               onChange={(e) => handleNewRecordChange('remarks', e.target.value)}
-                              className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
                               style={{ minHeight: '32px' }}
                               placeholder="Remarks"
                             />
                           </td>
                           <td className="py-3 px-4 text-sm text-gray-300">
-                            {new Date().toLocaleString()}
+                            <input
+                              type="text"
+                              value={new Date().toLocaleString()}
+                              readOnly
+                              className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-sm cursor-not-allowed"
+                              style={{ minHeight: '32px' }}
+                            />
                           </td>
                           <td className="py-3 px-4">
                             <div className="flex items-center justify-end gap-2">
-                              <button
+                              <GlassButton
                                 onClick={handleSaveNew}
                                 disabled={isSaving}
-                                className="p-1.5 rounded bg-green-500/20 hover:bg-green-500/30 transition-colors disabled:opacity-50"
+                                className="p-1.5 min-w-0 bg-green-500/20 hover:bg-green-500/30"
                                 title="Save"
                               >
                                 {isSaving ? (
@@ -732,15 +759,15 @@ export default function CounterPage() {
                                 ) : (
                                   <Save className="w-4 h-4 text-green-400" />
                                 )}
-                              </button>
-                              <button
+                              </GlassButton>
+                              <GlassButton
                                 onClick={handleCancelAdd}
                                 disabled={isSaving}
-                                className="p-1.5 rounded bg-red-500/20 hover:bg-red-500/30 transition-colors disabled:opacity-50"
+                                className="p-1.5 min-w-0 bg-red-500/20 hover:bg-red-500/30"
                                 title="Cancel"
                               >
                                 <X className="w-4 h-4 text-red-400" />
-                              </button>
+                              </GlassButton>
                             </div>
                           </td>
                         </tr>
@@ -756,7 +783,7 @@ export default function CounterPage() {
                               {searchQuery && (
                                 <button
                                   onClick={() => setSearchQuery("")}
-                                  className="text-sm text-blue-400 hover:text-blue-300"
+                                  className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
                                 >
                                   Clear search
                                 </button>
@@ -768,8 +795,8 @@ export default function CounterPage() {
                         data.map((item, index) => (
                           <tr
                             key={item.id}
-                            className={`border-b border-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.02)] transition-colors ${
-                              editingId === item.id ? 'bg-[rgba(59,130,246,0.05)]' : ''
+                            className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors ${
+                              editingId === item.id ? 'bg-blue-500/5' : ''
                             }`}
                           >
                             <td className="py-3 px-4">
@@ -777,7 +804,7 @@ export default function CounterPage() {
                                 type="checkbox"
                                 checked={selectedItems.includes(item.id)}
                                 onChange={(e) => handleSelectItem(item.id, e.target.checked)}
-                                className="w-4 h-4 rounded border-gray-300 bg-gray-700 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                className="w-4 h-4 rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500/50 cursor-pointer"
                               />
                             </td>
                             <td className="py-3 px-4 text-sm text-gray-300">
@@ -787,41 +814,65 @@ export default function CounterPage() {
                             {editingId === item.id ? (
                               <>
                                 <td className="py-3 px-4">
-                                  <select
-                                    value={editData[item.id]?.client_name || item.client_name || ""}
-                                    onChange={(e) => handleEditChange(item.id, 'client_name', e.target.value)}
-                                    className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                                    style={{ minHeight: '32px' }}
-                                  >
-                                    <option value="" className="bg-gray-800 text-white">Select Client</option>
-                                    {clientOptions.map(option => (
-                                      <option key={option.id} value={option.name} className="bg-gray-800 text-white">
-                                        {option.name}
-                                      </option>
-                                    ))}
-                                  </select>
+                                  <ApiDropdown
+                                    endpoint="get-clients"
+                                    value={
+                                      editData[item.id]?.client_id
+                                        ? {
+                                            value: editData[item.id]?.client_id!,
+                                            label: editData[item.id]?.client_name || "",
+                                          }
+                                        : null
+                                    }
+                                    onChange={(option) => {
+                                      handleEditChange(
+                                        item.id,
+                                        "client_id",
+                                        option?.value ?? null,
+                                      );
+                                      handleEditChange(
+                                        item.id,
+                                        "client_name",
+                                        option?.label ?? "",
+                                      );
+                                    }}
+                                    placeholder="Client"
+                                    className="min-h-[32px]"
+                                  />
                                 </td>
                                 <td className="py-3 px-4">
-                                  <select
-                                    value={editData[item.id]?.product_name || item.product_name}
-                                    onChange={(e) => handleEditChange(item.id, 'product_name', e.target.value)}
-                                    className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                                    style={{ minHeight: '32px' }}
-                                  >
-                                    <option value="" className="bg-gray-800 text-white">Select Product</option>
-                                    {productOptions.map(option => (
-                                      <option key={option.id} value={option.name} className="bg-gray-800 text-white">
-                                        {option.name}
-                                      </option>
-                                    ))}
-                                  </select>
+                                  <ApiDropdown
+                                    endpoint="get-products"
+                                    value={
+                                      editData[item.id]?.product_id
+                                        ? {
+                                            value: editData[item.id]?.product_id!,
+                                            label: editData[item.id]?.product_name || "",
+                                          }
+                                        : null
+                                    }
+                                    onChange={(option) => {
+                                      handleEditChange(
+                                        item.id,
+                                        "product_id",
+                                        option?.value ?? null,
+                                      );
+                                      handleEditChange(
+                                        item.id,
+                                        "product_name",
+                                        option?.label ?? "",
+                                      );
+                                    }}
+                                    placeholder="Product"
+                                    className="min-h-[32px]"
+                                  />
                                 </td>
                                 <td className="py-3 px-4">
                                   <input
                                     type="number"
-                                    value={editData[item.id]?.count || item.count}
-                                    onChange={(e) => handleEditChange(item.id, 'count', parseInt(e.target.value))}
-                                    className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                                    value={editData[item.id]?.counter_count || item.counter_count}
+                                    onChange={(e) => handleEditChange(item.id, 'counter_count', parseInt(e.target.value))}
+                                    className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
                                     style={{ minHeight: '32px' }}
                                     min="0"
                                   />
@@ -829,9 +880,57 @@ export default function CounterPage() {
                                 <td className="py-3 px-4">
                                   <input
                                     type="date"
-                                    value={editData[item.id]?.validity_date || item.validity_date}
-                                    onChange={(e) => handleEditChange(item.id, 'validity_date', e.target.value)}
-                                    className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                                    value={editData[item.id]?.valid_till || item.valid_till}
+                                    onChange={(e) => handleEditChange(item.id, 'valid_till', e.target.value)}
+                                    className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                    style={{ minHeight: '32px' }}
+                                  />
+                                </td>
+                                <td className="py-3 px-4">
+                                  <input
+                                    type="number"
+                                    value={calculateDays(editData[item.id]?.valid_till || item.valid_till)}
+                                    readOnly
+                                    className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-sm cursor-not-allowed"
+                                    style={{ minHeight: '32px' }}
+                                  />
+                                </td>
+                                <td className="py-3 px-4 text-sm text-gray-300">
+                                  <input
+                                    type="date"
+                                    value={item.today_date || new Date().toISOString().split('T')[0]}
+                                    readOnly
+                                    className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-sm cursor-not-allowed"
+                                    style={{ minHeight: '32px' }}
+                                  />
+                                </td>
+                                <td className="py-3 px-4">
+                                  <select
+                                    value={editData[item.id]?.status?.toString() || item.status.toString()}
+                                    onChange={(e) => handleEditChange(item.id, 'status', parseInt(e.target.value) as 0 | 1)}
+                                    className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                    style={{ minHeight: '32px' }}
+                                  >
+                                    <option value="1" className="bg-gray-900 text-white">Active</option>
+                                    <option value="0" className="bg-gray-900 text-white">Inactive</option>
+                                  </select>
+                                </td>
+                                <td className="py-3 px-4">
+                                  <input
+                                    type="text"
+                                    value={editData[item.id]?.remarks || item.remarks || ""}
+                                    onChange={(e) => handleEditChange(item.id, 'remarks', e.target.value)}
+                                    className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                    style={{ minHeight: '32px' }}
+                                    placeholder="Add remarks"
+                                  />
+                                </td>
+                                <td className="py-3 px-4 text-sm text-gray-300">
+                                  <input
+                                    type="text"
+                                    value={formatDate(item.updated_at)}
+                                    readOnly
+                                    className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-sm cursor-not-allowed"
                                     style={{ minHeight: '32px' }}
                                   />
                                 </td>
@@ -855,95 +954,64 @@ export default function CounterPage() {
                                   </div>
                                 </td>
                                 <td className="py-3 px-4">
-                                  <div className={`flex items-center gap-2 ${getCountColor(item.count)}`}>
+                                  <div className={`flex items-center gap-2 ${getCountColor(item.counter_count)}`}>
                                     <Hash className="w-4 h-4" />
                                     <span className="text-sm font-bold">
-                                      {item.count}
+                                      {item.counter_count}
                                     </span>
                                   </div>
                                 </td>
                                 <td className="py-3 px-4 text-sm text-gray-300">
                                   <div className="flex items-center gap-2">
-                                    <Calendar className="w-4 h-4 text-gray-400" />
-                                    {formatDate(item.validity_date)}
+                                    {/* <Calendar className="w-4 h-4 text-gray-400" /> */}
+                                    {formatDate(item.valid_till)}
                                   </div>
+                                </td>
+                                <td className="py-3 px-4">
+                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm border ${
+                                    calculateDays(item.valid_till) < 0 
+                                      ? 'bg-red-500/20 text-red-400 border-red-500/20' 
+                                      : calculateDays(item.valid_till) <= 30 
+                                        ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/20'
+                                        : 'bg-green-500/20 text-green-400 border-green-500/20'
+                                  }`}>
+                                    {/* <Clock className="w-3 h-3" /> */}
+                                    {calculateDays(item.valid_till)} days
+                                  </div>
+                                </td>
+                                <td className="py-3 px-4 text-sm text-gray-300">
+                                  {formatDate(item.today_date)}
+                                </td>
+                                <td className="py-3 px-4">
+                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm border ${getStatusColor(item.status)} ${
+                                    item.status === 1 ? 'bg-green-500/20 border-green-500/20' : 'bg-red-500/20 border-red-500/20'
+                                  }`}>
+                                    {getStatusIcon(item.status)}
+                                    {getStatusText(item.status)}
+                                  </div>
+                                </td>
+                                <td className="py-3 px-4">
+                                  <div className="flex items-center gap-2">
+                                    {/* <AlertCircle className="w-4 h-4 text-gray-400 flex-shrink-0" /> */}
+                                    <span className="text-sm text-gray-300 truncate max-w-[180px]">
+                                      {item.remarks || "No remarks"}
+                                    </span>
+                                  </div>
+                                </td>
+                                <td className="py-3 px-4 text-sm text-gray-300">
+                                  {formatDate(item.updated_at)}
                                 </td>
                               </>
                             )}
                             
                             <td className="py-3 px-4">
-                              <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
-                                calculateDays(item.validity_date) < 0 
-                                  ? 'bg-red-500/20 text-red-400' 
-                                  : calculateDays(item.validity_date) <= 30 
-                                    ? 'bg-yellow-500/20 text-yellow-400'
-                                    : 'bg-green-500/20 text-green-400'
-                              }`}>
-                                <Clock className="w-3 h-3" />
-                                {calculateDays(item.validity_date)} days
-                              </div>
-                            </td>
-                            
-                            <td className="py-3 px-4 text-sm text-gray-300">
-                              {formatDate(item.today_date)}
-                            </td>
-                            
-                            {editingId === item.id ? (
-                              <td className="py-3 px-4">
-                                <select
-                                  value={editData[item.id]?.status?.toString() || item.status.toString()}
-                                  onChange={(e) => handleEditChange(item.id, 'status', parseInt(e.target.value) as 0 | 1)}
-                                  className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                                  style={{ minHeight: '32px' }}
-                                >
-                                  <option value="1" className="bg-gray-800 text-white">Active</option>
-                                  <option value="0" className="bg-gray-800 text-white">Inactive</option>
-                                </select>
-                              </td>
-                            ) : (
-                              <td className="py-3 px-4">
-                                <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(item.status)} bg-opacity-20 ${
-                                  item.status === 1 ? 'bg-green-500/20' : 'bg-red-500/20'
-                                }`}>
-                                  {getStatusIcon(item.status)}
-                                  {getStatusText(item.status)}
-                                </div>
-                              </td>
-                            )}
-                            
-                            {editingId === item.id ? (
-                              <td className="py-3 px-4">
-                                <input
-                                  type="text"
-                                  value={editData[item.id]?.remarks || item.remarks}
-                                  onChange={(e) => handleEditChange(item.id, 'remarks', e.target.value)}
-                                  className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                                  style={{ minHeight: '32px' }}
-                                />
-                              </td>
-                            ) : (
-                              <td className="py-3 px-4">
-                                <div className="flex items-center gap-2">
-                                  <AlertCircle className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                                  <span className="text-sm text-gray-300 truncate max-w-[180px]">
-                                    {item.remarks}
-                                  </span>
-                                </div>
-                              </td>
-                            )}
-                            
-                            <td className="py-3 px-4 text-sm text-gray-300">
-                              {formatDate(item.last_updated)}
-                            </td>
-                            
-                            <td className="py-3 px-4">
                               <div className="flex items-center justify-end gap-2">
                                 {editingId === item.id ? (
                                   <>
-                                    <button
+                                    <GlassButton
                                       onClick={() => handleSave(item.id)}
                                       disabled={isSaving}
-                                      className="p-1.5 rounded bg-green-500/20 hover:bg-green-500/30 transition-colors disabled:opacity-50"
+                                      className="p-1.5 min-w-0 bg-green-500/20 hover:bg-green-500/30"
                                       title="Save"
                                     >
                                       {isSaving ? (
@@ -951,32 +1019,32 @@ export default function CounterPage() {
                                       ) : (
                                         <Save className="w-4 h-4 text-green-400" />
                                       )}
-                                    </button>
-                                    <button
+                                    </GlassButton>
+                                    <GlassButton
                                       onClick={handleCancelEdit}
                                       disabled={isSaving}
-                                      className="p-1.5 rounded bg-red-500/20 hover:bg-red-500/30 transition-colors disabled:opacity-50"
+                                      className="p-1.5 min-w-0 bg-red-500/20 hover:bg-red-500/30"
                                       title="Cancel"
                                     >
                                       <X className="w-4 h-4 text-red-400" />
-                                    </button>
+                                    </GlassButton>
                                   </>
                                 ) : (
                                   <>
-                                    <button
+                                    <GlassButton
                                       onClick={() => handleEdit(item)}
-                                      className="p-1.5 rounded hover:bg-[rgba(255,255,255,0.1)] transition-colors"
+                                      className="p-1.5 min-w-0 hover:bg-white/10"
                                       title="Edit"
                                     >
-                                      <Edit className="w-4 h-4 text-gray-400 hover:text-blue-400" />
-                                    </button>
-                                    <button
+                                      <Edit className="w-4 h-4 text-gray-300 hover:text-blue-400 transition-colors" />
+                                    </GlassButton>
+                                    <GlassButton
                                       onClick={() => handleDeleteClick(item.id)}
-                                      className="p-1.5 rounded hover:bg-red-500/20 transition-colors"
+                                      className="p-1.5 min-w-0 hover:bg-red-500/20"
                                       title="Delete"
                                     >
-                                      <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-400" />
-                                    </button>
+                                      <Trash2 className="w-4 h-4 text-gray-300 hover:text-red-400 transition-colors" />
+                                    </GlassButton>
                                   </>
                                 )}
                               </div>
@@ -1003,7 +1071,7 @@ export default function CounterPage() {
 
           {/* Selected Items Info */}
           {selectedItems.length > 0 && (
-            <div className="mt-4 p-3 bg-[rgba(255,255,255,0.05)] rounded-lg border border-[rgba(255,255,255,0.1)]">
+            <div className="mt-4 p-3 bg-white/5 rounded-lg border border-white/10 backdrop-blur-sm">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-300">
                   {selectedItems.length} counter record{selectedItems.length > 1 ? 's' : ''} selected
@@ -1047,7 +1115,7 @@ export default function CounterPage() {
       />
     </div>
   )
-} 
+}
 
 
 

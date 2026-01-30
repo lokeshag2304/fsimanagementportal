@@ -1,10 +1,10 @@
 // src/app/[role]/ssl/page.tsx
-"use client"
+"use client";
 
-import { useState, useEffect, useRef } from "react"
-import { Header } from "@/components/layout"
-import { GlassCard, GlassButton } from "@/components/glass"
-import { DeleteConfirmationModal } from "@/common/services/DeleteConfirmationModal"
+import { useState, useEffect, useRef } from "react";
+import { Header } from "@/components/layout";
+import { GlassCard, GlassButton } from "@/components/glass";
+import { DeleteConfirmationModal } from "@/common/services/DeleteConfirmationModal";
 import {
   Edit,
   Trash2,
@@ -19,506 +19,525 @@ import {
   XCircle,
   AlertCircle,
   Loader2,
-  ChevronLeft,
-  ChevronRight,
   Save,
   X,
-  Shield
-} from "lucide-react"
-import { useAuth } from "@/contexts/AuthContext"
-import { useToast } from "@/hooks/useToast"
-import { useRouter } from "next/navigation"
-import { apiService } from "@/common/services/apiService"
-import Pagination from "@/common/Pagination"
-import DashboardLoader from "@/common/DashboardLoader"
-import { getNavigationByRole } from "@/lib/getNavigationByRole"
+  Shield,
+  DollarSign,
+} from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/useToast";
+import { useRouter } from "next/navigation";
+import { apiService } from "@/common/services/apiService";
+import Pagination from "@/common/Pagination";
+import DashboardLoader from "@/common/DashboardLoader";
+import { getNavigationByRole } from "@/lib/getNavigationByRole";
+import { ApiDropdown } from "@/common/DynamicDropdown";
 
 interface SSLRecord {
-  id: number
-  client_name: string | null
-  client_id?: number
-  domain_name: string | null
-  domain_id?: number
-  product_name: string
-  product_id?: number
-  expiry_date: string
-  days_to_expire_today: number
-  today_date: string
-  status: 0 | 1
-  remarks: string
-  updated_at_custom: string
-  created_at: string
-  updated_at: string
+  id: number;
+  s_id: number;
+  expiry_date: string;
+  days_to_expire_today: number;
+  today_date: string;
+  status: 0 | 1;
+  remarks: string;
+  updated_at_custom: string;
+  created_at: string;
+  updated_at: string;
+  domain_id: number | null;
+  domain_name: string;
+  client_id: number | null;
+  client_name: string;
+  product_id: number | null;
+  product_name: string;
+  renewal_date: string;
+  amount: number | null;
 }
 
 interface AddEditSSL {
-  record_type: 2
-  id?: number
-  s_id: number
-  product_id: number
-  domain_id: number
-  client_id: number
-  expiry_date: string
-  status: 0 | 1
-  remarks: string
-  updated_at_custom: string
+  record_type: 2;
+  id?: number;
+  s_id: number;
+  product_id: number;
+  domain_id: number;
+  client_id: number;
+  amount: number;
+  renewal_date: string;
+  expiry_date: string;
+  status: 0 | 1;
+  remarks: string;
+  updated_at_custom: string;
 }
 
 export default function SSLPage() {
-   const {user} = useAuth()
-  const navigationTabs = getNavigationByRole(user?.role)
-  const { toast } = useToast()
-  const router = useRouter()
-  
-  const [data, setData] = useState<SSLRecord[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedItems, setSelectedItems] = useState<number[]>([])
-  const [editingId, setEditingId] = useState<number | null>(null)
-  const [addingNew, setAddingNew] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [itemToDelete, setItemToDelete] = useState<number | null>(null)
-  
+  const { user } = useAuth();
+  const navigationTabs = getNavigationByRole(user?.role);
+  const { toast } = useToast();
+  const router = useRouter();
+
+  const [data, setData] = useState<SSLRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedItems, setSelectedItems] = useState<number[]>([]);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [addingNew, setAddingNew] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<number | null>(null);
+
   const [newRecordData, setNewRecordData] = useState({
+    domain_id: null as number | null,
     domain_name: "",
+    client_id: null as number | null,
     client_name: "",
+    product_id: null as number | null,
     product_name: "",
+    amount: "",
+    renewal_date: "",
     expiry_date: "",
     status: "1" as "1" | "0",
     remarks: "",
-    updated_at_custom: new Date().toISOString().split('T')[0]
-  })
-  
-  const [editData, setEditData] = useState<Record<number, Partial<SSLRecord>>>({})
-  
+    updated_at_custom: new Date().toISOString().split("T")[0],
+  });
+
+  const [editData, setEditData] = useState<Record<number, Partial<SSLRecord>>>(
+    {},
+  );
+
   const [pagination, setPagination] = useState({
     page: 0,
     rowsPerPage: 10,
     orderBy: "id" as "id" | "expiry_date" | "domain_name" | "product_name",
-    orderDir: "desc" as "asc" | "desc"
-  })
-  
-  const [totalItems, setTotalItems] = useState(0)
-  
-  // Sample data for dropdowns (you should fetch these from APIs)
-  const clientOptions = [
-    { id: 1, name: "John Smith" },
-    { id: 2, name: "Sarah Johnson" },
-    { id: 3, name: "Mike Wilson" },
-    { id: 4, name: "David Brown" },
-    { id: 5, name: "Emma Davis" }
-  ]
+    orderDir: "desc" as "asc" | "desc",
+  });
 
-  const domainOptions = [
-    { id: 1, name: "example.com" },
-    { id: 2, name: "myshop.com" },
-    { id: 3, name: "blog-site.org" },
-    { id: 4, name: "api-service.net" },
-    { id: 5, name: "store-app.io" }
-  ]
+  const [totalItems, setTotalItems] = useState(0);
 
-  const productOptions = [
-    { id: 1, name: "Standard SSL" },
-    { id: 2, name: "Wildcard SSL" },
-    { id: 3, name: "EV SSL Certificate" },
-    { id: 4, name: "Multi-domain SSL" },
-    { id: 5, name: "Code Signing SSL" }
-  ]
-
-  const searchTimeoutRef = useRef<NodeJS.Timeout>()
+  const searchTimeoutRef = useRef<NodeJS.Timeout>();
 
   // Fetch SSL records
   const fetchSSLRecords = async () => {
     try {
-      setLoading(true)
-      
+      setLoading(true);
+
       const response = await apiService.listRecords({
         record_type: 2, // SSL
         search: searchQuery,
         page: pagination.page,
         rowsPerPage: pagination.rowsPerPage,
         orderBy: pagination.orderBy,
-        orderDir: pagination.orderDir
-      })
-      
+        orderDir: pagination.orderDir,
+      });
+
       if (response.status) {
-        setData(response.data || [])
-        setTotalItems(response.total || 0)
+        setData(response.data || []);
+        setTotalItems(response.total || 0);
       } else {
         toast({
           title: "Error",
           description: response.message || "Failed to fetch SSL records",
-          variant: "destructive"
-        })
+          variant: "destructive",
+        });
       }
     } catch (error) {
-      console.error("Error fetching SSL records:", error)
+      console.error("Error fetching SSL records:", error);
       toast({
         title: "Error",
         description: "Failed to fetch SSL records",
-        variant: "destructive"
-      })
+        variant: "destructive",
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchSSLRecords()
-  }, [pagination.page, pagination.orderBy, pagination.orderDir])
+    fetchSSLRecords();
+  }, [pagination.page, pagination.orderBy, pagination.orderDir]);
 
   useEffect(() => {
     if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current)
+      clearTimeout(searchTimeoutRef.current);
     }
-    
+
     searchTimeoutRef.current = setTimeout(() => {
-      setPagination(prev => ({ ...prev, page: 0 }))
-      fetchSSLRecords()
-    }, 300)
-    
+      setPagination((prev) => ({ ...prev, page: 0 }));
+      fetchSSLRecords();
+    }, 300);
+
     return () => {
       if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current)
+        clearTimeout(searchTimeoutRef.current);
       }
-    }
-  }, [searchQuery])
+    };
+  }, [searchQuery]);
 
   // Handle Add New
   const handleAddNew = () => {
-    setAddingNew(true)
+    setAddingNew(true);
     setNewRecordData({
+      domain_id: null,
       domain_name: "",
+      client_id: null,
       client_name: "",
+      product_id: null,
       product_name: "",
+      amount: "",
+      renewal_date: "",
       expiry_date: "",
       status: "1",
       remarks: "",
-      updated_at_custom: new Date().toISOString().split('T')[0]
-    })
-  }
+      updated_at_custom: new Date().toISOString().split("T")[0],
+    });
+  };
 
   // Cancel Add New
   const handleCancelAdd = () => {
-    setAddingNew(false)
-  }
+    setAddingNew(false);
+  };
 
   // Save New Record
   const handleSaveNew = async () => {
     try {
-      setIsSaving(true)
-      
-      if (!newRecordData.domain_name || !newRecordData.client_name || !newRecordData.product_name || !newRecordData.expiry_date) {
+      setIsSaving(true);
+
+      if (
+        !newRecordData.domain_id ||
+        !newRecordData.client_id ||
+        !newRecordData.product_id ||
+        !newRecordData.renewal_date ||
+        !newRecordData.expiry_date
+      ) {
         toast({
           title: "Error",
           description: "Please fill all required fields",
-          variant: "destructive"
-        })
-        return
-      }
-
-      // Find IDs for selected names
-      const selectedClient = clientOptions.find(c => c.name === newRecordData.client_name)
-      const selectedDomain = domainOptions.find(d => d.name === newRecordData.domain_name)
-      const selectedProduct = productOptions.find(p => p.name === newRecordData.product_name)
-
-      if (!selectedClient || !selectedDomain || !selectedProduct) {
-        toast({
-          title: "Error",
-          description: "Please select valid options from the dropdowns",
-          variant: "destructive"
-        })
-        return
+          variant: "destructive",
+        });
+        return;
       }
 
       const payload: AddEditSSL = {
         record_type: 2,
-        s_id: user?.id || 6,
-        product_id: selectedProduct.id,
-        domain_id: selectedDomain.id,
-        client_id: selectedClient.id,
+        s_id: user?.id || 0,
+        product_id: newRecordData.product_id!,
+        domain_id: newRecordData.domain_id!,
+        client_id: newRecordData.client_id!,
+        amount: parseFloat(newRecordData.amount) || 0,
+        renewal_date: newRecordData.renewal_date,
         expiry_date: newRecordData.expiry_date,
         status: parseInt(newRecordData.status) as 0 | 1,
         remarks: newRecordData.remarks,
-        updated_at_custom: newRecordData.updated_at_custom
-      }
+        updated_at_custom: newRecordData.updated_at_custom,
+      };
 
-      const response = await apiService.addRecord(payload as any)
-      
+      const response = await apiService.addRecord(payload as any);
+
       if (response.status) {
         toast({
           title: "Success",
           description: response.message || "SSL record added successfully",
-          variant: "default"
-        })
-        setAddingNew(false)
-        fetchSSLRecords()
+          variant: "default",
+        });
+        setAddingNew(false);
+        fetchSSLRecords();
+        // Reset form
+        setNewRecordData({
+          domain_id: null,
+          domain_name: "",
+          client_id: null,
+          client_name: "",
+          product_id: null,
+          product_name: "",
+          amount: "",
+          renewal_date: "",
+          expiry_date: "",
+          status: "1",
+          remarks: "",
+          updated_at_custom: new Date().toISOString().split("T")[0],
+        });
       } else {
         toast({
           title: "Error",
           description: response.message || "Failed to add SSL record",
-          variant: "destructive"
-        })
+          variant: "destructive",
+        });
       }
     } catch (error) {
-      console.error("Error adding SSL record:", error)
+      console.error("Error adding SSL record:", error);
       toast({
         title: "Error",
         description: "Failed to add SSL record",
-        variant: "destructive"
-      })
+        variant: "destructive",
+      });
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
-  }
+  };
 
   // Handle Edit
   const handleEdit = (record: SSLRecord) => {
-    setEditingId(record.id)
+    setEditingId(record.id);
     setEditData({
-      [record.id]: { ...record }
-    })
-  }
+      [record.id]: { 
+        ...record,
+        renewal_date: record.renewal_date || "",
+        amount: record.amount || 0,
+      },
+    });
+  };
 
   // Handle Save (inline editing)
   const handleSave = async (id: number) => {
     try {
-      setIsSaving(true)
-      const updatedData = editData[id]
-      
-      if (!updatedData) return
-      
-      // Find IDs for selected names
-      const selectedClient = clientOptions.find(c => c.name === updatedData.client_name)
-      const selectedDomain = domainOptions.find(d => d.name === updatedData.domain_name)
-      const selectedProduct = productOptions.find(p => p.name === updatedData.product_name)
+      setIsSaving(true);
+      const updatedData = editData[id];
 
-      if (!selectedClient || !selectedDomain || !selectedProduct) {
+      if (!updatedData) return;
+
+      if (
+        !updatedData.domain_id ||
+        !updatedData.client_id ||
+        !updatedData.product_id ||
+        !updatedData.renewal_date ||
+        !updatedData.expiry_date
+      ) {
         toast({
           title: "Error",
-          description: "Please select valid options from the dropdowns",
-          variant: "destructive"
-        })
-        return
+          description: "Please fill all required fields",
+          variant: "destructive",
+        });
+        return;
       }
 
       const payload: AddEditSSL = {
         record_type: 2,
         id,
         s_id: user?.id || 6,
-        product_id: selectedProduct.id,
-        domain_id: selectedDomain.id,
-        client_id: selectedClient.id,
-        expiry_date: updatedData.expiry_date || "",
-        status: updatedData.status || 1,
+        product_id: updatedData.product_id!,
+        domain_id: updatedData.domain_id!,
+        client_id: updatedData.client_id!,
+        amount: updatedData.amount || 0,
+        renewal_date: updatedData.renewal_date!,
+        expiry_date: updatedData.expiry_date!,
+        status: updatedData.status ?? 1,
         remarks: updatedData.remarks || "",
-        updated_at_custom: updatedData.updated_at_custom || new Date().toISOString().split('T')[0]
-      }
+        updated_at_custom: new Date().toISOString().split("T")[0], // Auto-update timestamp
+      };
 
-      const response = await apiService.editRecord(payload as any)
-      
+      const response = await apiService.editRecord(payload as any);
+
       if (response.status) {
         toast({
           title: "Success",
           description: response.message || "SSL record updated successfully",
-          variant: "default"
-        })
-        setEditingId(null)
-        setEditData({})
-        fetchSSLRecords()
+          variant: "default",
+        });
+        setEditingId(null);
+        setEditData({});
+        fetchSSLRecords();
       } else {
         toast({
           title: "Error",
           description: response.message || "Failed to update SSL record",
-          variant: "destructive"
-        })
+          variant: "destructive",
+        });
       }
     } catch (error) {
-      console.error("Error updating SSL record:", error)
+      console.error("Error updating SSL record:", error);
       toast({
         title: "Error",
         description: "Failed to update SSL record",
-        variant: "destructive"
-      })
+        variant: "destructive",
+      });
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
-  }
+  };
 
   // Cancel Edit
   const handleCancelEdit = () => {
-    setEditingId(null)
-    setEditData({})
-  }
+    setEditingId(null);
+    setEditData({});
+  };
 
   // Handle field change for editing
   const handleEditChange = (id: number, field: keyof SSLRecord, value: any) => {
-    setEditData(prev => ({
+    setEditData((prev) => ({
       ...prev,
       [id]: {
         ...prev[id],
-        [field]: value
-      }
-    }))
-  }
+        [field]: value,
+      },
+    }));
+  };
 
   // Handle field change for new record
-  const handleNewRecordChange = (field: keyof typeof newRecordData, value: any) => {
-    setNewRecordData(prev => ({
+  const handleNewRecordChange = (
+    field: keyof typeof newRecordData,
+    value: any,
+  ) => {
+    setNewRecordData((prev) => ({
       ...prev,
-      [field]: value
-    }))
-  }
+      [field]: value,
+    }));
+  };
 
   // Handle Delete
   const handleDeleteClick = (id: number) => {
-    setItemToDelete(id)
-    setShowDeleteModal(true)
-  }
+    setItemToDelete(id);
+    setShowDeleteModal(true);
+  };
 
   const handleBulkDeleteClick = () => {
     if (selectedItems.length === 0) {
       toast({
         title: "Error",
         description: "Please select at least one SSL record",
-        variant: "destructive"
-      })
-      return
+        variant: "destructive",
+      });
+      return;
     }
-    setItemToDelete(null)
-    setShowDeleteModal(true)
-  }
+    setItemToDelete(null);
+    setShowDeleteModal(true);
+  };
 
   const confirmDelete = async () => {
     try {
-      setIsDeleting(true)
-      
-      const idsToDelete = itemToDelete ? [itemToDelete] : selectedItems
-      
-      const response = await apiService.deleteRecords(idsToDelete, 2)
-      
+      setIsDeleting(true);
+
+      const idsToDelete = itemToDelete ? [itemToDelete] : selectedItems;
+
+      const response = await apiService.deleteRecords(idsToDelete, 2);
+
       if (response.status) {
         toast({
           title: "Success",
           description: response.message || "Record(s) deleted successfully",
-          variant: "default"
-        })
-        
-        setSelectedItems([])
-        setItemToDelete(null)
-        fetchSSLRecords()
+          variant: "default",
+        });
+
+        setSelectedItems([]);
+        setItemToDelete(null);
+        fetchSSLRecords();
       } else {
         toast({
           title: "Error",
           description: response.message || "Failed to delete record(s)",
-          variant: "destructive"
-        })
+          variant: "destructive",
+        });
       }
     } catch (error) {
-      console.error("Error deleting:", error)
+      console.error("Error deleting:", error);
       toast({
         title: "Error",
         description: "Failed to delete record(s)",
-        variant: "destructive"
-      })
+        variant: "destructive",
+      });
     } finally {
-      setIsDeleting(false)
-      setShowDeleteModal(false)
+      setIsDeleting(false);
+      setShowDeleteModal(false);
     }
-  }
+  };
 
   // Handle Select All
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedItems(data.map(item => item.id))
+      setSelectedItems(data.map((item) => item.id));
     } else {
-      setSelectedItems([])
+      setSelectedItems([]);
     }
-  }
+  };
 
   const handleSelectItem = (id: number, checked: boolean) => {
     if (checked) {
-      setSelectedItems(prev => [...prev, id])
+      setSelectedItems((prev) => [...prev, id]);
     } else {
-      setSelectedItems(prev => prev.filter(itemId => itemId !== id))
+      setSelectedItems((prev) => prev.filter((itemId) => itemId !== id));
     }
-  }
+  };
 
-  const isAllSelected = data.length > 0 && selectedItems.length === data.length
+  const isAllSelected = data.length > 0 && selectedItems.length === data.length;
 
   const getStatusColor = (status: 0 | 1) => {
-    return status === 1 ? 'text-green-400' : 'text-red-400'
-  }
+    return status === 1 ? "text-green-400" : "text-red-400";
+  };
 
   const getStatusText = (status: 0 | 1) => {
-    return status === 1 ? 'Active' : 'Inactive'
-  }
+    return status === 1 ? "Active" : "Inactive";
+  };
 
   const getStatusIcon = (status: 0 | 1) => {
-    return status === 1 ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />
-  }
+    return status === 1 ? (
+      <CheckCircle className="w-4 h-4" />
+    ) : (
+      <XCircle className="w-4 h-4" />
+    );
+  };
 
   const formatDate = (dateString: string) => {
     try {
-      const date = new Date(dateString)
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      })
+      const date = new Date(dateString);
+      return date.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
     } catch {
-      return dateString
+      return dateString;
     }
-  }
+  };
 
-  // Calculate days until expiry
   const calculateDays = (expiryDate: string) => {
     try {
-      const today = new Date()
-      const expiry = new Date(expiryDate)
-      const diffTime = expiry.getTime() - today.getTime()
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-      return diffDays
+      const today = new Date();
+      const expiry = new Date(expiryDate);
+      const diffTime = expiry.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return diffDays;
     } catch {
-      return 0
+      return 0;
     }
-  }
+  };
 
-    const handlePageChange = (newPage: number) => {
-    setPagination(prev => ({ ...prev, page: newPage }))
-  }
+  const handlePageChange = (newPage: number) => {
+    setPagination((prev) => ({ ...prev, page: newPage }));
+  };
 
-  // Get status based on days to expire
   const getExpiryStatus = (days: number) => {
-    if (days < 0) return { color: 'text-red-400', bg: 'bg-red-500/20', text: 'Expired' }
-    if (days <= 30) return { color: 'text-yellow-400', bg: 'bg-yellow-500/20', text: 'Warning' }
-    return { color: 'text-green-400', bg: 'bg-green-500/20', text: 'Active' }
-  }
+    if (days < 0)
+      return { color: "text-red-400", bg: "bg-red-500/20", text: "Expired" };
+    if (days <= 30)
+      return {
+        color: "text-yellow-400",
+        bg: "bg-yellow-500/20",
+        text: "Warning",
+      };
+    return { color: "text-green-400", bg: "bg-green-500/20", text: "Active" };
+  };
 
-  const totalPages = Math.ceil(totalItems / pagination.rowsPerPage)
-  const startItem = pagination.page * pagination.rowsPerPage + 1
-  const endItem = Math.min((pagination.page + 1) * pagination.rowsPerPage, totalItems)
+  const startItem = pagination.page * pagination.rowsPerPage + 1;
 
   return (
-    <div className="min-h-screen pb-8">
+   <div className="min-h-screen pb-8">
       <Header title="SSL Certificate Management" tabs={navigationTabs} />
 
       <div className="px-4 sm:px-6 mt-6">
-        <GlassCard className="p-6">
+        <GlassCard className="p-6 backdrop-blur-xl bg-gradient-to-br from-gray-900/80 via-black/80 to-gray-900/80 border border-white/10 shadow-2xl">
           {/* Header with Search and Add Button */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
             <div>
               <div className="flex items-center gap-2">
                 <Shield className="w-6 h-6 text-[#BA8969]" />
-                <h2 className="text-xl font-semibold text-white">SSL Certificates</h2>
+                <h2 className="text-xl font-semibold text-white">
+                  SSL Certificates
+                </h2>
               </div>
               <p className="text-sm text-gray-400 mt-1">
                 Manage your SSL certificates and expiration dates
               </p>
             </div>
-            
+
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto">
               <div className="relative flex-1 sm:flex-initial">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -527,10 +546,10 @@ export default function SSLPage() {
                   placeholder="Search SSL certificates..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 py-2 w-full sm:w-64 bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.1)] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="pl-10 pr-4 py-2 w-full sm:w-64 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm transition-all"
                 />
               </div>
-              
+
               <div className="flex gap-2">
                 {selectedItems.length > 0 && (
                   <GlassButton
@@ -547,7 +566,7 @@ export default function SSLPage() {
                     Delete ({selectedItems.length})
                   </GlassButton>
                 )}
-                
+
                 {!addingNew && (
                   <GlassButton
                     variant="primary"
@@ -563,18 +582,18 @@ export default function SSLPage() {
           </div>
 
           {/* Table Container */}
-          <div className="overflow-hidden rounded-lg border border-[rgba(255,255,255,0.1)]">
+          <div className="overflow-hidden rounded-xl border border-white/10 backdrop-blur-sm">
             {/* Table */}
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="bg-[rgba(255,255,255,0.05)] border-b border-[rgba(255,255,255,0.1)]">
+                  <tr className="bg-white/5 border-b border-white/10">
                     <th className="py-3 px-4 text-left w-12">
                       <input
                         type="checkbox"
                         checked={isAllSelected}
                         onChange={(e) => handleSelectAll(e.target.checked)}
-                        className="w-4 h-4 rounded border-gray-300 bg-gray-700 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        className="w-4 h-4 rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500/50 cursor-pointer"
                       />
                     </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[80px]">
@@ -588,6 +607,12 @@ export default function SSLPage() {
                     </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[180px]">
                       SSL Product
+                    </th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[180px]">
+                      Amount
+                    </th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
+                      Renewal Date
                     </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
                       Expiry Date
@@ -612,7 +637,7 @@ export default function SSLPage() {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={11} className="py-8 text-center">
+                      <td colSpan={13} className="py-8 text-center">
                         <div className="flex flex-col items-center justify-center gap-2">
                           <DashboardLoader label="Fetching SSL Certificates..." />
                         </div>
@@ -622,63 +647,126 @@ export default function SSLPage() {
                     <>
                       {/* Add New Row */}
                       {addingNew && (
-                        <tr className="border-b border-[rgba(255,255,255,0.05)] bg-[rgba(59,130,246,0.05)]">
+                        <tr className="border-b border-white/5 bg-blue-500/5">
                           <td className="py-3 px-4"></td>
                           <td className="py-3 px-4 text-sm text-gray-300">
                             New
                           </td>
                           <td className="py-3 px-4">
-                            <select
-                              value={newRecordData.domain_name}
-                              onChange={(e) => handleNewRecordChange('domain_name', e.target.value)}
-                              className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                              style={{ minHeight: '32px' }}
-                            >
-                              <option value="" className="bg-gray-800 text-white">Select Domain</option>
-                              {domainOptions.map(option => (
-                                <option key={option.id} value={option.name} className="bg-gray-800 text-white">
-                                  {option.name}
-                                </option>
-                              ))}
-                            </select>
+                            <ApiDropdown
+                              endpoint="get-domains"
+                              value={
+                                newRecordData.domain_id
+                                  ? {
+                                      value: newRecordData.domain_id,
+                                      label: newRecordData.domain_name,
+                                    }
+                                  : null
+                              }
+                              onChange={(option) => {
+                                handleNewRecordChange(
+                                  "domain_id",
+                                  option?.value ?? null,
+                                );
+                                handleNewRecordChange(
+                                  "domain_name",
+                                  option?.label ?? "",
+                                );
+                              }}
+                              placeholder="Select Domain"
+                              className="min-h-[32px]"
+                            />
                           </td>
                           <td className="py-3 px-4">
-                            <select
-                              value={newRecordData.client_name}
-                              onChange={(e) => handleNewRecordChange('client_name', e.target.value)}
-                              className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                              style={{ minHeight: '32px' }}
-                            >
-                              <option value="" className="bg-gray-800 text-white">Select Client</option>
-                              {clientOptions.map(option => (
-                                <option key={option.id} value={option.name} className="bg-gray-800 text-white">
-                                  {option.name}
-                                </option>
-                              ))}
-                            </select>
+                            <ApiDropdown
+                              endpoint="get-clients"
+                              value={
+                                newRecordData.client_id
+                                  ? {
+                                      value: newRecordData.client_id,
+                                      label: newRecordData.client_name,
+                                    }
+                                  : null
+                              }
+                              onChange={(option) => {
+                                handleNewRecordChange(
+                                  "client_id",
+                                  option?.value ?? null,
+                                );
+                                handleNewRecordChange(
+                                  "client_name",
+                                  option?.label ?? "",
+                                );
+                              }}
+                              placeholder="Select Client"
+                              className="min-h-[32px]"
+                            />
                           </td>
                           <td className="py-3 px-4">
-                            <select
-                              value={newRecordData.product_name}
-                              onChange={(e) => handleNewRecordChange('product_name', e.target.value)}
-                              className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                              style={{ minHeight: '32px' }}
-                            >
-                              <option value="" className="bg-gray-800 text-white">Select SSL Product</option>
-                              {productOptions.map(option => (
-                                <option key={option.id} value={option.name} className="bg-gray-800 text-white">
-                                  {option.name}
-                                </option>
-                              ))}
-                            </select>
+                            <ApiDropdown
+                              endpoint="get-products"
+                              value={
+                                newRecordData.product_id
+                                  ? {
+                                      value: newRecordData.product_id,
+                                      label: newRecordData.product_name,
+                                    }
+                                  : null
+                              }
+                              onChange={(option) => {
+                                handleNewRecordChange(
+                                  "product_id",
+                                  option?.value ?? null,
+                                );
+                                handleNewRecordChange(
+                                  "product_name",
+                                  option?.label ?? "",
+                                );
+                              }}
+                              placeholder="Select SSL Product"
+                              className="min-h-[32px]"
+                            />
+                          </td>
+                          <td className="py-3 px-4">
+                            <input
+                              type="number"
+                              value={newRecordData.amount}
+                              onChange={(e) =>
+                                handleNewRecordChange("amount", e.target.value)
+                              }
+                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                              style={{ minHeight: "32px" }}
+                              placeholder="0.00"
+                              min="0"
+                              step="0.01"
+                            />
+                          </td>
+                          <td className="py-3 px-4">
+                            <input
+                              type="date"
+                              value={newRecordData.renewal_date}
+                              onChange={(e) =>
+                                handleNewRecordChange(
+                                  "renewal_date",
+                                  e.target.value,
+                                )
+                              }
+                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                              style={{ minHeight: "32px" }}
+                            />
                           </td>
                           <td className="py-3 px-4">
                             <input
                               type="date"
                               value={newRecordData.expiry_date}
-                              onChange={(e) => handleNewRecordChange('expiry_date', e.target.value)}
-                              className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                              style={{ minHeight: '32px' }}
+                              onChange={(e) =>
+                                handleNewRecordChange(
+                                  "expiry_date",
+                                  e.target.value,
+                                )
+                              }
+                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                              style={{ minHeight: "32px" }}
                             />
                           </td>
                           <td className="py-3 px-4 text-sm text-gray-300">
@@ -687,21 +775,32 @@ export default function SSLPage() {
                           <td className="py-3 px-4">
                             <select
                               value={newRecordData.status}
-                              onChange={(e) => handleNewRecordChange('status', e.target.value as "1" | "0")}
-                              className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                              style={{ minHeight: '32px' }}
+                              onChange={(e) =>
+                                handleNewRecordChange(
+                                  "status",
+                                  e.target.value as "1" | "0",
+                                )
+                              }
+                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                              style={{ minHeight: "32px" }}
                             >
-                              <option value="1" className="bg-gray-800 text-white">Active</option>
-                              <option value="0" className="bg-gray-800 text-white">Inactive</option>
+                              <option value="1" className="bg-gray-900 text-white">
+                                Active
+                              </option>
+                              <option value="0" className="bg-gray-900 text-white">
+                                Inactive
+                              </option>
                             </select>
                           </td>
                           <td className="py-3 px-4">
                             <input
                               type="text"
                               value={newRecordData.remarks}
-                              onChange={(e) => handleNewRecordChange('remarks', e.target.value)}
-                              className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                              style={{ minHeight: '32px' }}
+                              onChange={(e) =>
+                                handleNewRecordChange("remarks", e.target.value)
+                              }
+                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                              style={{ minHeight: "32px" }}
                               placeholder="Remarks"
                             />
                           </td>
@@ -709,17 +808,23 @@ export default function SSLPage() {
                             <input
                               type="date"
                               value={newRecordData.updated_at_custom}
-                              onChange={(e) => handleNewRecordChange('updated_at_custom', e.target.value)}
-                              className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                              style={{ minHeight: '32px' }}
+                              readOnly
+                              onChange={(e) =>
+                                handleNewRecordChange(
+                                  "updated_at_custom",
+                                  e.target.value,
+                                )
+                              }
+                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                              style={{ minHeight: "32px" }}
                             />
                           </td>
                           <td className="py-3 px-4">
                             <div className="flex items-center justify-end gap-2">
-                              <button
+                              <GlassButton
                                 onClick={handleSaveNew}
                                 disabled={isSaving}
-                                className="p-1.5 rounded bg-green-500/20 hover:bg-green-500/30 transition-colors disabled:opacity-50"
+                                className="p-1.5 min-w-0 bg-green-500/20 hover:bg-green-500/30"
                                 title="Save"
                               >
                                 {isSaving ? (
@@ -727,31 +832,33 @@ export default function SSLPage() {
                                 ) : (
                                   <Save className="w-4 h-4 text-green-400" />
                                 )}
-                              </button>
-                              <button
+                              </GlassButton>
+                              <GlassButton
                                 onClick={handleCancelAdd}
                                 disabled={isSaving}
-                                className="p-1.5 rounded bg-red-500/20 hover:bg-red-500/30 transition-colors disabled:opacity-50"
+                                className="p-1.5 min-w-0 bg-red-500/20 hover:bg-red-500/30"
                                 title="Cancel"
                               >
                                 <X className="w-4 h-4 text-red-400" />
-                              </button>
+                              </GlassButton>
                             </div>
                           </td>
                         </tr>
                       )}
-                      
+
                       {/* Existing Data Rows */}
                       {data.length === 0 ? (
                         <tr>
-                          <td colSpan={11} className="py-8 text-center">
+                          <td colSpan={13} className="py-8 text-center">
                             <div className="flex flex-col items-center justify-center gap-2">
                               <Shield className="w-12 h-12 text-gray-400" />
-                              <span className="text-gray-400">No SSL certificates found</span>
+                              <span className="text-gray-400">
+                                No SSL certificates found
+                              </span>
                               {searchQuery && (
                                 <button
                                   onClick={() => setSearchQuery("")}
-                                  className="text-sm text-blue-400 hover:text-blue-300"
+                                  className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
                                 >
                                   Clear search
                                 </button>
@@ -763,81 +870,236 @@ export default function SSLPage() {
                         data.map((item, index) => (
                           <tr
                             key={item.id}
-                            className={`border-b border-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.02)] transition-colors ${
-                              editingId === item.id ? 'bg-[rgba(59,130,246,0.05)]' : ''
+                            className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors ${
+                              editingId === item.id ? "bg-blue-500/5" : ""
                             }`}
                           >
                             <td className="py-3 px-4">
                               <input
                                 type="checkbox"
                                 checked={selectedItems.includes(item.id)}
-                                onChange={(e) => handleSelectItem(item.id, e.target.checked)}
-                                className="w-4 h-4 rounded border-gray-300 bg-gray-700 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                onChange={(e) =>
+                                  handleSelectItem(item.id, e.target.checked)
+                                }
+                                className="w-4 h-4 rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500/50 cursor-pointer"
                               />
                             </td>
                             <td className="py-3 px-4 text-sm text-gray-300">
                               {startItem + index}
                             </td>
-                            
+
+                            {/* Edit Mode */}
                             {editingId === item.id ? (
                               <>
+                                {/* Domain */}
                                 <td className="py-3 px-4">
-                                  <select
-                                    value={editData[item.id]?.domain_name || item.domain_name || ""}
-                                    onChange={(e) => handleEditChange(item.id, 'domain_name', e.target.value)}
-                                    className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                                    style={{ minHeight: '32px' }}
-                                  >
-                                    <option value="" className="bg-gray-800 text-white">Select Domain</option>
-                                    {domainOptions.map(option => (
-                                      <option key={option.id} value={option.name} className="bg-gray-800 text-white">
-                                        {option.name}
-                                      </option>
-                                    ))}
-                                  </select>
+                                  <ApiDropdown
+                                    endpoint="get-domains"
+                                    value={
+                                      editData[item.id]?.domain_id
+                                        ? {
+                                            value: editData[item.id]?.domain_id!,
+                                            label: editData[item.id]?.domain_name || "",
+                                          }
+                                        : null
+                                    }
+                                    onChange={(option) => {
+                                      handleEditChange(
+                                        item.id,
+                                        "domain_id",
+                                        option?.value ?? null,
+                                      );
+                                      handleEditChange(
+                                        item.id,
+                                        "domain_name",
+                                        option?.label ?? "",
+                                      );
+                                    }}
+                                    placeholder="Select Domain"
+                                    className="min-h-[32px]"
+                                  />
                                 </td>
+                                
+                                {/* Client */}
                                 <td className="py-3 px-4">
-                                  <select
-                                    value={editData[item.id]?.client_name || item.client_name || ""}
-                                    onChange={(e) => handleEditChange(item.id, 'client_name', e.target.value)}
-                                    className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                                    style={{ minHeight: '32px' }}
-                                  >
-                                    <option value="" className="bg-gray-800 text-white">Select Client</option>
-                                    {clientOptions.map(option => (
-                                      <option key={option.id} value={option.name} className="bg-gray-800 text-white">
-                                        {option.name}
-                                      </option>
-                                    ))}
-                                  </select>
+                                  <ApiDropdown
+                                    endpoint="get-clients"
+                                    value={
+                                      editData[item.id]?.client_id
+                                        ? {
+                                            value: editData[item.id]?.client_id!,
+                                            label: editData[item.id]?.client_name || "",
+                                          }
+                                        : null
+                                    }
+                                    onChange={(option) => {
+                                      handleEditChange(
+                                        item.id,
+                                        "client_id",
+                                        option?.value ?? null,
+                                      );
+                                      handleEditChange(
+                                        item.id,
+                                        "client_name",
+                                        option?.label ?? "",
+                                      );
+                                    }}
+                                    placeholder="Select Client"
+                                    className="min-h-[32px]"
+                                  />
                                 </td>
+                                
+                                {/* Product */}
                                 <td className="py-3 px-4">
-                                  <select
-                                    value={editData[item.id]?.product_name || item.product_name}
-                                    onChange={(e) => handleEditChange(item.id, 'product_name', e.target.value)}
-                                    className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                                    style={{ minHeight: '32px' }}
-                                  >
-                                    <option value="" className="bg-gray-800 text-white">Select SSL Product</option>
-                                    {productOptions.map(option => (
-                                      <option key={option.id} value={option.name} className="bg-gray-800 text-white">
-                                        {option.name}
-                                      </option>
-                                    ))}
-                                  </select>
+                                  <ApiDropdown
+                                    endpoint="get-products"
+                                    value={
+                                      editData[item.id]?.product_id
+                                        ? {
+                                            value: editData[item.id]?.product_id!,
+                                            label: editData[item.id]?.product_name || "",
+                                          }
+                                        : null
+                                    }
+                                    onChange={(option) => {
+                                      handleEditChange(
+                                        item.id,
+                                        "product_id",
+                                        option?.value ?? null,
+                                      );
+                                      handleEditChange(
+                                        item.id,
+                                        "product_name",
+                                        option?.label ?? "",
+                                      );
+                                    }}
+                                    placeholder="Select SSL Product"
+                                    className="min-h-[32px]"
+                                  />
                                 </td>
+                                
+                                {/* Amount */}
+                                <td className="py-3 px-4">
+                                  <input
+                                    type="number"
+                                    value={editData[item.id]?.amount || item.amount || ""}
+                                    onChange={(e) =>
+                                      handleEditChange(
+                                        item.id,
+                                        "amount",
+                                        parseFloat(e.target.value) || 0,
+                                      )
+                                    }
+                                    className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                    style={{ minHeight: "32px" }}
+                                    min="0"
+                                    step="0.01"
+                                  />
+                                </td>
+                                
+                                {/* Renewal Date */}
+                                <td className="py-3 px-4">
+                                  <input
+                                    type="date"
+                                    value={editData[item.id]?.renewal_date || item.renewal_date || ""}
+                                    onChange={(e) =>
+                                      handleEditChange(
+                                        item.id,
+                                        "renewal_date",
+                                        e.target.value,
+                                      )
+                                    }
+                                    className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                    style={{ minHeight: "32px" }}
+                                  />
+                                </td>
+                                
+                                {/* Expiry Date */}
                                 <td className="py-3 px-4">
                                   <input
                                     type="date"
                                     value={editData[item.id]?.expiry_date || item.expiry_date}
-                                    onChange={(e) => handleEditChange(item.id, 'expiry_date', e.target.value)}
-                                    className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                                    style={{ minHeight: '32px' }}
+                                    onChange={(e) =>
+                                      handleEditChange(
+                                        item.id,
+                                        "expiry_date",
+                                        e.target.value,
+                                      )
+                                    }
+                                    className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                    style={{ minHeight: "32px" }}
+                                  />
+                                </td>
+                                
+                                {/* Days to Expire (Read-only in edit mode) */}
+                                <td className="py-3 px-4 text-sm text-gray-300">
+                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm border ${
+                                    calculateDays(editData[item.id]?.expiry_date || item.expiry_date) < 0
+                                      ? 'bg-red-500/20 text-red-400 border-red-500/20'
+                                      : calculateDays(editData[item.id]?.expiry_date || item.expiry_date) <= 30
+                                        ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/20'
+                                        : 'bg-green-500/20 text-green-400 border-green-500/20'
+                                  }`}>
+                                    <Clock className="w-3 h-3" />
+                                    {calculateDays(editData[item.id]?.expiry_date || item.expiry_date)} days
+                                  </div>
+                                </td>
+                                
+                                {/* Status */}
+                                <td className="py-3 px-4">
+                                  <select
+                                    value={editData[item.id]?.status?.toString() || item.status.toString()}
+                                    onChange={(e) =>
+                                      handleEditChange(
+                                        item.id,
+                                        "status",
+                                        parseInt(e.target.value) as 0 | 1,
+                                      )
+                                    }
+                                    className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                    style={{ minHeight: "32px" }}
+                                  >
+                                    <option value="1" className="bg-gray-900 text-white">
+                                      Active
+                                    </option>
+                                    <option value="0" className="bg-gray-900 text-white">
+                                      Inactive
+                                    </option>
+                                  </select>
+                                </td>
+                                
+                                {/* Remarks */}
+                                <td className="py-3 px-4">
+                                  <input
+                                    type="text"
+                                    value={editData[item.id]?.remarks || item.remarks}
+                                    onChange={(e) =>
+                                      handleEditChange(
+                                        item.id,
+                                        "remarks",
+                                        e.target.value,
+                                      )
+                                    }
+                                    className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                    style={{ minHeight: "32px" }}
+                                  />
+                                </td>
+                                
+                                {/* Last Updated (Read-only) */}
+                                <td className="py-3 px-4">
+                                  <input
+                                    type="text"
+                                    value={formatDate(item.updated_at_custom)}
+                                    readOnly
+                                    className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-sm cursor-not-allowed"
+                                    style={{ minHeight: "32px" }}
                                   />
                                 </td>
                               </>
                             ) : (
+                              /* View Mode */
                               <>
+                                {/* Domain */}
                                 <td className="py-3 px-4">
                                   <div className="flex items-center gap-2">
                                     <Globe className="w-4 h-4 text-gray-400 flex-shrink-0" />
@@ -846,6 +1108,8 @@ export default function SSLPage() {
                                     </span>
                                   </div>
                                 </td>
+                                
+                                {/* Client */}
                                 <td className="py-3 px-4">
                                   <div className="flex items-center gap-2">
                                     <User className="w-4 h-4 text-gray-400 flex-shrink-0" />
@@ -854,6 +1118,8 @@ export default function SSLPage() {
                                     </span>
                                   </div>
                                 </td>
+                                
+                                {/* Product */}
                                 <td className="py-3 px-4">
                                   <div className="flex items-center gap-2">
                                     <Package className="w-4 h-4 text-gray-400 flex-shrink-0" />
@@ -862,96 +1128,82 @@ export default function SSLPage() {
                                     </span>
                                   </div>
                                 </td>
+                                
+                                {/* Amount */}
                                 <td className="py-3 px-4 text-sm text-gray-300">
                                   <div className="flex items-center gap-2">
-                                    <Calendar className="w-4 h-4 text-gray-400" />
+                                    {item.amount || "0.00"}
+                                  </div>
+                                </td>
+                                
+                                {/* Renewal Date */}
+                                <td className="py-3 px-4 text-sm text-gray-300">
+                                  <div className="flex items-center gap-2">
+                                    {/* <Calendar className="w-4 h-4 text-gray-400" /> */}
+                                    {item.renewal_date ? formatDate(item.renewal_date) : "N/A"}
+                                  </div>
+                                </td>
+                                
+                                {/* Expiry Date */}
+                                <td className="py-3 px-4 text-sm text-gray-300">
+                                  <div className="flex items-center gap-2">
+                                    {/* <Calendar className="w-4 h-4 text-gray-400" /> */}
                                     {formatDate(item.expiry_date)}
                                   </div>
                                 </td>
+                                
+                                {/* Days to Expire */}
+                                <td className="py-3 px-4">
+                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm border ${
+                                    calculateDays(item.expiry_date) < 0
+                                      ? 'bg-red-500/20 text-red-400 border-red-500/20'
+                                      : calculateDays(item.expiry_date) <= 30
+                                        ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/20'
+                                        : 'bg-green-500/20 text-green-400 border-green-500/20'
+                                  }`}>
+                                    {/* <Clock className="w-3 h-3" /> */}
+                                    {calculateDays(item.expiry_date)} days
+                                  </div>
+                                </td>
+                                
+                                {/* Status */}
+                                <td className="py-3 px-4">
+                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm border ${
+                                    item.status === 1 
+                                      ? 'bg-green-500/20 text-green-400 border-green-500/20' 
+                                      : 'bg-red-500/20 text-red-400 border-red-500/20'
+                                  }`}>
+                                    {getStatusIcon(item.status)}
+                                    {getStatusText(item.status)}
+                                  </div>
+                                </td>
+                                
+                                {/* Remarks */}
+                                <td className="py-3 px-4">
+                                  <div className="flex items-center gap-2">
+                                    {/* <AlertCircle className="w-4 h-4 text-gray-400 flex-shrink-0" /> */}
+                                    <span className="text-sm text-gray-300 truncate max-w-[180px]">
+                                      {item.remarks}
+                                    </span>
+                                  </div>
+                                </td>
+                                
+                                {/* Last Updated */}
+                                <td className="py-3 px-4 text-sm text-gray-300">
+                                  {formatDate(item.updated_at_custom)}
+                                </td>
                               </>
                             )}
-                            
-                            <td className="py-3 px-4">
-                              <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
-                                calculateDays(item.expiry_date) < 0 
-                                  ? 'bg-red-500/20 text-red-400' 
-                                  : calculateDays(item.expiry_date) <= 30 
-                                    ? 'bg-yellow-500/20 text-yellow-400'
-                                    : 'bg-green-500/20 text-green-400'
-                              }`}>
-                                <Clock className="w-3 h-3" />
-                                {calculateDays(item.expiry_date)} days
-                              </div>
-                            </td>
-                            
-                            {editingId === item.id ? (
-                              <td className="py-3 px-4">
-                                <select
-                                  value={editData[item.id]?.status?.toString() || item.status.toString()}
-                                  onChange={(e) => handleEditChange(item.id, 'status', parseInt(e.target.value) as 0 | 1)}
-                                  className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                                  style={{ minHeight: '32px' }}
-                                >
-                                  <option value="1" className="bg-gray-800 text-white">Active</option>
-                                  <option value="0" className="bg-gray-800 text-white">Inactive</option>
-                                </select>
-                              </td>
-                            ) : (
-                              <td className="py-3 px-4">
-                                <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(item.status)} bg-opacity-20 ${
-                                  item.status === 1 ? 'bg-green-500/20' : 'bg-red-500/20'
-                                }`}>
-                                  {getStatusIcon(item.status)}
-                                  {getStatusText(item.status)}
-                                </div>
-                              </td>
-                            )}
-                            
-                            {editingId === item.id ? (
-                              <td className="py-3 px-4">
-                                <input
-                                  type="text"
-                                  value={editData[item.id]?.remarks || item.remarks}
-                                  onChange={(e) => handleEditChange(item.id, 'remarks', e.target.value)}
-                                  className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                                  style={{ minHeight: '32px' }}
-                                />
-                              </td>
-                            ) : (
-                              <td className="py-3 px-4">
-                                <div className="flex items-center gap-2">
-                                  <AlertCircle className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                                  <span className="text-sm text-gray-300 truncate max-w-[180px]">
-                                    {item.remarks}
-                                  </span>
-                                </div>
-                              </td>
-                            )}
-                            
-                            {editingId === item.id ? (
-                              <td className="py-3 px-4">
-                                <input
-                                  type="date"
-                                  value={editData[item.id]?.updated_at_custom || item.updated_at_custom}
-                                  onChange={(e) => handleEditChange(item.id, 'updated_at_custom', e.target.value)}
-                                  className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                                  style={{ minHeight: '32px' }}
-                                />
-                              </td>
-                            ) : (
-                              <td className="py-3 px-4 text-sm text-gray-300">
-                                {formatDate(item.updated_at_custom)}
-                              </td>
-                            )}
-                            
+
+                            {/* Actions */}
                             <td className="py-3 px-4">
                               <div className="flex items-center justify-end gap-2">
                                 {editingId === item.id ? (
                                   <>
-                                    <button
+                                    <GlassButton
                                       onClick={() => handleSave(item.id)}
                                       disabled={isSaving}
-                                      className="p-1.5 rounded bg-green-500/20 hover:bg-green-500/30 transition-colors disabled:opacity-50"
+                                      className="p-1.5 min-w-0 bg-green-500/20 hover:bg-green-500/30"
                                       title="Save"
                                     >
                                       {isSaving ? (
@@ -959,32 +1211,32 @@ export default function SSLPage() {
                                       ) : (
                                         <Save className="w-4 h-4 text-green-400" />
                                       )}
-                                    </button>
-                                    <button
+                                    </GlassButton>
+                                    <GlassButton
                                       onClick={handleCancelEdit}
                                       disabled={isSaving}
-                                      className="p-1.5 rounded bg-red-500/20 hover:bg-red-500/30 transition-colors disabled:opacity-50"
+                                      className="p-1.5 min-w-0 bg-red-500/20 hover:bg-red-500/30"
                                       title="Cancel"
                                     >
                                       <X className="w-4 h-4 text-red-400" />
-                                    </button>
+                                    </GlassButton>
                                   </>
                                 ) : (
                                   <>
-                                    <button
+                                    <GlassButton
                                       onClick={() => handleEdit(item)}
-                                      className="p-1.5 rounded hover:bg-[rgba(255,255,255,0.1)] transition-colors"
+                                      className="p-1.5 min-w-0 hover:bg-white/10"
                                       title="Edit"
                                     >
-                                      <Edit className="w-4 h-4 text-gray-400 hover:text-blue-400" />
-                                    </button>
-                                    <button
+                                      <Edit className="w-4 h-4 text-gray-300 hover:text-blue-400 transition-colors" />
+                                    </GlassButton>
+                                    <GlassButton
                                       onClick={() => handleDeleteClick(item.id)}
-                                      className="p-1.5 rounded hover:bg-red-500/20 transition-colors"
+                                      className="p-1.5 min-w-0 hover:bg-red-500/20"
                                       title="Delete"
                                     >
-                                      <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-400" />
-                                    </button>
+                                      <Trash2 className="w-4 h-4 text-gray-300 hover:text-red-400 transition-colors" />
+                                    </GlassButton>
                                   </>
                                 )}
                               </div>
@@ -1000,76 +1252,22 @@ export default function SSLPage() {
 
             {/* Pagination */}
             {!loading && data.length > 0 && (
-              // <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 bg-[rgba(255,255,255,0.05)] border-t border-[rgba(255,255,255,0.1)]">
-              //   <div className="text-sm text-gray-400 mb-3 sm:mb-0">
-              //     Showing {startItem} to {endItem} of {totalItems} SSL certificates
-              //   </div>
-              //   <div className="flex items-center gap-2">
-              //     <button
-              //       onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
-              //       disabled={pagination.page === 0}
-              //       className="p-2 rounded-lg bg-[rgba(255,255,255,0.05)] text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[rgba(255,255,255,0.1)] transition-colors"
-              //       title="Previous"
-              //     >
-              //       <ChevronLeft className="w-4 h-4" />
-              //     </button>
-                  
-              //     <div className="flex items-center gap-1">
-              //       {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              //         let pageNum
-              //         if (totalPages <= 5) {
-              //           pageNum = i
-              //         } else if (pagination.page <= 2) {
-              //           pageNum = i
-              //         } else if (pagination.page >= totalPages - 3) {
-              //           pageNum = totalPages - 5 + i
-              //         } else {
-              //           pageNum = pagination.page - 2 + i
-              //         }
-                      
-              //         if (pageNum >= totalPages) return null
-                      
-              //         return (
-              //           <button
-              //             key={pageNum}
-              //             onClick={() => setPagination(prev => ({ ...prev, page: pageNum }))}
-              //             className={`px-3 py-1 rounded text-sm transition-colors ${
-              //               pagination.page === pageNum
-              //                 ? 'bg-blue-600 text-white'
-              //                 : 'bg-[rgba(255,255,255,0.05)] text-gray-300 hover:bg-[rgba(255,255,255,0.1)]'
-              //             }`}
-              //           >
-              //             {pageNum + 1}
-              //           </button>
-              //         )
-              //       })}
-              //     </div>
-                  
-              //     <button
-              //       onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
-              //       disabled={pagination.page >= totalPages - 1}
-              //       className="p-2 rounded-lg bg-[rgba(255,255,255,0.05)] text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[rgba(255,255,255,0.1)] transition-colors"
-              //       title="Next"
-              //     >
-              //       <ChevronRight className="w-4 h-4" />
-              //     </button>
-              //   </div>
-              // </div>
               <Pagination
                 page={pagination.page}
                 rowsPerPage={pagination.rowsPerPage}
                 totalItems={totalItems}
                 onPageChange={handlePageChange}
-                />
+              />
             )}
           </div>
 
           {/* Selected Items Info */}
           {selectedItems.length > 0 && (
-            <div className="mt-4 p-3 bg-[rgba(255,255,255,0.05)] rounded-lg border border-[rgba(255,255,255,0.1)]">
+            <div className="mt-4 p-3 bg-white/5 rounded-lg border border-white/10 backdrop-blur-sm">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-300">
-                  {selectedItems.length} SSL certificate{selectedItems.length > 1 ? 's' : ''} selected
+                  {selectedItems.length} SSL certificate
+                  {selectedItems.length > 1 ? "s" : ""} selected
                 </span>
                 <div className="flex gap-2">
                   <button
@@ -1083,7 +1281,9 @@ export default function SSLPage() {
                     disabled={isDeleting}
                     className="text-sm text-red-400 hover:text-red-300 transition-colors disabled:opacity-50"
                   >
-                    {isDeleting ? "Deleting..." : `Delete ${selectedItems.length} items`}
+                    {isDeleting
+                      ? "Deleting..."
+                      : `Delete ${selectedItems.length} items`}
                   </button>
                 </div>
               </div>
@@ -1096,30 +1296,26 @@ export default function SSLPage() {
       <DeleteConfirmationModal
         isOpen={showDeleteModal}
         onClose={() => {
-          setShowDeleteModal(false)
-          setItemToDelete(null)
+          setShowDeleteModal(false);
+          setItemToDelete(null);
         }}
         onConfirm={confirmDelete}
         itemCount={itemToDelete ? 1 : selectedItems.length}
         isLoading={isDeleting}
-        title={itemToDelete ? "Delete SSL Certificate" : "Delete Multiple SSL Certificates"}
-        message={itemToDelete 
-          ? "Are you sure you want to delete this SSL certificate? This action cannot be undone."
-          : "Are you sure you want to delete the selected SSL certificates? This action cannot be undone."
+        title={
+          itemToDelete
+            ? "Delete SSL Certificate"
+            : "Delete Multiple SSL Certificates"
+        }
+        message={
+          itemToDelete
+            ? "Are you sure you want to delete this SSL certificate? This action cannot be undone."
+            : "Are you sure you want to delete the selected SSL certificates? This action cannot be undone."
         }
       />
     </div>
-  )
+  );
 }
-
-
-
-
-
-
-
-
-
 
 // "use client"
 
@@ -1170,7 +1366,7 @@ export default function SSLPage() {
 //   const today = new Date()
 //   const expire = new Date(expireDate)
 //   const daysUntilExpire = calculateDaysBetween(today, expire)
-  
+
 //   if (daysUntilExpire < 0) return 'Expired'
 //   if (daysUntilExpire <= 30) return 'Warning'
 //   if (daysUntilExpire > 30) return 'Active'
@@ -1255,7 +1451,7 @@ export default function SSLPage() {
 //     const updatedData = data.map(item => {
 //       const daysOfExpire = calculateDaysOfExpire(item.expireDate)
 //       const status = calculateStatus(item.expireDate)
-      
+
 //       return {
 //         ...item,
 //         todayDate: getTodayDate(),
@@ -1511,9 +1707,9 @@ export default function SSLPage() {
 //                     </td>
 //                     <td className="py-3 px-4">
 //                       <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
-//                         item.daysOfExpire < 0 
-//                           ? 'bg-red-500/20 text-red-400' 
-//                           : item.daysOfExpire <= 30 
+//                         item.daysOfExpire < 0
+//                           ? 'bg-red-500/20 text-red-400'
+//                           : item.daysOfExpire <= 30
 //                             ? 'bg-yellow-500/20 text-yellow-400'
 //                             : 'bg-green-500/20 text-green-400'
 //                       }`}>
@@ -1604,7 +1800,7 @@ export default function SSLPage() {
 //               onChange={(e) => setFormData({ ...formData, domainName: e.target.value })}
 //             />
 //           </div>
-          
+
 //           <div>
 //             <label className="block text-[var(--text-tertiary)] text-sm mb-2">Client</label>
 //             <select
@@ -1620,7 +1816,7 @@ export default function SSLPage() {
 //               ))}
 //             </select>
 //           </div>
-          
+
 //           <div>
 //             <label className="block text-[var(--text-tertiary)] text-sm mb-2">Expiration Date</label>
 //             <GlassInput
@@ -1629,7 +1825,7 @@ export default function SSLPage() {
 //               onChange={(e) => setFormData({ ...formData, expireDate: e.target.value })}
 //             />
 //           </div>
-          
+
 //           <div>
 //             <label className="block text-[var(--text-tertiary)] text-sm mb-2">SSL Product</label>
 //             <select
@@ -1645,7 +1841,7 @@ export default function SSLPage() {
 //               ))}
 //             </select>
 //           </div>
-          
+
 //           {/* Display-only fields (not editable in form) */}
 //           <div className="pt-4 border-t border-[rgba(255,255,255,var(--glass-border-opacity))]">
 //             <h4 className="text-sm font-medium text-[var(--text-tertiary)] mb-3">Auto-generated Information</h4>
@@ -1653,19 +1849,19 @@ export default function SSLPage() {
 //               <div className="space-y-1">
 //                 <div className="text-[var(--text-muted)]">Days to Expire</div>
 //                 <div className={`font-medium ${
-//                   formData.expireDate 
-//                     ? calculateDaysOfExpire(formData.expireDate) < 0 
-//                       ? 'text-red-400' 
-//                       : calculateDaysOfExpire(formData.expireDate) <= 30 
+//                   formData.expireDate
+//                     ? calculateDaysOfExpire(formData.expireDate) < 0
+//                       ? 'text-red-400'
+//                       : calculateDaysOfExpire(formData.expireDate) <= 30
 //                         ? 'text-yellow-400'
 //                         : 'text-green-400'
 //                     : 'text-white'
 //                 }`}>
-//                   {formData.expireDate 
+//                   {formData.expireDate
 //                     ? (() => {
 //                         const days = calculateDaysOfExpire(formData.expireDate)
 //                         return days >= 0 ? `${days} days` : `${Math.abs(days)} days ago`
-//                       })() 
+//                       })()
 //                     : '-- days'
 //                   }
 //                 </div>

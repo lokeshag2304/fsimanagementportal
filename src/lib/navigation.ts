@@ -20,7 +20,7 @@ type NavItem = {
   submenu?: { name: string; href: string }[]
 }
 
-type Role = "SuperAdmin" | "Admin" | "Client" | "User"
+type Role = "SuperAdmin" | "ClientAdmin" | "UserAdmin"
 
 export const roleNavigationMap: Record<Role, NavItem[]> = {
   SuperAdmin: [
@@ -57,21 +57,73 @@ export const roleNavigationMap: Record<Role, NavItem[]> = {
  { name: "Activity", href: "/SuperAdmin/activity", icon: Rocket },
   ],
 
-  Admin: [
-    { name: "Dashboard", href: "/Admin/dashboard", icon: Home },
-    { name: "Users", href: "/Admin/users", icon: Users },
-    { name: "Products", href: "/Admin/products", icon: Package },
-    { name: "Domains", href: "/Admin/domains", icon: Globe },
+
+  ClientAdmin: [
+     { name: "Dashboard", href: "/ClientAdmin/dashboard", icon: Home },
+    { name: "Subscription", href: "/ClientAdmin/subscription", icon: UserPlus },
+    { name: "SSL", href: "/ClientAdmin/ssl", icon: Book },
+    { name: "Counter", href: "/ClientAdmin/counter", icon: BookOpen },
+    { name: "Domains", href: "/ClientAdmin/domains", icon: Globe },
+    { name: "Emails", href: "/ClientAdmin/sub-email", icon: Rocket },
+    { name: "Hosting", href: "/ClientAdmin/hosting", icon: Rocket },
+//     {
+//       name: "User Management",
+//       href: "/ClientAdmin/user-management",
+//       icon: UserCog,
+//       hasDropdown: true,
+//       hasSubmenu: true,
+//       submenu: [
+//         { name: "Client", href: "/ClientAdmin/clients" },
+//         { name: "User Admin", href: "/ClientAdmin/users" },
+//       ],
+//     },
+//     {
+//       name: "Tool",
+//       href: "/ClientAdmin/user-management",
+//       icon: UserCog,
+//       hasDropdown: true,
+//       hasSubmenu: true,
+//       submenu: [
+//       { name: "Products", href: "/ClientAdmin/products"},
+//     { name: "Domain", href: "/ClientAdmin/domain" },
+//     { name: "Search Result", href: "/ClientAdmin/search-result"},
+//   ],
+// },
+//  { name: "Activity", href: "/ClientAdmin/activity", icon: Rocket },
   ],
 
-  Client: [
-    { name: "Dashboard", href: "/Client/dashboard", icon: Home },
-    { name: "My Domains", href: "/Client/domains", icon: Globe },
-    { name: "Billing", href: "/Client/billing", icon: Book },
+  UserAdmin: [
+     { name: "Dashboard", href: "/UserAdmin/dashboard", icon: Home },
+    { name: "Subscription", href: "/UserAdmin/subscription", icon: UserPlus },
+    { name: "SSL", href: "/UserAdmin/ssl", icon: Book },
+    { name: "Counter", href: "/UserAdmin/counter", icon: BookOpen },
+    { name: "Domains", href: "/UserAdmin/domains", icon: Globe },
+    { name: "Emails", href: "/UserAdmin/sub-email", icon: Rocket },
+    { name: "Hosting", href: "/UserAdmin/hosting", icon: Rocket },
+    {
+      name: "User Management",
+      href: "/UserAdmin/user-management",
+      icon: UserCog,
+      hasDropdown: true,
+      hasSubmenu: true,
+      submenu: [
+        { name: "Client", href: "/UserAdmin/clients" },
+        { name: "User Admin", href: "/UserAdmin/users" },
+      ],
+    },
+    {
+      name: "Tool",
+      href: "/UserAdmin/user-management",
+      icon: UserCog,
+      hasDropdown: true,
+      hasSubmenu: true,
+      submenu: [
+      { name: "Products", href: "/UserAdmin/products"},
+    { name: "Domain", href: "/UserAdmin/domain" },
+    { name: "Search Result", href: "/UserAdmin/search-result"},
   ],
-
-  User: [
-    { name: "Dashboard", href: "/User/dashboard", icon: X },
+},
+ { name: "Activity", href: "/UserAdmin/activity", icon: Rocket },
   ],
 }
 

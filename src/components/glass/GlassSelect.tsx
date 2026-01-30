@@ -19,34 +19,45 @@ interface GlassSelectProps {
 ================================ */
 const isDarkMode = () =>
   typeof window !== "undefined" &&
-  document.documentElement.classList.contains("dark")
+  document.documentElement.getAttribute("data-theme") === "dark"
 
 /* ================================
    Glass Select Styles (AUTO)
 ================================ */
 const glassSelectStyles = {
-  control: (base: any) => {
+  control: (base: any, state: any) => {
     const dark = isDarkMode()
 
     return {
       ...base,
       backgroundColor: dark
-        ? "rgba(255,255,255,0.1)"
-        : "rgba(255,255,255,0.8)",
-      borderColor: dark
+        ? "rgba(255,255,255,0.08)"
+        : "rgba(255,255,255,0.9)",
+      borderColor: state.isFocused
+        ? "rgba(59,130,246,0.6)"
+        : dark
         ? "rgba(255,255,255,0.15)"
         : "rgba(0,0,0,0.15)",
       color: dark ? "#ffffff" : "#111827",
-      borderRadius: "0.5rem",
-      minHeight: "42px",
-      boxShadow: "none",
+      borderRadius: "0.75rem",
+      minHeight: "40px",
+      boxShadow: state.isFocused
+        ? "0 0 0 2px rgba(59,130,246,0.25)"
+        : "none",
+      backdropFilter: "blur(12px)",
+      WebkitBackdropFilter: "blur(12px)",
+      transition: "all 0.2s ease",
       "&:hover": {
-        borderColor: dark
-          ? "rgba(255,255,255,0.25)"
-          : "rgba(0,0,0,0.25)",
+        borderColor: "rgba(59,130,246,0.5)",
       },
     }
   },
+
+  /* 🔥 Menu Portal Fix */
+  menuPortal: (base: any) => ({
+    ...base,
+    zIndex: 99999,
+  }),
 
   menu: (base: any) => {
     const dark = isDarkMode()
@@ -54,13 +65,15 @@ const glassSelectStyles = {
     return {
       ...base,
       backgroundColor: dark
-        ? "rgba(0,0,0,0.9)"
-        : "rgba(255,255,255,0.95)",
+        ? "rgba(15,15,15,0.95)"
+        : "rgba(255,255,255,0.97)",
       border: dark
         ? "1px solid rgba(255,255,255,0.15)"
         : "1px solid rgba(0,0,0,0.1)",
-      borderRadius: "0.5rem",
-      zIndex: 9999,
+      borderRadius: "0.75rem",
+      overflow: "hidden",
+      backdropFilter: "blur(14px)",
+      WebkitBackdropFilter: "blur(14px)",
     }
   },
 
@@ -70,33 +83,39 @@ const glassSelectStyles = {
     return {
       ...base,
       backgroundColor: state.isSelected
-        ? "rgba(59,130,246,0.4)"
+        ? "rgba(59,130,246,0.35)"
         : state.isFocused
         ? dark
-          ? "rgba(255,255,255,0.1)"
+          ? "rgba(255,255,255,0.08)"
           : "rgba(0,0,0,0.05)"
         : "transparent",
       color: dark ? "#ffffff" : "#111827",
       cursor: "pointer",
+      fontSize: "0.875rem",
+      padding: "10px 14px",
     }
   },
 
   multiValue: (base: any) => ({
     ...base,
     backgroundColor: "rgba(59,130,246,0.15)",
+    borderRadius: "0.5rem",
   }),
 
   multiValueLabel: (base: any) => ({
     ...base,
     color: isDarkMode() ? "#ffffff" : "#111827",
+    fontSize: "0.75rem",
+    padding: "2px 6px",
   }),
 
   multiValueRemove: (base: any) => ({
     ...base,
     color: isDarkMode() ? "#ffffff" : "#111827",
+    borderRadius: "0.375rem",
     "&:hover": {
       backgroundColor: "rgba(239,68,68,0.25)",
-      color: isDarkMode() ? "#ffffff" : "#111827",
+      color: "#ffffff",
     },
   }),
 
@@ -108,6 +127,7 @@ const glassSelectStyles = {
   singleValue: (base: any) => ({
     ...base,
     color: isDarkMode() ? "#ffffff" : "#111827",
+    fontWeight: 500,
   }),
 
   placeholder: (base: any) => ({
@@ -115,15 +135,19 @@ const glassSelectStyles = {
     color: isDarkMode()
       ? "rgba(255,255,255,0.45)"
       : "rgba(0,0,0,0.45)",
+    fontSize: "0.875rem",
   }),
 
-  dropdownIndicator: (base: any) => ({
+  dropdownIndicator: (base: any, state: any) => ({
     ...base,
-    color: isDarkMode()
+    color: state.isFocused
+      ? "#3b82f6"
+      : isDarkMode()
       ? "rgba(255,255,255,0.45)"
       : "rgba(0,0,0,0.45)",
+    transition: "color 0.2s ease",
     "&:hover": {
-      color: isDarkMode() ? "#ffffff" : "#111827",
+      color: "#3b82f6",
     },
   }),
 
@@ -133,7 +157,7 @@ const glassSelectStyles = {
       ? "rgba(255,255,255,0.45)"
       : "rgba(0,0,0,0.45)",
     "&:hover": {
-      color: isDarkMode() ? "#ffffff" : "#111827",
+      color: "#ef4444",
     },
   }),
 
@@ -144,6 +168,7 @@ const glassSelectStyles = {
       : "rgba(0,0,0,0.15)",
   }),
 }
+
 
 /* ================================
    GlassSelect Component

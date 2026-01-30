@@ -1,4 +1,3 @@
-// src/app/[role]/hosting/page.tsx
 "use client"
 
 import { useState, useEffect, useRef } from "react"
@@ -20,10 +19,9 @@ import {
   XCircle,
   AlertCircle,
   Loader2,
-  ChevronLeft,
-  ChevronRight,
   Save,
-  X
+  X,
+  DollarSign
 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/useToast"
@@ -32,6 +30,7 @@ import { apiService } from "@/common/services/apiService"
 import Pagination from "@/common/Pagination"
 import DashboardLoader from "@/common/DashboardLoader"
 import { getNavigationByRole } from "@/lib/getNavigationByRole"
+import { ApiDropdown } from "@/common/DynamicDropdown"
 
 interface HostingRecord {
   id: number
@@ -42,6 +41,8 @@ interface HostingRecord {
   product_name: string
   product_id?: number
   expiry_date: string
+  renewal_date: string
+  amount: number | null
   days_to_expire_today: number
   today_date: string
   status: 0 | 1
@@ -58,6 +59,8 @@ interface AddEditHosting {
   domain_id: number
   client_id: number
   expiry_date: string
+  renewal_date: string
+  amount: number
   status: 0 | 1
   remarks: string
 }
@@ -80,10 +83,15 @@ export default function HostingPage() {
   const [itemToDelete, setItemToDelete] = useState<number | null>(null)
   
   const [newRecordData, setNewRecordData] = useState({
+    domain_id: null as number | null,
     domain_name: "",
+    client_id: null as number | null,
     client_name: "",
+    product_id: null as number | null,
     product_name: "",
     expiry_date: "",
+    renewal_date: "",
+    amount: "",
     status: "1" as "1" | "0",
     remarks: ""
   })
@@ -98,33 +106,6 @@ export default function HostingPage() {
   })
   
   const [totalItems, setTotalItems] = useState(0)
-  
-  // Sample data for dropdowns (you should fetch these from APIs)
-  const clientOptions = [
-    { id: 1, name: "John Smith" },
-    { id: 2, name: "Sarah Johnson" },
-    { id: 3, name: "Mike Wilson" },
-    { id: 4, name: "David Brown" },
-    { id: 5, name: "Emma Davis" }
-  ]
-
-  const domainOptions = [
-    { id: 1, name: "example.com" },
-    { id: 2, name: "myshop.com" },
-    { id: 3, name: "blog-site.org" },
-    { id: 4, name: "api-service.net" },
-    { id: 5, name: "store-app.io" }
-  ]
-
-  const productOptions = [
-    { id: 1, name: "Basic Hosting" },
-    { id: 2, name: "Business Hosting" },
-    { id: 3, name: "Premium Hosting" },
-    { id: 4, name: "Enterprise Hosting" },
-    { id: 5, name: "WordPress Hosting" },
-    { id: 6, name: "Cloud Hosting" },
-    { id: 7, name: "VPS Hosting" }
-  ]
 
   const searchTimeoutRef = useRef<NodeJS.Timeout>()
 
@@ -187,12 +168,18 @@ export default function HostingPage() {
 
   // Handle Add New
   const handleAddNew = () => {
+    const today = new Date().toISOString().split('T')[0]
     setAddingNew(true)
     setNewRecordData({
+      domain_id: null,
       domain_name: "",
+      client_id: null,
       client_name: "",
+      product_id: null,
       product_name: "",
       expiry_date: "",
+      renewal_date: today,
+      amount: "",
       status: "1",
       remarks: ""
     })
@@ -201,6 +188,19 @@ export default function HostingPage() {
   // Cancel Add New
   const handleCancelAdd = () => {
     setAddingNew(false)
+    setNewRecordData({
+      domain_id: null,
+      domain_name: "",
+      client_id: null,
+      client_name: "",
+      product_id: null,
+      product_name: "",
+      expiry_date: "",
+      renewal_date: "",
+      amount: "",
+      status: "1",
+      remarks: ""
+    })
   }
 
   // Save New Record
@@ -208,7 +208,9 @@ export default function HostingPage() {
     try {
       setIsSaving(true)
       
-      if (!newRecordData.domain_name || !newRecordData.client_name || !newRecordData.product_name || !newRecordData.expiry_date) {
+      if (!newRecordData.domain_id || !newRecordData.client_id || 
+          !newRecordData.product_id || !newRecordData.expiry_date || 
+          !newRecordData.renewal_date || !newRecordData.amount) {
         toast({
           title: "Error",
           description: "Please fill all required fields",
@@ -217,27 +219,15 @@ export default function HostingPage() {
         return
       }
 
-      // Find IDs for selected names
-      const selectedClient = clientOptions.find(c => c.name === newRecordData.client_name)
-      const selectedDomain = domainOptions.find(d => d.name === newRecordData.domain_name)
-      const selectedProduct = productOptions.find(p => p.name === newRecordData.product_name)
-
-      if (!selectedClient || !selectedDomain || !selectedProduct) {
-        toast({
-          title: "Error",
-          description: "Please select valid options from the dropdowns",
-          variant: "destructive"
-        })
-        return
-      }
-
       const payload: AddEditHosting = {
         record_type: 3,
         s_id: user?.id || 6,
-        product_id: selectedProduct.id,
-        domain_id: selectedDomain.id,
-        client_id: selectedClient.id,
+        product_id: newRecordData.product_id!,
+        domain_id: newRecordData.domain_id!,
+        client_id: newRecordData.client_id!,
         expiry_date: newRecordData.expiry_date,
+        renewal_date: newRecordData.renewal_date,
+        amount: parseFloat(newRecordData.amount) || 0,
         status: parseInt(newRecordData.status) as 0 | 1,
         remarks: newRecordData.remarks
       }
@@ -252,6 +242,20 @@ export default function HostingPage() {
         })
         setAddingNew(false)
         fetchHostingRecords()
+        // Reset form
+        setNewRecordData({
+          domain_id: null,
+          domain_name: "",
+          client_id: null,
+          client_name: "",
+          product_id: null,
+          product_name: "",
+          expiry_date: "",
+          renewal_date: new Date().toISOString().split('T')[0],
+          amount: "",
+          status: "1",
+          remarks: ""
+        })
       } else {
         toast({
           title: "Error",
@@ -275,7 +279,15 @@ export default function HostingPage() {
   const handleEdit = (record: HostingRecord) => {
     setEditingId(record.id)
     setEditData({
-      [record.id]: { ...record }
+      [record.id]: { 
+        ...record,
+        domain_id: record.domain_id || undefined,
+        client_id: record.client_id || undefined,
+        product_id: record.product_id || undefined,
+        renewal_date: record.renewal_date || "",
+        amount: record.amount || 0,
+        remarks: record.remarks || ""
+      }
     })
   }
 
@@ -287,15 +299,12 @@ export default function HostingPage() {
       
       if (!updatedData) return
       
-      // Find IDs for selected names
-      const selectedClient = clientOptions.find(c => c.name === updatedData.client_name)
-      const selectedDomain = domainOptions.find(d => d.name === updatedData.domain_name)
-      const selectedProduct = productOptions.find(p => p.name === updatedData.product_name)
-
-      if (!selectedClient || !selectedDomain || !selectedProduct) {
+      if (!updatedData.domain_id || !updatedData.client_id || 
+          !updatedData.product_id || !updatedData.expiry_date || 
+          !updatedData.renewal_date || updatedData.amount === undefined) {
         toast({
           title: "Error",
-          description: "Please select valid options from the dropdowns",
+          description: "Please fill all required fields",
           variant: "destructive"
         })
         return
@@ -305,11 +314,13 @@ export default function HostingPage() {
         record_type: 3,
         id,
         s_id: user?.id || 6,
-        product_id: selectedProduct.id,
-        domain_id: selectedDomain.id,
-        client_id: selectedClient.id,
-        expiry_date: updatedData.expiry_date || "",
-        status: updatedData.status || 1,
+        product_id: updatedData.product_id!,
+        domain_id: updatedData.domain_id!,
+        client_id: updatedData.client_id!,
+        expiry_date: updatedData.expiry_date!,
+        renewal_date: updatedData.renewal_date!,
+        amount: updatedData.amount || 0,
+        status: updatedData.status ?? 1,
         remarks: updatedData.remarks || ""
       }
 
@@ -486,16 +497,14 @@ export default function HostingPage() {
     }
   }
 
-  const totalPages = Math.ceil(totalItems / pagination.rowsPerPage)
   const startItem = pagination.page * pagination.rowsPerPage + 1
-  const endItem = Math.min((pagination.page + 1) * pagination.rowsPerPage, totalItems)
 
   return (
     <div className="min-h-screen pb-8">
       <Header title="Hosting Management" tabs={navigationTabs} />
 
       <div className="px-4 sm:px-6 mt-6">
-        <GlassCard className="p-6">
+        <GlassCard className="p-6 backdrop-blur-xl bg-gradient-to-br from-gray-900/80 via-black/80 to-gray-900/80 border border-white/10 shadow-2xl">
           {/* Header with Search and Add Button */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
             <div>
@@ -516,7 +525,7 @@ export default function HostingPage() {
                   placeholder="Search hosting..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 py-2 w-full sm:w-64 bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.1)] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="pl-10 pr-4 py-2 w-full sm:w-64 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm transition-all"
                 />
               </div>
               
@@ -552,18 +561,18 @@ export default function HostingPage() {
           </div>
 
           {/* Table Container */}
-          <div className="overflow-hidden rounded-lg border border-[rgba(255,255,255,0.1)]">
+          <div className="overflow-hidden rounded-xl border border-white/10 backdrop-blur-sm">
             {/* Table */}
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="bg-[rgba(255,255,255,0.05)] border-b border-[rgba(255,255,255,0.1)]">
+                  <tr className="bg-white/5 border-b border-white/10">
                     <th className="py-3 px-4 text-left w-12">
                       <input
                         type="checkbox"
                         checked={isAllSelected}
                         onChange={(e) => handleSelectAll(e.target.checked)}
-                        className="w-4 h-4 rounded border-gray-300 bg-gray-700 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        className="w-4 h-4 rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500/50 cursor-pointer"
                       />
                     </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[80px]">
@@ -581,14 +590,17 @@ export default function HostingPage() {
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
                       Expiry Date
                     </th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
+                      Renewal Date
+                    </th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
+                      Amount
+                    </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
                       Days to Expire
                     </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
                       Status
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[180px]">
-                      Remarks
                     </th>
                     <th className="py-3 px-4 text-right text-sm font-medium text-gray-300 min-w-[140px]">
                       Actions
@@ -598,7 +610,7 @@ export default function HostingPage() {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={10} className="py-8 text-center">
+                      <td colSpan={11} className="py-8 text-center">
                         <div className="flex flex-col items-center justify-center gap-2">
                           <DashboardLoader label="Fetching Hosting....." />
                         </div>
@@ -608,95 +620,142 @@ export default function HostingPage() {
                     <>
                       {/* Add New Row */}
                       {addingNew && (
-                        <tr className="border-b border-[rgba(255,255,255,0.05)] bg-[rgba(59,130,246,0.05)]">
+                        <tr className="border-b border-white/5 bg-blue-500/5">
                           <td className="py-3 px-4"></td>
                           <td className="py-3 px-4 text-sm text-gray-300">
                             New
                           </td>
                           <td className="py-3 px-4">
-                            <select
-                              value={newRecordData.domain_name}
-                              onChange={(e) => handleNewRecordChange('domain_name', e.target.value)}
-                              className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                              style={{ minHeight: '32px' }}
-                            >
-                              <option value="" className="bg-gray-800 text-white">Select Domain</option>
-                              {domainOptions.map(option => (
-                                <option key={option.id} value={option.name} className="bg-gray-800 text-white">
-                                  {option.name}
-                                </option>
-                              ))}
-                            </select>
+                            <ApiDropdown
+                              endpoint="get-domains"
+                              value={
+                                newRecordData.domain_id
+                                  ? {
+                                      value: newRecordData.domain_id,
+                                      label: newRecordData.domain_name,
+                                    }
+                                  : null
+                              }
+                              onChange={(option) => {
+                                handleNewRecordChange(
+                                  "domain_id",
+                                  option?.value ?? null,
+                                );
+                                handleNewRecordChange(
+                                  "domain_name",
+                                  option?.label ?? "",
+                                );
+                              }}
+                              placeholder="Domain"
+                              className="min-h-[32px]"
+                            />
                           </td>
                           <td className="py-3 px-4">
-                            <select
-                              value={newRecordData.client_name}
-                              onChange={(e) => handleNewRecordChange('client_name', e.target.value)}
-                              className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                              style={{ minHeight: '32px' }}
-                            >
-                              <option value="" className="bg-gray-800 text-white">Select Client</option>
-                              {clientOptions.map(option => (
-                                <option key={option.id} value={option.name} className="bg-gray-800 text-white">
-                                  {option.name}
-                                </option>
-                              ))}
-                            </select>
+                            <ApiDropdown
+                              endpoint="get-clients"
+                              value={
+                                newRecordData.client_id
+                                  ? {
+                                      value: newRecordData.client_id,
+                                      label: newRecordData.client_name,
+                                    }
+                                  : null
+                              }
+                              onChange={(option) => {
+                                handleNewRecordChange(
+                                  "client_id",
+                                  option?.value ?? null,
+                                );
+                                handleNewRecordChange(
+                                  "client_name",
+                                  option?.label ?? "",
+                                );
+                              }}
+                              placeholder="Client"
+                              className="min-h-[32px]"
+                            />
                           </td>
                           <td className="py-3 px-4">
-                            <select
-                              value={newRecordData.product_name}
-                              onChange={(e) => handleNewRecordChange('product_name', e.target.value)}
-                              className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                              style={{ minHeight: '32px' }}
-                            >
-                              <option value="" className="bg-gray-800 text-white">Select Hosting Plan</option>
-                              {productOptions.map(option => (
-                                <option key={option.id} value={option.name} className="bg-gray-800 text-white">
-                                  {option.name}
-                                </option>
-                              ))}
-                            </select>
+                            <ApiDropdown
+                              endpoint="get-products"
+                              value={
+                                newRecordData.product_id
+                                  ? {
+                                      value: newRecordData.product_id,
+                                      label: newRecordData.product_name,
+                                    }
+                                  : null
+                              }
+                              onChange={(option) => {
+                                handleNewRecordChange(
+                                  "product_id",
+                                  option?.value ?? null,
+                                );
+                                handleNewRecordChange(
+                                  "product_name",
+                                  option?.label ?? "",
+                                );
+                              }}
+                              placeholder="Hosting Plan"
+                              className="min-h-[32px]"
+                            />
                           </td>
                           <td className="py-3 px-4">
                             <input
                               type="date"
                               value={newRecordData.expiry_date}
                               onChange={(e) => handleNewRecordChange('expiry_date', e.target.value)}
-                              className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
                               style={{ minHeight: '32px' }}
                             />
                           </td>
-                          <td className="py-3 px-4 text-sm text-gray-300">
-                            --
+                          <td className="py-3 px-4">
+                            <input
+                              type="date"
+                              value={newRecordData.renewal_date}
+                              onChange={(e) => handleNewRecordChange('renewal_date', e.target.value)}
+                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                              style={{ minHeight: '32px' }}
+                            />
+                          </td>
+                          <td className="py-3 px-4">
+                            <input
+                              type="number"
+                              value={newRecordData.amount}
+                              onChange={(e) => handleNewRecordChange('amount', e.target.value)}
+                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                              style={{ minHeight: '32px' }}
+                              min="0"
+                              step="0.01"
+                              placeholder="0.00"
+                            />
+                          </td>
+                          <td className="py-3 px-4">
+                            <input
+                              type="number"
+                              value={calculateDays(newRecordData.expiry_date)}
+                              readOnly
+                              className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-sm cursor-not-allowed"
+                              style={{ minHeight: '32px' }}
+                            />
                           </td>
                           <td className="py-3 px-4">
                             <select
                               value={newRecordData.status}
                               onChange={(e) => handleNewRecordChange('status', e.target.value as "1" | "0")}
-                              className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
                               style={{ minHeight: '32px' }}
                             >
-                              <option value="1" className="bg-gray-800 text-white">Active</option>
-                              <option value="0" className="bg-gray-800 text-white">Inactive</option>
+                              <option value="1" className="bg-gray-900 text-white">Active</option>
+                              <option value="0" className="bg-gray-900 text-white">Inactive</option>
                             </select>
                           </td>
                           <td className="py-3 px-4">
-                            <input
-                              type="text"
-                              value={newRecordData.remarks}
-                              onChange={(e) => handleNewRecordChange('remarks', e.target.value)}
-                              className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                              style={{ minHeight: '32px' }}
-                              placeholder="Remarks"
-                            />
-                          </td>
-                          <td className="py-3 px-4">
                             <div className="flex items-center justify-end gap-2">
-                              <button
+                              <GlassButton
                                 onClick={handleSaveNew}
                                 disabled={isSaving}
-                                className="p-1.5 rounded bg-green-500/20 hover:bg-green-500/30 transition-colors disabled:opacity-50"
+                                className="p-1.5 min-w-0 bg-green-500/20 hover:bg-green-500/30"
                                 title="Save"
                               >
                                 {isSaving ? (
@@ -704,15 +763,15 @@ export default function HostingPage() {
                                 ) : (
                                   <Save className="w-4 h-4 text-green-400" />
                                 )}
-                              </button>
-                              <button
+                              </GlassButton>
+                              <GlassButton
                                 onClick={handleCancelAdd}
                                 disabled={isSaving}
-                                className="p-1.5 rounded bg-red-500/20 hover:bg-red-500/30 transition-colors disabled:opacity-50"
+                                className="p-1.5 min-w-0 bg-red-500/20 hover:bg-red-500/30"
                                 title="Cancel"
                               >
                                 <X className="w-4 h-4 text-red-400" />
-                              </button>
+                              </GlassButton>
                             </div>
                           </td>
                         </tr>
@@ -721,14 +780,14 @@ export default function HostingPage() {
                       {/* Existing Data Rows */}
                       {data.length === 0 ? (
                         <tr>
-                          <td colSpan={10} className="py-8 text-center">
+                          <td colSpan={11} className="py-8 text-center">
                             <div className="flex flex-col items-center justify-center gap-2">
                               <Server className="w-12 h-12 text-gray-400" />
                               <span className="text-gray-400">No hosting records found</span>
                               {searchQuery && (
                                 <button
                                   onClick={() => setSearchQuery("")}
-                                  className="text-sm text-blue-400 hover:text-blue-300"
+                                  className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
                                 >
                                   Clear search
                                 </button>
@@ -740,8 +799,8 @@ export default function HostingPage() {
                         data.map((item, index) => (
                           <tr
                             key={item.id}
-                            className={`border-b border-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.02)] transition-colors ${
-                              editingId === item.id ? 'bg-[rgba(59,130,246,0.05)]' : ''
+                            className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors ${
+                              editingId === item.id ? 'bg-blue-500/5' : ''
                             }`}
                           >
                             <td className="py-3 px-4">
@@ -749,7 +808,7 @@ export default function HostingPage() {
                                 type="checkbox"
                                 checked={selectedItems.includes(item.id)}
                                 onChange={(e) => handleSelectItem(item.id, e.target.checked)}
-                                className="w-4 h-4 rounded border-gray-300 bg-gray-700 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                className="w-4 h-4 rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500/50 cursor-pointer"
                               />
                             </td>
                             <td className="py-3 px-4 text-sm text-gray-300">
@@ -759,58 +818,134 @@ export default function HostingPage() {
                             {editingId === item.id ? (
                               <>
                                 <td className="py-3 px-4">
-                                  <select
-                                    value={editData[item.id]?.domain_name || item.domain_name || ""}
-                                    onChange={(e) => handleEditChange(item.id, 'domain_name', e.target.value)}
-                                    className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                                    style={{ minHeight: '32px' }}
-                                  >
-                                    <option value="" className="bg-gray-800 text-white">Select Domain</option>
-                                    {domainOptions.map(option => (
-                                      <option key={option.id} value={option.name} className="bg-gray-800 text-white">
-                                        {option.name}
-                                      </option>
-                                    ))}
-                                  </select>
+                                  <ApiDropdown
+                                    endpoint="get-domains"
+                                    value={
+                                      editData[item.id]?.domain_id
+                                        ? {
+                                            value: editData[item.id]?.domain_id!,
+                                            label: editData[item.id]?.domain_name || "",
+                                          }
+                                        : null
+                                    }
+                                    onChange={(option) => {
+                                      handleEditChange(
+                                        item.id,
+                                        "domain_id",
+                                        option?.value ?? null,
+                                      );
+                                      handleEditChange(
+                                        item.id,
+                                        "domain_name",
+                                        option?.label ?? "",
+                                      );
+                                    }}
+                                    placeholder="Domain"
+                                    className="min-h-[32px]"
+                                  />
                                 </td>
                                 <td className="py-3 px-4">
-                                  <select
-                                    value={editData[item.id]?.client_name || item.client_name || ""}
-                                    onChange={(e) => handleEditChange(item.id, 'client_name', e.target.value)}
-                                    className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                                    style={{ minHeight: '32px' }}
-                                  >
-                                    <option value="" className="bg-gray-800 text-white">Select Client</option>
-                                    {clientOptions.map(option => (
-                                      <option key={option.id} value={option.name} className="bg-gray-800 text-white">
-                                        {option.name}
-                                      </option>
-                                    ))}
-                                  </select>
+                                  <ApiDropdown
+                                    endpoint="get-clients"
+                                    value={
+                                      editData[item.id]?.client_id
+                                        ? {
+                                            value: editData[item.id]?.client_id!,
+                                            label: editData[item.id]?.client_name || "",
+                                          }
+                                        : null
+                                    }
+                                    onChange={(option) => {
+                                      handleEditChange(
+                                        item.id,
+                                        "client_id",
+                                        option?.value ?? null,
+                                      );
+                                      handleEditChange(
+                                        item.id,
+                                        "client_name",
+                                        option?.label ?? "",
+                                      );
+                                    }}
+                                    placeholder="Client"
+                                    className="min-h-[32px]"
+                                  />
                                 </td>
                                 <td className="py-3 px-4">
-                                  <select
-                                    value={editData[item.id]?.product_name || item.product_name}
-                                    onChange={(e) => handleEditChange(item.id, 'product_name', e.target.value)}
-                                    className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                                    style={{ minHeight: '32px' }}
-                                  >
-                                    <option value="" className="bg-gray-800 text-white">Select Hosting Plan</option>
-                                    {productOptions.map(option => (
-                                      <option key={option.id} value={option.name} className="bg-gray-800 text-white">
-                                        {option.name}
-                                      </option>
-                                    ))}
-                                  </select>
+                                  <ApiDropdown
+                                    endpoint="get-products"
+                                    value={
+                                      editData[item.id]?.product_id
+                                        ? {
+                                            value: editData[item.id]?.product_id!,
+                                            label: editData[item.id]?.product_name || "",
+                                          }
+                                        : null
+                                    }
+                                    onChange={(option) => {
+                                      handleEditChange(
+                                        item.id,
+                                        "product_id",
+                                        option?.value ?? null,
+                                      );
+                                      handleEditChange(
+                                        item.id,
+                                        "product_name",
+                                        option?.label ?? "",
+                                      );
+                                    }}
+                                    placeholder="Hosting Plan"
+                                    className="min-h-[32px]"
+                                  />
                                 </td>
                                 <td className="py-3 px-4">
                                   <input
                                     type="date"
                                     value={editData[item.id]?.expiry_date || item.expiry_date}
                                     onChange={(e) => handleEditChange(item.id, 'expiry_date', e.target.value)}
-                                    className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
                                     style={{ minHeight: '32px' }}
                                   />
+                                </td>
+                                <td className="py-3 px-4">
+                                  <input
+                                    type="date"
+                                    value={editData[item.id]?.renewal_date || item.renewal_date || ""}
+                                    onChange={(e) => handleEditChange(item.id, 'renewal_date', e.target.value)}
+                                    className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                    style={{ minHeight: '32px' }}
+                                  />
+                                </td>
+                                <td className="py-3 px-4">
+                                  <input
+                                    type="number"
+                                    value={editData[item.id]?.amount || item.amount || ""}
+                                    onChange={(e) => handleEditChange(item.id, 'amount', parseFloat(e.target.value) || 0)}
+                                    className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                    style={{ minHeight: '32px' }}
+                                    min="0"
+                                    step="0.01"
+                                  />
+                                </td>
+                                <td className="py-3 px-4">
+                                  <input
+                                    type="number"
+                                    value={calculateDays(editData[item.id]?.expiry_date || item.expiry_date)}
+                                    readOnly
+                                    className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-sm cursor-not-allowed"
+                                    style={{ minHeight: '32px' }}
+                                  />
+                                </td>
+                                <td className="py-3 px-4">
+                                  <select
+                                    value={editData[item.id]?.status?.toString() || item.status.toString()}
+                                    onChange={(e) => handleEditChange(item.id, 'status', parseInt(e.target.value) as 0 | 1)}
+                                    className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                    style={{ minHeight: '32px' }}
+                                  >
+                                    <option value="1" className="bg-gray-900 text-white">Active</option>
+                                    <option value="0" className="bg-gray-900 text-white">Inactive</option>
+                                  </select>
                                 </td>
                               </>
                             ) : (
@@ -841,78 +976,53 @@ export default function HostingPage() {
                                 </td>
                                 <td className="py-3 px-4 text-sm text-gray-300">
                                   <div className="flex items-center gap-2">
-                                    <Calendar className="w-4 h-4 text-gray-400" />
+                                    {/* <Calendar className="w-4 h-4 text-gray-400" /> */}
                                     {formatDate(item.expiry_date)}
+                                  </div>
+                                </td>
+                                <td className="py-3 px-4 text-sm text-gray-300">
+                                  <div className="flex items-center gap-2">
+                                    <Calendar className="w-4 h-4 text-gray-400" />
+                                    {item.renewal_date ? formatDate(item.renewal_date) : "N/A"}
+                                  </div>
+                                </td>
+                                <td className="py-3 px-4 text-sm text-gray-300">
+                                  <div className="flex items-center gap-2">
+                                    {/* <DollarSign className="w-4 h-4 text-gray-400" /> */}
+                                    {item.amount || "0.00"}
+                                  </div>
+                                </td>
+                                <td className="py-3 px-4">
+                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm border ${
+                                    calculateDays(item.expiry_date) < 0 
+                                      ? 'bg-red-500/20 text-red-400 border-red-500/20' 
+                                      : calculateDays(item.expiry_date) <= 30 
+                                        ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/20'
+                                        : 'bg-green-500/20 text-green-400 border-green-500/20'
+                                  }`}>
+                                    {/* <Clock className="w-3 h-3" /> */}
+                                    {calculateDays(item.expiry_date)} days
+                                  </div>
+                                </td>
+                                <td className="py-3 px-4">
+                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm border ${getStatusColor(item.status)} ${
+                                    item.status === 1 ? 'bg-green-500/20 border-green-500/20' : 'bg-red-500/20 border-red-500/20'
+                                  }`}>
+                                    {getStatusIcon(item.status)}
+                                    {getStatusText(item.status)}
                                   </div>
                                 </td>
                               </>
                             )}
                             
                             <td className="py-3 px-4">
-                              <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
-                                calculateDays(item.expiry_date) < 0 
-                                  ? 'bg-red-500/20 text-red-400' 
-                                  : calculateDays(item.expiry_date) <= 30 
-                                    ? 'bg-yellow-500/20 text-yellow-400'
-                                    : 'bg-green-500/20 text-green-400'
-                              }`}>
-                                <Clock className="w-3 h-3" />
-                                {calculateDays(item.expiry_date)} days
-                              </div>
-                            </td>
-                            
-                            {editingId === item.id ? (
-                              <td className="py-3 px-4">
-                                <select
-                                  value={editData[item.id]?.status?.toString() || item.status.toString()}
-                                  onChange={(e) => handleEditChange(item.id, 'status', parseInt(e.target.value) as 0 | 1)}
-                                  className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                                  style={{ minHeight: '32px' }}
-                                >
-                                  <option value="1" className="bg-gray-800 text-white">Active</option>
-                                  <option value="0" className="bg-gray-800 text-white">Inactive</option>
-                                </select>
-                              </td>
-                            ) : (
-                              <td className="py-3 px-4">
-                                <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(item.status)} bg-opacity-20 ${
-                                  item.status === 1 ? 'bg-green-500/20' : 'bg-red-500/20'
-                                }`}>
-                                  {getStatusIcon(item.status)}
-                                  {getStatusText(item.status)}
-                                </div>
-                              </td>
-                            )}
-                            
-                            {editingId === item.id ? (
-                              <td className="py-3 px-4">
-                                <input
-                                  type="text"
-                                  value={editData[item.id]?.remarks || item.remarks}
-                                  onChange={(e) => handleEditChange(item.id, 'remarks', e.target.value)}
-                                  className="w-full px-2 py-1 bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(59,130,246,0.3)] rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
-                                  style={{ minHeight: '32px' }}
-                                />
-                              </td>
-                            ) : (
-                              <td className="py-3 px-4">
-                                <div className="flex items-center gap-2">
-                                  <AlertCircle className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                                  <span className="text-sm text-gray-300 truncate max-w-[180px]">
-                                    {item.remarks}
-                                  </span>
-                                </div>
-                              </td>
-                            )}
-                            
-                            <td className="py-3 px-4">
                               <div className="flex items-center justify-end gap-2">
                                 {editingId === item.id ? (
                                   <>
-                                    <button
+                                    <GlassButton
                                       onClick={() => handleSave(item.id)}
                                       disabled={isSaving}
-                                      className="p-1.5 rounded bg-green-500/20 hover:bg-green-500/30 transition-colors disabled:opacity-50"
+                                      className="p-1.5 min-w-0 bg-green-500/20 hover:bg-green-500/30"
                                       title="Save"
                                     >
                                       {isSaving ? (
@@ -920,32 +1030,32 @@ export default function HostingPage() {
                                       ) : (
                                         <Save className="w-4 h-4 text-green-400" />
                                       )}
-                                    </button>
-                                    <button
+                                    </GlassButton>
+                                    <GlassButton
                                       onClick={handleCancelEdit}
                                       disabled={isSaving}
-                                      className="p-1.5 rounded bg-red-500/20 hover:bg-red-500/30 transition-colors disabled:opacity-50"
+                                      className="p-1.5 min-w-0 bg-red-500/20 hover:bg-red-500/30"
                                       title="Cancel"
                                     >
                                       <X className="w-4 h-4 text-red-400" />
-                                    </button>
+                                    </GlassButton>
                                   </>
                                 ) : (
                                   <>
-                                    <button
+                                    <GlassButton
                                       onClick={() => handleEdit(item)}
-                                      className="p-1.5 rounded hover:bg-[rgba(255,255,255,0.1)] transition-colors"
+                                      className="p-1.5 min-w-0 hover:bg-white/10"
                                       title="Edit"
                                     >
-                                      <Edit className="w-4 h-4 text-gray-400 hover:text-blue-400" />
-                                    </button>
-                                    <button
+                                      <Edit className="w-4 h-4 text-gray-300 hover:text-blue-400 transition-colors" />
+                                    </GlassButton>
+                                    <GlassButton
                                       onClick={() => handleDeleteClick(item.id)}
-                                      className="p-1.5 rounded hover:bg-red-500/20 transition-colors"
+                                      className="p-1.5 min-w-0 hover:bg-red-500/20"
                                       title="Delete"
                                     >
-                                      <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-400" />
-                                    </button>
+                                      <Trash2 className="w-4 h-4 text-gray-300 hover:text-red-400 transition-colors" />
+                                    </GlassButton>
                                   </>
                                 )}
                               </div>
@@ -961,61 +1071,6 @@ export default function HostingPage() {
 
             {/* Pagination */}
             {!loading && data.length > 0 && (
-              // <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 bg-[rgba(255,255,255,0.05)] border-t border-[rgba(255,255,255,0.1)]">
-              //   <div className="text-sm text-gray-400 mb-3 sm:mb-0">
-              //     Showing {startItem} to {endItem} of {totalItems} hosting records
-              //   </div>
-              //   <div className="flex items-center gap-2">
-              //     <button
-              //       onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
-              //       disabled={pagination.page === 0}
-              //       className="p-2 rounded-lg bg-[rgba(255,255,255,0.05)] text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[rgba(255,255,255,0.1)] transition-colors"
-              //       title="Previous"
-              //     >
-              //       <ChevronLeft className="w-4 h-4" />
-              //     </button>
-                  
-              //     <div className="flex items-center gap-1">
-              //       {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              //         let pageNum
-              //         if (totalPages <= 5) {
-              //           pageNum = i
-              //         } else if (pagination.page <= 2) {
-              //           pageNum = i
-              //         } else if (pagination.page >= totalPages - 3) {
-              //           pageNum = totalPages - 5 + i
-              //         } else {
-              //           pageNum = pagination.page - 2 + i
-              //         }
-                      
-              //         if (pageNum >= totalPages) return null
-                      
-              //         return (
-              //           <button
-              //             key={pageNum}
-              //             onClick={() => setPagination(prev => ({ ...prev, page: pageNum }))}
-              //             className={`px-3 py-1 rounded text-sm transition-colors ${
-              //               pagination.page === pageNum
-              //                 ? 'bg-blue-600 text-white'
-              //                 : 'bg-[rgba(255,255,255,0.05)] text-gray-300 hover:bg-[rgba(255,255,255,0.1)]'
-              //             }`}
-              //           >
-              //             {pageNum + 1}
-              //           </button>
-              //         )
-              //       })}
-              //     </div>
-                  
-              //     <button
-              //       onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
-              //       disabled={pagination.page >= totalPages - 1}
-              //       className="p-2 rounded-lg bg-[rgba(255,255,255,0.05)] text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[rgba(255,255,255,0.1)] transition-colors"
-              //       title="Next"
-              //     >
-              //       <ChevronRight className="w-4 h-4" />
-              //     </button>
-              //   </div>
-              // </div>
               <Pagination
                 page={pagination.page}
                 rowsPerPage={pagination.rowsPerPage}
@@ -1027,7 +1082,7 @@ export default function HostingPage() {
 
           {/* Selected Items Info */}
           {selectedItems.length > 0 && (
-            <div className="mt-4 p-3 bg-[rgba(255,255,255,0.05)] rounded-lg border border-[rgba(255,255,255,0.1)]">
+            <div className="mt-4 p-3 bg-white/5 rounded-lg border border-white/10 backdrop-blur-sm">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-300">
                   {selectedItems.length} hosting record{selectedItems.length > 1 ? 's' : ''} selected
@@ -1072,7 +1127,6 @@ export default function HostingPage() {
     </div>
   )
 }
-
 
 
 

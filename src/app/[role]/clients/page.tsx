@@ -27,6 +27,7 @@ import { GlassSelect } from "@/components/glass/GlassSelect"
 import { getNavigationByRole } from "@/lib/getNavigationByRole"
 import Pagination from "@/common/Pagination"
 import DashboardLoader from "@/common/DashboardLoader"
+import { glassSelectStyles } from "@/common/DynamicDropdown"
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://rainbowsolutionandtechnology.com/FSISubscriptionPortal/public/api"
 const ASSETS_URL = process.env.NEXT_PUBLIC_ASSETS_URL || BASE_URL
@@ -42,6 +43,7 @@ interface DomainOption {
 }
 
 interface Client {
+  password: string
   id: number
   name: string
   email: string
@@ -340,7 +342,7 @@ export default function ClientsPage() {
           phone: client.phone || client.number || "",
           number: client.number || client.phone || "",
           address: client.address || "",
-          password: "", // Password empty for edit
+          password: client.password || "", 
           domain_ids: client.domain_ids?.map(id => parseInt(id)) || [],
           profile: null,
           type: 1
@@ -673,85 +675,6 @@ export default function ClientsPage() {
   const startItem = pagination.page * pagination.rowsPerPage + 1
   const endItem = Math.min((pagination.page + 1) * pagination.rowsPerPage, totalClients)
 
-  // Custom styles for react-select with light/dark mode support
-  const selectStyles = {
-    control: (base: any, state: any) => ({
-      ...base,
-      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-      borderColor: 'rgba(255, 255, 255, 0.1)',
-      color: '#fff',
-      borderRadius: '0.5rem',
-      minHeight: '42px',
-      '&:hover': {
-        borderColor: 'rgba(255, 255, 255, 0.2)',
-      }
-    }),
-    menu: (base: any) => ({
-      ...base,
-      backgroundColor: 'rgba(0, 0, 0, 0.9)',
-      border: '1px solid rgba(255, 255, 255, 0.1)',
-      borderRadius: '0.5rem',
-      zIndex: 9999,
-    }),
-    option: (base: any, state: any) => ({
-      ...base,
-      backgroundColor: state.isSelected 
-        ? 'rgba(59, 130, 246, 0.5)' 
-        : state.isFocused 
-          ? 'rgba(255, 255, 255, 0.1)' 
-          : 'transparent',
-      color: '#fff',
-      '&:active': {
-        backgroundColor: 'rgba(59, 130, 246, 0.3)',
-      }
-    }),
-    multiValue: (base: any) => ({
-      ...base,
-      backgroundColor: 'rgba(59, 130, 246, 0.2)',
-    }),
-    multiValueLabel: (base: any) => ({
-      ...base,
-      color: '#fff',
-    }),
-    multiValueRemove: (base: any) => ({
-      ...base,
-      color: '#fff',
-      '&:hover': {
-        backgroundColor: 'rgba(239, 68, 68, 0.3)',
-        color: '#fff',
-      }
-    }),
-    input: (base: any) => ({
-      ...base,
-      color: '#fff',
-    }),
-    singleValue: (base: any) => ({
-      ...base,
-      color: '#fff',
-    }),
-    placeholder: (base: any) => ({
-      ...base,
-      color: 'rgba(255, 255, 255, 0.4)',
-    }),
-    dropdownIndicator: (base: any) => ({
-      ...base,
-      color: 'rgba(255, 255, 255, 0.4)',
-      '&:hover': {
-        color: 'rgba(255, 255, 255, 0.6)',
-      }
-    }),
-    clearIndicator: (base: any) => ({
-      ...base,
-      color: 'rgba(255, 255, 255, 0.4)',
-      '&:hover': {
-        color: 'rgba(255, 255, 255, 0.6)',
-      }
-    }),
-    indicatorSeparator: (base: any) => ({
-      ...base,
-      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    })
-  }
 
   return (
     <div className="min-h-screen pb-8">
@@ -1177,7 +1100,7 @@ export default function ClientsPage() {
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button> */}
             </div>
-            {editingClient ? (
+            {/* {editingClient ? (
               <p className="text-xs text-gray-400 mt-1">
                 Leave password empty to keep current password
               </p>
@@ -1185,7 +1108,7 @@ export default function ClientsPage() {
               <p className="text-xs text-gray-400 mt-1">
                 Minimum 6 characters
               </p>
-            )}
+            )} */}
           </div>
           
           {/* Domain Selection using react-select */}
@@ -1201,6 +1124,7 @@ export default function ClientsPage() {
   isSearchable
   isClearable
   noOptionsMessage={() => "No domains found"}
+  styles={glassSelectStyles}
 />
 
           </div>
