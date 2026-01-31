@@ -73,7 +73,7 @@ export function StatsRow({ stats, className }: StatsRowProps) {
   return (
     <div
       className={cn(
-        "grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6 animate-fade-in",
+        "grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6 animate-fade-in",
         className,
       )}
     >

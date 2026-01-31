@@ -33,6 +33,7 @@ import { getNavigationByRole } from "@/lib/getNavigationByRole"
 import { ApiDropdown } from "@/common/DynamicDropdown"
 
 interface HostingRecord {
+  deleted_at: ReactNode
   id: number
   client_name: string | null
   client_id?: number
@@ -40,13 +41,19 @@ interface HostingRecord {
   domain_id?: number
   product_name: string
   product_id?: number
+  vender_name: string
+  vender_id?: number
   expiry_date: string
-  renewal_date: string
   amount: number | null
   days_to_expire_today: number
   today_date: string
-  status: 0 | 1
-  remarks: string
+  status: 0 | 1  
+  remarks: string;
+  remark_id: number | null;
+  latest_remark?: {
+    id: number;
+    remark: string;
+  };
   created_at: string
   updated_at: string
 }
@@ -56,13 +63,14 @@ interface AddEditHosting {
   id?: number
   s_id: number
   product_id: number
+  vender_id: number
   domain_id: number
   client_id: number
   expiry_date: string
-  renewal_date: string
   amount: number
   status: 0 | 1
   remarks: string
+  remark_id: number;
 }
 
 export default function HostingPage() {
@@ -88,9 +96,9 @@ export default function HostingPage() {
     client_id: null as number | null,
     client_name: "",
     product_id: null as number | null,
+    vender_id: null as number | null,
     product_name: "",
     expiry_date: "",
-    renewal_date: "",
     amount: "",
     status: "1" as "1" | "0",
     remarks: ""
@@ -176,9 +184,9 @@ export default function HostingPage() {
       client_id: null,
       client_name: "",
       product_id: null,
+      vender_id: null,
       product_name: "",
       expiry_date: "",
-      renewal_date: today,
       amount: "",
       status: "1",
       remarks: ""
@@ -194,9 +202,9 @@ export default function HostingPage() {
       client_id: null,
       client_name: "",
       product_id: null,
+      vender_id: null,
       product_name: "",
       expiry_date: "",
-      renewal_date: "",
       amount: "",
       status: "1",
       remarks: ""
@@ -209,8 +217,7 @@ export default function HostingPage() {
       setIsSaving(true)
       
       if (!newRecordData.domain_id || !newRecordData.client_id || 
-          !newRecordData.product_id || !newRecordData.expiry_date || 
-          !newRecordData.renewal_date || !newRecordData.amount) {
+          !newRecordData.product_id || !newRecordData.vender_id || !newRecordData.expiry_date ){
         toast({
           title: "Error",
           description: "Please fill all required fields",
@@ -223,10 +230,10 @@ export default function HostingPage() {
         record_type: 3,
         s_id: user?.id || 6,
         product_id: newRecordData.product_id!,
+        vender_id: newRecordData.vender_id!,
         domain_id: newRecordData.domain_id!,
         client_id: newRecordData.client_id!,
         expiry_date: newRecordData.expiry_date,
-        renewal_date: newRecordData.renewal_date,
         amount: parseFloat(newRecordData.amount) || 0,
         status: parseInt(newRecordData.status) as 0 | 1,
         remarks: newRecordData.remarks
@@ -249,9 +256,9 @@ export default function HostingPage() {
           client_id: null,
           client_name: "",
           product_id: null,
+          vender_id: null,
           product_name: "",
           expiry_date: "",
-          renewal_date: new Date().toISOString().split('T')[0],
           amount: "",
           status: "1",
           remarks: ""
@@ -284,9 +291,10 @@ export default function HostingPage() {
         domain_id: record.domain_id || undefined,
         client_id: record.client_id || undefined,
         product_id: record.product_id || undefined,
-        renewal_date: record.renewal_date || "",
+        vender_id: record.vender_id || undefined,
         amount: record.amount || 0,
-        remarks: record.remarks || ""
+        remarks: record.remarks || "",
+        remark_id: record?.latest_remark?.id || null
       }
     })
   }
@@ -300,8 +308,8 @@ export default function HostingPage() {
       if (!updatedData) return
       
       if (!updatedData.domain_id || !updatedData.client_id || 
-          !updatedData.product_id || !updatedData.expiry_date || 
-          !updatedData.renewal_date || updatedData.amount === undefined) {
+          !updatedData.product_id || !updatedData.vender_id || !updatedData.expiry_date || 
+           updatedData.amount === undefined) {
         toast({
           title: "Error",
           description: "Please fill all required fields",
@@ -315,13 +323,14 @@ export default function HostingPage() {
         id,
         s_id: user?.id || 6,
         product_id: updatedData.product_id!,
+        vender_id: updatedData.vender_id!,
         domain_id: updatedData.domain_id!,
         client_id: updatedData.client_id!,
         expiry_date: updatedData.expiry_date!,
-        renewal_date: updatedData.renewal_date!,
         amount: updatedData.amount || 0,
         status: updatedData.status ?? 1,
-        remarks: updatedData.remarks || ""
+        remarks: updatedData.remarks || "",
+        remark_id: updatedData.remark_id || null,
       }
 
       const response = await apiService.editRecord(payload as any)
@@ -585,10 +594,10 @@ export default function HostingPage() {
                       Client
                     </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[180px]">
-                      Hosting Plan
+                       Product 
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
-                      Expiry Date
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[180px]">
+                       Vender 
                     </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
                       Renewal Date
@@ -601,6 +610,15 @@ export default function HostingPage() {
                     </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
                       Status
+                    </th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[180px]">
+                      Remarks
+                    </th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
+                      Deleted Date
+                    </th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
+                      Last Updated
                     </th>
                     <th className="py-3 px-4 text-right text-sm font-medium text-gray-300 min-w-[140px]">
                       Actions
@@ -696,7 +714,32 @@ export default function HostingPage() {
                                   option?.label ?? "",
                                 );
                               }}
-                              placeholder="Hosting Plan"
+                              placeholder="Product"
+                              className="min-h-[32px]"
+                            />
+                          </td>
+                          <td className="py-3 px-4">
+                            <ApiDropdown
+                              endpoint="get-venders"
+                              value={
+                                newRecordData.vender_id
+                                  ? {
+                                      value: newRecordData.vender_id,
+                                      label: newRecordData.vender_name,
+                                    }
+                                  : null
+                              }
+                              onChange={(option) => {
+                                handleNewRecordChange(
+                                  "vender_id",
+                                  option?.value ?? null,
+                                );
+                                handleNewRecordChange(
+                                  "vender_name",
+                                  option?.label ?? "",
+                                );
+                              }}
+                              placeholder="Vender"
                               className="min-h-[32px]"
                             />
                           </td>
@@ -705,15 +748,6 @@ export default function HostingPage() {
                               type="date"
                               value={newRecordData.expiry_date}
                               onChange={(e) => handleNewRecordChange('expiry_date', e.target.value)}
-                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                              style={{ minHeight: '32px' }}
-                            />
-                          </td>
-                          <td className="py-3 px-4">
-                            <input
-                              type="date"
-                              value={newRecordData.renewal_date}
-                              onChange={(e) => handleNewRecordChange('renewal_date', e.target.value)}
                               className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
                               style={{ minHeight: '32px' }}
                             />
@@ -750,6 +784,24 @@ export default function HostingPage() {
                               <option value="0" className="bg-gray-900 text-white">Inactive</option>
                             </select>
                           </td>
+                          <td className="py-3 px-4">
+                            <input
+                              type="text"
+                              value={newRecordData.remarks}
+                              onChange={(e) =>
+                                handleNewRecordChange("remarks", e.target.value)
+                              }
+                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                              style={{ minHeight: "32px" }}
+                              placeholder="Remarks"
+                            />
+                          </td>
+                           <td className="py-3 px-4 text-sm text-gray-300">
+                                  {"- -"}
+                                </td>
+                           <td className="py-3 px-4 text-sm text-gray-300">
+                                  {"- -"}
+                                </td>
                           <td className="py-3 px-4">
                             <div className="flex items-center justify-end gap-2">
                               <GlassButton
@@ -894,7 +946,34 @@ export default function HostingPage() {
                                         option?.label ?? "",
                                       );
                                     }}
-                                    placeholder="Hosting Plan"
+                                    placeholder="Product"
+                                    className="min-h-[32px]"
+                                  />
+                                </td>
+                                <td className="py-3 px-4">
+                                  <ApiDropdown
+                                    endpoint="get-venders"
+                                    value={
+                                      editData[item.id]?.vendor_id
+                                        ? {
+                                            value: editData[item.id]?.vendor_id!,
+                                            label: editData[item.id]?.vendor_name || "",
+                                          }
+                                        : null
+                                    }
+                                    onChange={(option) => {
+                                      handleEditChange(
+                                        item.id,
+                                        "vendor_id",
+                                        option?.value ?? null,
+                                      );
+                                      handleEditChange(
+                                        item.id,
+                                        "vendor_name",
+                                        option?.label ?? "",
+                                      );
+                                    }}
+                                    placeholder="Vendor"
                                     className="min-h-[32px]"
                                   />
                                 </td>
@@ -903,15 +982,6 @@ export default function HostingPage() {
                                     type="date"
                                     value={editData[item.id]?.expiry_date || item.expiry_date}
                                     onChange={(e) => handleEditChange(item.id, 'expiry_date', e.target.value)}
-                                    className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                                    style={{ minHeight: '32px' }}
-                                  />
-                                </td>
-                                <td className="py-3 px-4">
-                                  <input
-                                    type="date"
-                                    value={editData[item.id]?.renewal_date || item.renewal_date || ""}
-                                    onChange={(e) => handleEditChange(item.id, 'renewal_date', e.target.value)}
                                     className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
                                     style={{ minHeight: '32px' }}
                                   />
@@ -947,6 +1017,27 @@ export default function HostingPage() {
                                     <option value="0" className="bg-gray-900 text-white">Inactive</option>
                                   </select>
                                 </td>
+                                <td className="py-3 px-4">
+                                  <input
+                                    type="text"
+                                    value={editData[item.id]?.remarks || item?.latest_remark?.remark}
+                                    onChange={(e) =>
+                                      handleEditChange(
+                                        item.id,
+                                        "remarks",
+                                        e.target.value,
+                                      )
+                                    }
+                                    className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                    style={{ minHeight: "32px" }}
+                                  />
+                                </td>
+                                 <td className="py-3 px-4 text-sm text-gray-300">
+                                  {(item.deleted_at)}
+                                </td>
+                                 <td className="py-3 px-4 text-sm text-gray-300">
+                                  {(item.updated_at)}
+                                </td>
                               </>
                             ) : (
                               <>
@@ -974,16 +1065,18 @@ export default function HostingPage() {
                                     </span>
                                   </div>
                                 </td>
-                                <td className="py-3 px-4 text-sm text-gray-300">
+                                <td className="py-3 px-4">
                                   <div className="flex items-center gap-2">
-                                    {/* <Calendar className="w-4 h-4 text-gray-400" /> */}
-                                    {formatDate(item.expiry_date)}
+                                    {/* <Package className="w-4 h-4 text-gray-400 flex-shrink-0" /> */}
+                                    <span className="text-sm text-white font-medium">
+                                      {item.vender_name}
+                                    </span>
                                   </div>
                                 </td>
                                 <td className="py-3 px-4 text-sm text-gray-300">
                                   <div className="flex items-center gap-2">
-                                    <Calendar className="w-4 h-4 text-gray-400" />
-                                    {item.renewal_date ? formatDate(item.renewal_date) : "N/A"}
+                                    {/* <Calendar className="w-4 h-4 text-gray-400" /> */}
+                                    {formatDate(item.expiry_date)}
                                   </div>
                                 </td>
                                 <td className="py-3 px-4 text-sm text-gray-300">
@@ -1011,6 +1104,20 @@ export default function HostingPage() {
                                     {getStatusIcon(item.status)}
                                     {getStatusText(item.status)}
                                   </div>
+                                </td>
+                                 <td className="py-3 px-4">
+                                  <div className="flex items-center gap-2">
+                                    {/* <AlertCircle className="w-4 h-4 text-gray-400 flex-shrink-0" /> */}
+                                    <span className="text-sm text-gray-300 truncate max-w-[180px]">
+                                      {item?.latest_remark?.remark}
+                                    </span>
+                                  </div>
+                                </td>
+                                <td className="py-3 px-4 text-sm text-gray-300">
+                                  {(item.deleted_at)}
+                                </td>
+                                 <td className="py-3 px-4 text-sm text-gray-300">
+                                  {(item.updated_at)}
                                 </td>
                               </>
                             )}

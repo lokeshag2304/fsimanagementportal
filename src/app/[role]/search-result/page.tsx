@@ -42,7 +42,7 @@ export default function SearchResultsPage() {
   const { user, getToken } = useAuth()
   const navigationTabs = getNavigationByRole(user?.role)
   const [data, setData] = useState<SearchResult[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [pagination, setPagination] = useState<PaginationState>({
@@ -92,10 +92,10 @@ export default function SearchResultsPage() {
 
   // Fetch data on component mount and when pagination/search changes
   useEffect(() => {
-    if (user?.id) {
+    if (searchQuery) {
       fetchSearchResults()
     }
-  }, [pagination.page, pagination.rowsPerPage, searchQuery, user?.id])
+  }, [pagination.page, pagination.rowsPerPage, searchQuery])
 
   const handlePageChange = (newPage: number) => {
     setPagination(prev => ({ ...prev, page: newPage }))
@@ -131,10 +131,10 @@ export default function SearchResultsPage() {
 
   // Filter data locally if needed (though API handles search)
   const filteredData = data.filter(item =>
-    item.record_type_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.domain_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.product_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.status.toLowerCase().includes(searchQuery.toLowerCase())
+    item.record_type_name?.toLowerCase().includes(searchQuery?.toLowerCase()) ||
+    item.domain_name?.toLowerCase().includes(searchQuery?.toLowerCase()) ||
+    item.product_name?.toLowerCase().includes(searchQuery?.toLowerCase()) ||
+    item.status?.toLowerCase().includes(searchQuery?.toLowerCase())
   )
 
   // if (loading) {
@@ -161,8 +161,6 @@ export default function SearchResultsPage() {
   }
 
   return (
-    <div className="min-h-screen pb-8">
-      <Header title="Search Results Management" tabs={navigationTabs} />
 
       <div className="px-4 sm:px-6 mt-6">
         <GlassCard className="p-6">
@@ -329,7 +327,6 @@ export default function SearchResultsPage() {
           )}
         </GlassCard>
       </div>
-    </div>
   )
 }
 

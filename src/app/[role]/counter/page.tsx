@@ -37,6 +37,8 @@ interface CounterRecord {
   client_id?: number
   product_name: string
   product_id?: number
+  vender_name: string
+  vender_id?: number
   counter_count: number
   valid_till: string
   days_to_expire: number
@@ -45,6 +47,10 @@ interface CounterRecord {
   remarks: string
   updated_at: string
   created_at: string
+  latest_remark?: {
+    id: number;
+    remark: string;
+  };
 }
 
 interface AddEditCounter {
@@ -52,11 +58,13 @@ interface AddEditCounter {
   id?: number
   s_id: number
   product_id: number
+  vender_id: number
   client_id: number
   counter_count: number
   valid_till: string
   status: 0 | 1
   remarks: string
+  remark_id: number
 }
 
 export default function CounterPage() {
@@ -80,6 +88,7 @@ export default function CounterPage() {
     client_id: null as number | null,
     client_name: "",
     product_id: null as number | null,
+    vender_id: null as number | null,
     product_name: "",
     counter_count: "",
     valid_till: "",
@@ -178,6 +187,7 @@ export default function CounterPage() {
       client_id: null,
       client_name: "",
       product_id: null,
+      vender_id: null,
       product_name: "",
       counter_count: "",
       valid_till: today,
@@ -193,6 +203,7 @@ export default function CounterPage() {
       client_id: null,
       client_name: "",
       product_id: null,
+      vender_id: null,
       product_name: "",
       counter_count: "",
       valid_till: "",
@@ -207,7 +218,7 @@ export default function CounterPage() {
       setIsSaving(true)
       
       if (!newRecordData.client_id || !newRecordData.product_id || 
-          !newRecordData.counter_count || !newRecordData.valid_till) {
+          !newRecordData.counter_count || !newRecordData.vender_id || !newRecordData.valid_till) {
         toast({
           title: "Error",
           description: "Please fill all required fields",
@@ -220,11 +231,12 @@ export default function CounterPage() {
         record_type: 6,
         s_id: user?.id || 6,
         product_id: newRecordData.product_id!,
+        vender_id: newRecordData.vender_id!,
         client_id: newRecordData.client_id!,
         counter_count: parseInt(newRecordData.counter_count),
         valid_till: newRecordData.valid_till,
         status: parseInt(newRecordData.status) as 0 | 1,
-        remarks: newRecordData.remarks
+        remarks: newRecordData.remarks,
       }
 
       const response = await apiService.addRecord(payload as any)
@@ -242,6 +254,7 @@ export default function CounterPage() {
           client_id: null,
           client_name: "",
           product_id: null,
+          vender_id: null,
           product_name: "",
           counter_count: "",
           valid_till: new Date().toISOString().split('T')[0],
@@ -275,9 +288,11 @@ export default function CounterPage() {
         ...record,
         client_id: record.client_id || undefined,
         product_id: record.product_id || undefined,
+        vender_id: record.vender_id || undefined,
         counter_count: record.counter_count || 0,
         valid_till: record.valid_till || "",
-        remarks: record.remarks || ""
+        remarks: record.remarks || "",
+        remark_id: record.latest_remark?.id || null
       }
     })
   }
@@ -291,7 +306,7 @@ export default function CounterPage() {
       if (!updatedData) return
       
       if (!updatedData.client_id || !updatedData.product_id || 
-          !updatedData.counter_count || !updatedData.valid_till) {
+          !updatedData.counter_count || !updatedData.vender_id || !updatedData.valid_till) {
         toast({
           title: "Error",
           description: "Please fill all required fields",
@@ -305,11 +320,13 @@ export default function CounterPage() {
         id,
         s_id: user?.id || 6,
         product_id: updatedData.product_id!,
+        vender_id: updatedData.vender_id!,
         client_id: updatedData.client_id!,
         counter_count: updatedData.counter_count || 0,
         valid_till: updatedData.valid_till!,
         status: updatedData.status ?? 1,
-        remarks: updatedData.remarks || ""
+        remarks: updatedData.remarks || "",
+        remark_id: updatedData.remark_id || null
       }
 
       const response = await apiService.editRecord(payload as any)
@@ -584,6 +601,9 @@ export default function CounterPage() {
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[180px]">
                       Product
                     </th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[180px]">
+                      Vender
+                    </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[100px]">
                       Count
                     </th>
@@ -679,6 +699,31 @@ export default function CounterPage() {
                             />
                           </td>
                           <td className="py-3 px-4">
+                            <ApiDropdown
+                              endpoint="get-venders"
+                              value={
+                                newRecordData.vender_id
+                                  ? {
+                                      value: newRecordData.vender_id,
+                                      label: newRecordData.vender_name,
+                                    }
+                                  : null
+                              }
+                              onChange={(option) => {
+                                handleNewRecordChange(
+                                  "vender_id",
+                                  option?.value ?? null,
+                                );
+                                handleNewRecordChange(
+                                  "vender_name",
+                                  option?.label ?? "",
+                                );
+                              }}
+                              placeholder="Vender"
+                              className="min-h-[32px]"
+                            />
+                          </td>
+                          <td className="py-3 px-4">
                             <input
                               type="number"
                               value={newRecordData.counter_count}
@@ -738,13 +783,14 @@ export default function CounterPage() {
                             />
                           </td>
                           <td className="py-3 px-4 text-sm text-gray-300">
-                            <input
+                            {/* <input
                               type="text"
                               value={new Date().toLocaleString()}
                               readOnly
                               className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-sm cursor-not-allowed"
                               style={{ minHeight: '32px' }}
-                            />
+                            /> */}
+                            {"- -"}
                           </td>
                           <td className="py-3 px-4">
                             <div className="flex items-center justify-end gap-2">
@@ -868,6 +914,33 @@ export default function CounterPage() {
                                   />
                                 </td>
                                 <td className="py-3 px-4">
+                                  <ApiDropdown
+                                    endpoint="get-venders"
+                                    value={
+                                      editData[item.id]?.vender_id
+                                        ? {
+                                            value: editData[item.id]?.vender_id!,
+                                            label: editData[item.id]?.vender_name || "",
+                                          }
+                                        : null
+                                    }
+                                    onChange={(option) => {
+                                      handleEditChange(
+                                        item.id,
+                                        "vender_id",
+                                        option?.value ?? null,
+                                      );
+                                      handleEditChange(
+                                        item.id,
+                                        "vender_name",
+                                        option?.label ?? "",
+                                      );
+                                    }}
+                                    placeholder="Vender"
+                                    className="min-h-[32px]"
+                                  />
+                                </td>
+                                <td className="py-3 px-4">
                                   <input
                                     type="number"
                                     value={editData[item.id]?.counter_count || item.counter_count}
@@ -918,7 +991,7 @@ export default function CounterPage() {
                                 <td className="py-3 px-4">
                                   <input
                                     type="text"
-                                    value={editData[item.id]?.remarks || item.remarks || ""}
+                                    value={editData[item.id]?.remarks || item?.latest_remark?.remark || ""}
                                     onChange={(e) => handleEditChange(item.id, 'remarks', e.target.value)}
                                     className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
                                     style={{ minHeight: '32px' }}
@@ -926,13 +999,7 @@ export default function CounterPage() {
                                   />
                                 </td>
                                 <td className="py-3 px-4 text-sm text-gray-300">
-                                  <input
-                                    type="text"
-                                    value={formatDate(item.updated_at)}
-                                    readOnly
-                                    className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-sm cursor-not-allowed"
-                                    style={{ minHeight: '32px' }}
-                                  />
+                                 {item?.updated_at}
                                 </td>
                               </>
                             ) : (
@@ -950,6 +1017,14 @@ export default function CounterPage() {
                                     <Package className="w-4 h-4 text-gray-400 flex-shrink-0" />
                                     <span className="text-sm text-white font-medium">
                                       {item.product_name}
+                                    </span>
+                                  </div>
+                                </td>
+                                <td className="py-3 px-4">
+                                  <div className="flex items-center gap-2">
+                                    {/* <Package className="w-4 h-4 text-gray-400 flex-shrink-0" /> */}
+                                    <span className="text-sm text-white font-medium">
+                                      {item.vender_name}
                                     </span>
                                   </div>
                                 </td>
@@ -972,7 +1047,7 @@ export default function CounterPage() {
                                     calculateDays(item.valid_till) < 0 
                                       ? 'bg-red-500/20 text-red-400 border-red-500/20' 
                                       : calculateDays(item.valid_till) <= 30 
-                                        ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/20'
+                                        ? 'bg-orange-500/20 text-orange-400 border-orange-500/20'
                                         : 'bg-green-500/20 text-green-400 border-green-500/20'
                                   }`}>
                                     {/* <Clock className="w-3 h-3" /> */}
@@ -994,12 +1069,12 @@ export default function CounterPage() {
                                   <div className="flex items-center gap-2">
                                     {/* <AlertCircle className="w-4 h-4 text-gray-400 flex-shrink-0" /> */}
                                     <span className="text-sm text-gray-300 truncate max-w-[180px]">
-                                      {item.remarks || "No remarks"}
+                                      {item?.latest_remark?.remark || "No remarks"}
                                     </span>
                                   </div>
                                 </td>
                                 <td className="py-3 px-4 text-sm text-gray-300">
-                                  {formatDate(item.updated_at)}
+                                  {item.updated_at}
                                 </td>
                               </>
                             )}

@@ -40,7 +40,6 @@ interface SSLRecord {
   days_to_expire_today: number;
   today_date: string;
   status: 0 | 1;
-  remarks: string;
   updated_at_custom: string;
   created_at: string;
   updated_at: string;
@@ -49,9 +48,17 @@ interface SSLRecord {
   client_id: number | null;
   client_name: string;
   product_id: number | null;
+  vender_id: number | null;
+  vender_name: string;
   product_name: string;
   renewal_date: string;
   amount: number | null;
+  remarks: string;
+  remark_id: number | null;
+  latest_remark?: {
+    id: number;
+    remark: string;
+  };
 }
 
 interface AddEditSSL {
@@ -59,14 +66,30 @@ interface AddEditSSL {
   id?: number;
   s_id: number;
   product_id: number;
+  vender_id: number;
   domain_id: number;
   client_id: number;
   amount: number;
   renewal_date: string;
   expiry_date: string;
   status: 0 | 1;
-  remarks: string;
   updated_at_custom: string;
+  remarks: string;
+  remark_id: number;
+}
+
+function useDebounce<T>(value: T, delay = 400): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+
+  return debouncedValue;
 }
 
 export default function SSLPage() {
@@ -92,6 +115,7 @@ export default function SSLPage() {
     client_id: null as number | null,
     client_name: "",
     product_id: null as number | null,
+    vender_id: null as number | null,
     product_name: "",
     amount: "",
     renewal_date: "",
@@ -112,6 +136,7 @@ export default function SSLPage() {
     orderDir: "desc" as "asc" | "desc",
   });
 
+  const debouncedSearchQuery = useDebounce(searchQuery, 400);
   const [totalItems, setTotalItems] = useState(0);
 
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
@@ -123,7 +148,7 @@ export default function SSLPage() {
 
       const response = await apiService.listRecords({
         record_type: 2, // SSL
-        search: searchQuery,
+        search: debouncedSearchQuery,
         page: pagination.page,
         rowsPerPage: pagination.rowsPerPage,
         orderBy: pagination.orderBy,
@@ -152,26 +177,14 @@ export default function SSLPage() {
     }
   };
 
-  useEffect(() => {
-    fetchSSLRecords();
-  }, [pagination.page, pagination.orderBy, pagination.orderDir]);
-
-  useEffect(() => {
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-
-    searchTimeoutRef.current = setTimeout(() => {
-      setPagination((prev) => ({ ...prev, page: 0 }));
-      fetchSSLRecords();
-    }, 300);
-
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
-  }, [searchQuery]);
+useEffect(() => {
+  fetchSSLRecords();
+}, [
+  pagination.page,
+  pagination.orderBy,
+  pagination.orderDir,
+  debouncedSearchQuery,
+]);
 
   // Handle Add New
   const handleAddNew = () => {
@@ -182,6 +195,7 @@ export default function SSLPage() {
       client_id: null,
       client_name: "",
       product_id: null,
+      vender_id: null,
       product_name: "",
       amount: "",
       renewal_date: "",
@@ -206,6 +220,7 @@ export default function SSLPage() {
         !newRecordData.domain_id ||
         !newRecordData.client_id ||
         !newRecordData.product_id ||
+        !newRecordData.vender_id ||
         !newRecordData.renewal_date ||
         !newRecordData.expiry_date
       ) {
@@ -221,6 +236,7 @@ export default function SSLPage() {
         record_type: 2,
         s_id: user?.id || 0,
         product_id: newRecordData.product_id!,
+        vender_id: newRecordData.vender_id!,
         domain_id: newRecordData.domain_id!,
         client_id: newRecordData.client_id!,
         amount: parseFloat(newRecordData.amount) || 0,
@@ -248,6 +264,7 @@ export default function SSLPage() {
           client_id: null,
           client_name: "",
           product_id: null,
+          vender_id: null,
           product_name: "",
           amount: "",
           renewal_date: "",
@@ -283,6 +300,7 @@ export default function SSLPage() {
         ...record,
         renewal_date: record.renewal_date || "",
         amount: record.amount || 0,
+        remark_id: record?.latest_remark?.id || null
       },
     });
   };
@@ -299,6 +317,7 @@ export default function SSLPage() {
         !updatedData.domain_id ||
         !updatedData.client_id ||
         !updatedData.product_id ||
+        !updatedData.vender_id ||
         !updatedData.renewal_date ||
         !updatedData.expiry_date
       ) {
@@ -313,8 +332,9 @@ export default function SSLPage() {
       const payload: AddEditSSL = {
         record_type: 2,
         id,
-        s_id: user?.id || 6,
+        s_id: user?.id || 0,
         product_id: updatedData.product_id!,
+        vender_id: updatedData.vender_id!,
         domain_id: updatedData.domain_id!,
         client_id: updatedData.client_id!,
         amount: updatedData.amount || 0,
@@ -322,6 +342,7 @@ export default function SSLPage() {
         expiry_date: updatedData.expiry_date!,
         status: updatedData.status ?? 1,
         remarks: updatedData.remarks || "",
+        remark_id: updatedData.remark_id || null,
         updated_at_custom: new Date().toISOString().split("T")[0], // Auto-update timestamp
       };
 
@@ -606,16 +627,19 @@ export default function SSLPage() {
                       Client
                     </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[180px]">
-                      SSL Product
+                      Product
+                    </th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[180px]">
+                      Vender
                     </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[180px]">
                       Amount
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
+                    {/* <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
                       Renewal Date
-                    </th>
+                    </th> */}
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
-                      Expiry Date
+                     Renewal Date
                     </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
                       Days to Expire
@@ -673,7 +697,7 @@ export default function SSLPage() {
                                   option?.label ?? "",
                                 );
                               }}
-                              placeholder="Select Domain"
+                              placeholder="Domain"
                               className="min-h-[32px]"
                             />
                           </td>
@@ -698,7 +722,7 @@ export default function SSLPage() {
                                   option?.label ?? "",
                                 );
                               }}
-                              placeholder="Select Client"
+                              placeholder="Client"
                               className="min-h-[32px]"
                             />
                           </td>
@@ -723,7 +747,32 @@ export default function SSLPage() {
                                   option?.label ?? "",
                                 );
                               }}
-                              placeholder="Select SSL Product"
+                              placeholder="Product"
+                              className="min-h-[32px]"
+                            />
+                          </td>
+                          <td className="py-3 px-4">
+                            <ApiDropdown
+                              endpoint="get-venders"
+                              value={
+                                newRecordData.vender_id
+                                  ? {
+                                      value: newRecordData.vender_id,
+                                      label: newRecordData.product_name,
+                                    }
+                                  : null
+                              }
+                              onChange={(option) => {
+                                handleNewRecordChange(
+                                  "vender_id",
+                                  option?.value ?? null,
+                                );
+                                handleNewRecordChange(
+                                  "vender_name",
+                                  option?.label ?? "",
+                                );
+                              }}
+                              placeholder="vender"
                               className="min-h-[32px]"
                             />
                           </td>
@@ -741,7 +790,7 @@ export default function SSLPage() {
                               step="0.01"
                             />
                           </td>
-                          <td className="py-3 px-4">
+                          {/* <td className="py-3 px-4">
                             <input
                               type="date"
                               value={newRecordData.renewal_date}
@@ -754,7 +803,7 @@ export default function SSLPage() {
                               className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
                               style={{ minHeight: "32px" }}
                             />
-                          </td>
+                          </td> */}
                           <td className="py-3 px-4">
                             <input
                               type="date"
@@ -804,21 +853,9 @@ export default function SSLPage() {
                               placeholder="Remarks"
                             />
                           </td>
-                          <td className="py-3 px-4">
-                            <input
-                              type="date"
-                              value={newRecordData.updated_at_custom}
-                              readOnly
-                              onChange={(e) =>
-                                handleNewRecordChange(
-                                  "updated_at_custom",
-                                  e.target.value,
-                                )
-                              }
-                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                              style={{ minHeight: "32px" }}
-                            />
-                          </td>
+                          <td className="py-3 px-4 text-sm text-gray-300">
+                                  {newRecordData?.updated_at ?(newRecordData?.updated_at) : "--"}
+                                </td>
                           <td className="py-3 px-4">
                             <div className="flex items-center justify-end gap-2">
                               <GlassButton
@@ -915,7 +952,7 @@ export default function SSLPage() {
                                         option?.label ?? "",
                                       );
                                     }}
-                                    placeholder="Select Domain"
+                                    placeholder="Domain"
                                     className="min-h-[32px]"
                                   />
                                 </td>
@@ -944,7 +981,7 @@ export default function SSLPage() {
                                         option?.label ?? "",
                                       );
                                     }}
-                                    placeholder="Select Client"
+                                    placeholder="Client"
                                     className="min-h-[32px]"
                                   />
                                 </td>
@@ -973,7 +1010,34 @@ export default function SSLPage() {
                                         option?.label ?? "",
                                       );
                                     }}
-                                    placeholder="Select SSL Product"
+                                    placeholder="Product"
+                                    className="min-h-[32px]"
+                                  />
+                                </td>
+                                <td className="py-3 px-4">
+                                  <ApiDropdown
+                                    endpoint="get-venders"
+                                    value={
+                                      editData[item.id]?.vender_id
+                                        ? {
+                                            value: editData[item.id]?.vender_id!,
+                                            label: editData[item.id]?.vender_name || "",
+                                          }
+                                        : null
+                                    }
+                                    onChange={(option) => {
+                                      handleEditChange(
+                                        item.id,
+                                        "vender",
+                                        option?.value ?? null,
+                                      );
+                                      handleEditChange(
+                                        item.id,
+                                        "vender_name",
+                                        option?.label ?? "",
+                                      );
+                                    }}
+                                    placeholder="Vender"
                                     className="min-h-[32px]"
                                   />
                                 </td>
@@ -998,7 +1062,7 @@ export default function SSLPage() {
                                 </td>
                                 
                                 {/* Renewal Date */}
-                                <td className="py-3 px-4">
+                                {/* <td className="py-3 px-4">
                                   <input
                                     type="date"
                                     value={editData[item.id]?.renewal_date || item.renewal_date || ""}
@@ -1012,7 +1076,7 @@ export default function SSLPage() {
                                     className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
                                     style={{ minHeight: "32px" }}
                                   />
-                                </td>
+                                </td> */}
                                 
                                 {/* Expiry Date */}
                                 <td className="py-3 px-4">
@@ -1037,7 +1101,7 @@ export default function SSLPage() {
                                     calculateDays(editData[item.id]?.expiry_date || item.expiry_date) < 0
                                       ? 'bg-red-500/20 text-red-400 border-red-500/20'
                                       : calculateDays(editData[item.id]?.expiry_date || item.expiry_date) <= 30
-                                        ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/20'
+                                        ? 'bg-orange-500/20 text-orange-400 border-orange-500/20'
                                         : 'bg-green-500/20 text-green-400 border-green-500/20'
                                   }`}>
                                     <Clock className="w-3 h-3" />
@@ -1072,7 +1136,7 @@ export default function SSLPage() {
                                 <td className="py-3 px-4">
                                   <input
                                     type="text"
-                                    value={editData[item.id]?.remarks || item.remarks}
+                                    value={editData[item.id]?.remarks || item?.latest_remark?.remark}
                                     onChange={(e) =>
                                       handleEditChange(
                                         item.id,
@@ -1086,14 +1150,8 @@ export default function SSLPage() {
                                 </td>
                                 
                                 {/* Last Updated (Read-only) */}
-                                <td className="py-3 px-4">
-                                  <input
-                                    type="text"
-                                    value={formatDate(item.updated_at_custom)}
-                                    readOnly
-                                    className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-sm cursor-not-allowed"
-                                    style={{ minHeight: "32px" }}
-                                  />
+                                <td className="py-3 px-4 text-sm text-gray-300">
+                                  {(item.updated_at)}
                                 </td>
                               </>
                             ) : (
@@ -1128,6 +1186,15 @@ export default function SSLPage() {
                                     </span>
                                   </div>
                                 </td>
+
+                                <td className="py-3 px-4">
+                                  <div className="flex items-center gap-2">
+                                    <Package className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                    <span className="text-sm text-white font-medium">
+                                      {item.vender_name}
+                                    </span>
+                                  </div>
+                                </td>
                                 
                                 {/* Amount */}
                                 <td className="py-3 px-4 text-sm text-gray-300">
@@ -1137,12 +1204,11 @@ export default function SSLPage() {
                                 </td>
                                 
                                 {/* Renewal Date */}
-                                <td className="py-3 px-4 text-sm text-gray-300">
+                                {/* <td className="py-3 px-4 text-sm text-gray-300">
                                   <div className="flex items-center gap-2">
-                                    {/* <Calendar className="w-4 h-4 text-gray-400" /> */}
                                     {item.renewal_date ? formatDate(item.renewal_date) : "N/A"}
                                   </div>
-                                </td>
+                                </td> */}
                                 
                                 {/* Expiry Date */}
                                 <td className="py-3 px-4 text-sm text-gray-300">
@@ -1183,14 +1249,14 @@ export default function SSLPage() {
                                   <div className="flex items-center gap-2">
                                     {/* <AlertCircle className="w-4 h-4 text-gray-400 flex-shrink-0" /> */}
                                     <span className="text-sm text-gray-300 truncate max-w-[180px]">
-                                      {item.remarks}
+                                      {item?.latest_remark?.remark}
                                     </span>
                                   </div>
                                 </td>
                                 
                                 {/* Last Updated */}
                                 <td className="py-3 px-4 text-sm text-gray-300">
-                                  {formatDate(item.updated_at_custom)}
+                                  {(item.updated_at)}
                                 </td>
                               </>
                             )}

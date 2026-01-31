@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useTheme } from "@/contexts/theme-context";
 import { useBrandAssets } from "@/hooks/useBrandAssets";
@@ -89,6 +89,7 @@ export function Header({ title, tabs }: HeaderProps) {
   const { themeMode } = useTheme(); // "light" | "dark"
   const { logo } = useBrandAssets(themeMode);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const isHoveringRef = useRef(false);
   const toggleDropdown = (itemName: string) => {
     setOpenDropdowns((prev) =>
       prev.includes(itemName)
@@ -342,77 +343,118 @@ export function Header({ title, tabs }: HeaderProps) {
 
             {/* Tabs - hidden on mobile */}
             {tabs && tabs.length > 0 && (
-              <nav className="hidden md:flex items-center gap-1 ml-2 overflow-x-auto scrollbar-hide">
-                {tabs.map((tab) => {
-                  const isActive =
-                    pathname === tab.href ||
-                    (tab.href !== "/" && pathname.startsWith(tab.href)) ||
-                    (tab.href === "/" && pathname === "/");
+  <nav className="hidden md:flex items-center gap-1 ml-2 overflow-x-auto scrollbar-hide">
+    {tabs.map((tab) => {
+      const isActive =
+        pathname === tab.href ||
+        (tab.href !== "/" && pathname.startsWith(tab.href)) ||
+        (tab.href === "/" && pathname === "/");
 
-                  return tab.hasDropdown && tab.submenu ? (
-                    <DropdownMenu
-                      key={tab.name}
-                      open={openDropdown === tab.name}
-                      onOpenChange={(open) =>
-                        setOpenDropdown(open ? tab.name : null)
-                      }
-                    >
-                      <DropdownMenuTrigger asChild>
-                        <button
-                          onMouseEnter={() => setOpenDropdown(tab.name)} // 👈 hover open
-                          onMouseLeave={() => setOpenDropdown(null)} // 👈 hover out close
-                          className={cn(
-                            "flex items-center gap-1 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300",
-                            isActive
-                              ? "bg-theme-gradient text-white"
-                              : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,var(--ui-opacity-10))]",
-                          )}
-                        >
-                          {tab.name}
-                          <ChevronDown className="w-4 h-4 ml-0.5" />
-                        </button>
-                      </DropdownMenuTrigger>
+      return tab.hasDropdown && tab.submenu ? (
+        <DropdownMenu
+          key={tab.name}
+          open={openDropdown === tab.name}
+          onOpenChange={(open) => {
+            if (!open) {
+              // Close only when not hovering over trigger or content
+              setTimeout(() => {
+                if (!isHoveringRef.current) {
+                  setOpenDropdown(null);
+                }
+              }, 100);
+            } else {
+              setOpenDropdown(tab.name);
+            }
+          }}
+        >
+          <DropdownMenuTrigger asChild>
+            <button
+              onMouseEnter={() => {
+                isHoveringRef.current = true;
+                setOpenDropdown(tab.name);
+              }}
+              onMouseLeave={(e) => {
+                // Check if we're moving to dropdown content
+                const relatedTarget = e.relatedTarget as HTMLElement;
+                const isMovingToDropdown = relatedTarget?.closest('.dropdown-content-wrapper');
+                
+                if (!isMovingToDropdown) {
+                  isHoveringRef.current = false;
+                  setTimeout(() => {
+                    if (!isHoveringRef.current) {
+                      setOpenDropdown(null);
+                    }
+                  }, 150);
+                }
+              }}
+              className={cn(
+                "flex items-center gap-1 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300",
+                isActive
+                  ? "bg-theme-gradient text-white"
+                  : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,var(--ui-opacity-10))]",
+              )}
+            >
+              {tab.name}
+              <ChevronDown className="w-4 h-4 ml-0.5" />
+            </button>
+          </DropdownMenuTrigger>
 
-                      <DropdownMenuContent
-                        side="bottom"
-                        align="start"
-                        sideOffset={6}
-                        onMouseEnter={() => setOpenDropdown(tab.name)} // 👈 menu hover safe
-                        onMouseLeave={() => setOpenDropdown(null)}
-                        className="glass-dropdown border-[rgba(255,255,255,var(--glass-border-opacity))]"
-                      >
-                        {tab.submenu.map((subItem) => (
-                          <DropdownMenuItem key={subItem.name} asChild>
-                            <Link
-                              href={subItem.href}
-                              className="text-[var(--text-secondary)] focus:bg-[rgba(255,255,255,var(--ui-opacity-10))] focus:text-white cursor-pointer"
-                            >
-                              {subItem.name}
-                            </Link>
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  ) : (
-                    <Link
-                      key={tab.name}
-                      href={tab.href}
-                      className={cn(
-                        "flex items-center gap-1 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300",
-                        isActive
-                          ? "bg-theme-gradient text-white"
-                          : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,var(--ui-opacity-10))]",
-                      )}
-                    >
-                      {tab.name}
-                      {tab.hasDropdown && (
-                        <ChevronDown className="w-4 h-4 ml-0.5" />
-                      )}
-                    </Link>
-                  );
-                })}
-              </nav>
-            )}
+          <DropdownMenuContent
+            side="bottom"
+            align="start"
+            sideOffset={6}
+            className="glass-dropdown border-[rgba(255,255,255,var(--glass-border-opacity))] dropdown-content-wrapper"
+            onMouseEnter={() => {
+              isHoveringRef.current = true;
+              setOpenDropdown(tab.name);
+            }}
+            onMouseLeave={(e) => {
+              // Check if we're moving back to trigger
+              const relatedTarget = e.relatedTarget as HTMLElement;
+              const isMovingToTrigger = relatedTarget?.closest('button[data-state]');
+              
+              if (!isMovingToTrigger) {
+                isHoveringRef.current = false;
+                setTimeout(() => {
+                  if (!isHoveringRef.current) {
+                    setOpenDropdown(null);
+                  }
+                }, 150);
+              }
+            }}
+          >
+            {tab.submenu.map((subItem) => (
+              <DropdownMenuItem key={subItem.name} asChild>
+                <Link
+                  href={subItem.href}
+                  className="text-[var(--text-secondary)] focus:bg-[rgba(255,255,255,var(--ui-opacity-10))] focus:text-white cursor-pointer"
+                >
+                  {subItem.name}
+                </Link>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : (
+        <Link
+          key={tab.name}
+          href={tab.href}
+          className={cn(
+            "flex items-center gap-1 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300",
+            isActive
+              ? "bg-theme-gradient text-white"
+              : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,var(--ui-opacity-10))]",
+          )}
+        >
+          {tab.name}
+          {tab.hasDropdown && (
+            <ChevronDown className="w-4 h-4 ml-0.5" />
+          )}
+        </Link>
+      );
+    })}
+  </nav>
+)}
           </div>
         </div>
 

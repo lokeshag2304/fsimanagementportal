@@ -44,9 +44,14 @@ interface Subscription {
   days_to_expire_today: number;
   today_date: string;
   status: 0 | 1;
-  remarks: string;
+  latest_remark?: {
+    id: number;
+    remark: string;
+  };
   created_at: string;
   updated_at: string;
+  remark_id: number;
+  remarks: string;
 }
 
 interface AddEditSubscription {
@@ -60,6 +65,7 @@ interface AddEditSubscription {
   status: 0 | 1;
   remarks: string;
   product_name: string;
+  remark_id: number;
 }
 
 interface ProductOption {
@@ -96,7 +102,7 @@ export default function SubscriptionsPage() {
   });
 
   const [editData, setEditData] = useState<
-    Record<number, Partial<Subscription>>
+    Record<number, Partial<Subscription> & { remark_id?: number | null }>
   >({});
 
   const [pagination, setPagination] = useState({
@@ -246,6 +252,7 @@ export default function SubscriptionsPage() {
         expiry_date: newRecordData.expiry_date,
         status: parseInt(newRecordData.status) as 0 | 1,
         remarks: newRecordData.remarks,
+        remark_id: updatedData.remark_id || null,
       };
 
       const response = await apiService.addRecord(payload);
@@ -287,17 +294,19 @@ export default function SubscriptionsPage() {
   };
 
   // Handle Edit - Clear previous edit data
-const handleEdit = (subscription: Subscription) => {
-  setEditingId(subscription.id);
-  setEditData({
-    [subscription.id]: {
-      ...subscription,
-      product_id: subscription.product_id || 0,
-      product_name: subscription.product_name || "",
-    },
-  });
-};
-
+  const handleEdit = (subscription: Subscription) => {
+    console.log(subscription)
+    setEditingId(subscription.id);
+    setEditData({
+      [subscription.id]: {
+        ...subscription,
+        product_id: subscription.product_id || 0,
+        product_name: subscription.product_name || "",
+        remarks: subscription.latest_remark?.remark || "",
+        remark_id: subscription.latest_remark?.id || null,
+      },
+    });
+  };
 
   // Handle Save (inline editing)
   const handleSave = async (id: number) => {
@@ -325,6 +334,7 @@ const handleEdit = (subscription: Subscription) => {
         expiry_date: updatedData.expiry_date || "",
         status: updatedData.status ?? 1,
         remarks: updatedData.remarks || "",
+        remark_id: updatedData.remark_id || null,
       };
 
       const response = await apiService.editRecord(payload);
@@ -614,6 +624,9 @@ const handleEdit = (subscription: Subscription) => {
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[180px]">
                       Remarks
                     </th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
+                      Last Updated
+                    </th>
                     <th className="py-3 px-4 text-right text-sm font-medium text-gray-300 min-w-[140px]">
                       Actions
                     </th>
@@ -751,6 +764,11 @@ const handleEdit = (subscription: Subscription) => {
                               placeholder="Remarks"
                             />
                           </td>
+                          <td className="py-3 px-4 text-sm text-gray-300">
+                            {newRecordData?.updated_at
+                              ? newRecordData?.updated_at
+                              : "--"}
+                          </td>
                           <td className="py-3 px-4">
                             <div className="flex items-center justify-end gap-2">
                               <GlassButton
@@ -828,25 +846,36 @@ const handleEdit = (subscription: Subscription) => {
                                       Loading products...
                                     </div>
                                   ) : (
-                                   <ApiDropdown
-  endpoint="get-products"
-  value={
-    editData[item.id]?.product_id
-      ? {
-          value: editData[item.id]?.product_id,
-          label:
-            editData[item.id]?.product_name ||
-            getProductNameById(editData[item.id]?.product_id),
-        }
-      : null
-  }
-  onChange={(option) => {
-    handleEditChange(item.id, "product_id", option?.value ?? null);
-    handleEditChange(item.id, "product_name", option?.label ?? "");
-  }}
-  placeholder="Select Product"
-/>
-
+                                    <ApiDropdown
+                                      endpoint="get-products"
+                                      value={
+                                        editData[item.id]?.product_id
+                                          ? {
+                                              value:
+                                                editData[item.id]?.product_id,
+                                              label:
+                                                editData[item.id]
+                                                  ?.product_name ||
+                                                getProductNameById(
+                                                  editData[item.id]?.product_id,
+                                                ),
+                                            }
+                                          : null
+                                      }
+                                      onChange={(option) => {
+                                        handleEditChange(
+                                          item.id,
+                                          "product_id",
+                                          option?.value ?? null,
+                                        );
+                                        handleEditChange(
+                                          item.id,
+                                          "product_name",
+                                          option?.label ?? "",
+                                        );
+                                      }}
+                                      placeholder="Select Product"
+                                    />
                                   )}
                                 </td>
                                 <td className="py-3 px-4">
@@ -940,7 +969,7 @@ const handleEdit = (subscription: Subscription) => {
                                   calculateDays(item.expiry_date) < 0
                                     ? "bg-red-500/20 text-red-400 border border-red-500/20"
                                     : calculateDays(item.expiry_date) <= 7
-                                      ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/20"
+                                      ? "bg-orange-500/20 text-orange-400 border border-orange-500/20"
                                       : "bg-green-500/20 text-green-400 border border-green-500/20"
                                 }`}
                               >
@@ -1000,7 +1029,8 @@ const handleEdit = (subscription: Subscription) => {
                                 <input
                                   type="text"
                                   value={
-                                    editData[item.id]?.remarks || item.remarks
+                                    editData[item.id]?.remarks ||
+                                    item?.latest_remark?.remark
                                   }
                                   onChange={(e) =>
                                     handleEditChange(
@@ -1018,11 +1048,15 @@ const handleEdit = (subscription: Subscription) => {
                                 <div className="flex items-center gap-2">
                                   <MessageSquare className="w-4 h-4 text-gray-400 flex-shrink-0" />
                                   <span className="text-sm text-gray-300 truncate max-w-[180px]">
-                                    {item.remarks}
+                                    {item?.latest_remark?.remark}
                                   </span>
                                 </div>
                               </td>
                             )}
+
+                            <td className="py-3 px-4 text-sm text-gray-300">
+                              {item.updated_at}
+                            </td>
 
                             <td className="py-3 px-4">
                               <div className="flex items-center justify-end gap-2">
@@ -1142,9 +1176,6 @@ const handleEdit = (subscription: Subscription) => {
     </div>
   );
 }
-
-
-
 
 // // src/app/[role]/subscription/page.tsx
 // "use client"
@@ -2087,7 +2118,6 @@ const handleEdit = (subscription: Subscription) => {
 // }
 
 // src/app/[role]/subscription/page.tsx
-
 
 // // src/app/[role]/subscription/page.tsx
 // "use client"

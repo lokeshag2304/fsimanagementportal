@@ -42,7 +42,6 @@ import Pagination from "@/common/Pagination";
 import { getNavigationByRole } from "@/lib/getNavigationByRole";
 import DashboardLoader from "@/common/DashboardLoader";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import SearchResultsPage from "../search-result/page";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
@@ -375,14 +374,53 @@ export default function Dashboard() {
               icon: <UserCheck className="w-5 h-5 text-[var(--text-muted)]" />,
               url: `${user?.role}/users`,
             },
+            // {
+            //   title: "Products",
+            //   value: statsData.courses.total,
+            //   icon: (
+            //     <GraduationCap className="w-5 h-5 text-[var(--text-muted)]" />
+            //   ),
+            //   url: `${user?.role}/products`,
+            //   // subStats: [
+            //   //   { label: "Active", value: statsData.courses.active },
+            //   //   { label: "Upcoming", value: statsData.courses.upcoming },
+            //   // ],
+            // },
+            // {
+            //   title: "Domains",
+            //   value: statsData.lessons.total,
+            //   icon: <BookOpen className="w-5 h-5 text-[var(--text-muted)]" />,
+            //   url: `${user?.role}/domains`,
+            //   // subStats: [
+            //   //   { label: "Active", value: statsData.lessons.active },
+            //   //   { label: "Upcoming", value: statsData.lessons.upcoming },
+            //   // ],
+            // },
+            // {
+            //   title: "Users",
+            //   value: statsData.enrollments.total,
+            //   icon: <UserCheck className="w-5 h-5 text-[var(--text-muted)]" />,
+            //   url: `${user?.role}/users`,
+            //   // subStats: [
+            //   //   { label: "Active", value: statsData.enrollments.passed },
+            //   //   { label: "New", value: statsData.enrollments.new },
+            //   // ],
+            // },
+            // {
+            //   title: "Clients",
+            //   value: statsData.students.total,
+            //   icon: <Users className="w-5 h-5 text-[var(--text-muted)]" />,
+            //   url: `${user?.role}/clients`,
+            //   // subStats: [
+            //   //   { label: "Active", value: statsData.students.active },
+            //   //   { label: "New", value: statsData.students.new },
+            //   // ],
+            // },
           ]}
         />
 </GlassCard>
-{/* <GlassCard> */}
-  <SearchResultsPage />
-{/* </GlassCard> */}
         {/* Recent Categories Table */}
-        {/* <GlassCard variant="liquid" noPadding className="overflow-hidden">
+        <GlassCard variant="liquid" noPadding className="overflow-hidden">
           <div className="p-4 sm:p-5">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
               <div>
@@ -396,6 +434,7 @@ export default function Dashboard() {
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
                 <div className="relative w-full sm:w-64">
+                  {/* <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" /> */}
                   <input
                     type="text"
                     value={searchQuery}
@@ -428,6 +467,7 @@ export default function Dashboard() {
               </div>
             </div>
 
+            {/* Table */}
             <div className="overflow-x-auto rounded-lg border border-white/[0.08]">
               <table className="w-full">
                 <thead className="bg-[rgba(255,255,255,0.03)] border-b border-white/[0.08]">
@@ -515,6 +555,7 @@ export default function Dashboard() {
               </table>
             </div>
 
+            {/* Pagination */}
             {dashboardData?.recent_categories &&
               dashboardData.recent_categories.total > 0 && (
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t border-white/[0.08]">
@@ -532,7 +573,7 @@ export default function Dashboard() {
                 </div>
               )}
           </div>
-        </GlassCard> */}
+        </GlassCard>
       </div>
     </div>
   );

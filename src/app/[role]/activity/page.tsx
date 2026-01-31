@@ -212,6 +212,9 @@ export default function ActivityLogPage() {
                     S.NO
                   </th>
                   <th className="text-left py-3 px-4 text-sm font-medium text-[var(--text-tertiary)]">
+                    Admin
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-[var(--text-tertiary)]">
                     Action
                   </th>
                   <th className="text-left py-3 px-4 text-sm font-medium text-[var(--text-tertiary)]">
@@ -220,12 +223,6 @@ export default function ActivityLogPage() {
                   <th className="text-left py-3 px-4 text-sm font-medium text-[var(--text-tertiary)]">
                     Timestamp
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-[var(--text-tertiary)]">
-                    User Role
-                  </th>
-                  {/* <th className="text-left py-3 px-4 text-sm font-medium text-[var(--text-tertiary)]">
-                    User ID
-                  </th> */}
                 </tr>
               </thead>
               <tbody>
@@ -245,6 +242,16 @@ export default function ActivityLogPage() {
                   >
                     <td className="py-3 px-4 text-sm text-[var(--text-secondary)]">
                       {(pagination.page * pagination.rowsPerPage) + index + 1}
+                    </td>
+                    <td className="py-3 px-4">
+                     <div>
+                      <div className="text-purple-700">{activity?.name || ""}</div>
+                       <div className="flex items-center gap-2">
+                        <span className={`text-xs font-medium `}>
+                          {activity.role}
+                        </span>
+                      </div>
+                     </div>
                     </td>
                     <td className="py-3 px-4">
                       <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${getActionColor(activity.action)} ${getActionBgColor(activity.action)}`}>
@@ -277,18 +284,6 @@ export default function ActivityLogPage() {
                             })}
                           </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
-                        {/* <Shield className="w-4 h-4 text-[var(--text-muted)]" /> */}
-                        <span className={`text-sm font-medium ${
-                          activity.role === 'Superadmin' ? 'text-purple-400' :
-                          activity.role === 'Admin' ? 'text-blue-400' :
-                          'text-gray-400'
-                        }`}>
-                          {activity.role}
-                        </span>
                       </div>
                     </td>
                     <td className="py-3 px-4">

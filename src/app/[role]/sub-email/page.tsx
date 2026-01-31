@@ -41,6 +41,8 @@ interface EmailRecord {
   domain_id?: number
   product_name: string
   product_id?: number
+  vender_name: string
+  vender_id?: number
   quantity: number
   bill_type: string
   start_date: string
@@ -52,6 +54,10 @@ interface EmailRecord {
   remarks: string
   created_at: string
   updated_at: string
+  latest_remark?: {
+    id: number;
+    remark: string;
+  };
 }
 
 interface AddEditEmail {
@@ -59,6 +65,7 @@ interface AddEditEmail {
   id?: number
   s_id: number
   product_id: number
+  vender_id: number
   domain_id: number
   client_id: number
   quantity: number
@@ -68,6 +75,7 @@ interface AddEditEmail {
   expiry_date: string
   status: 0 | 1
   remarks: string
+  remarks_id?: number
 }
 
 export default function EmailsPage() {
@@ -93,6 +101,7 @@ export default function EmailsPage() {
     client_id: null as number | null,
     client_name: "",
     product_id: null as number | null,
+    vender_id: null as number | null,
     product_name: "",
     quantity: "",
     bill_type: "yearly",
@@ -190,6 +199,7 @@ export default function EmailsPage() {
       client_id: null,
       client_name: "",
       product_id: null,
+      vender_id: null,
       product_name: "",
       quantity: "",
       bill_type: "yearly",
@@ -209,6 +219,7 @@ export default function EmailsPage() {
       client_id: null,
       client_name: "",
       product_id: null,
+      vender_id: null,
       product_name: "",
       quantity: "",
       bill_type: "yearly",
@@ -303,9 +314,11 @@ export default function EmailsPage() {
         domain_id: record.domain_id || undefined,
         client_id: record.client_id || undefined,
         product_id: record.product_id || undefined,
+        vender_id: record.vender_id || undefined,
         start_date: record.start_date || "",
         expiry_date: record.expiry_date || "",
-        remarks: record.remarks || ""
+        remarks: record.remarks || "",
+        remark_id: record.latest_remark?.id || null
       }
     })
   }
@@ -319,7 +332,7 @@ export default function EmailsPage() {
       if (!updatedData) return
       
       if (!updatedData.domain_id || !updatedData.client_id || 
-          !updatedData.product_id || !updatedData.quantity || 
+          !updatedData.product_id || !updatedData.vender_id || !updatedData.quantity || 
           !updatedData.start_date || !updatedData.expiry_date) {
         toast({
           title: "Error",
@@ -334,6 +347,7 @@ export default function EmailsPage() {
         id,
         s_id: user?.id || 6,
         product_id: updatedData.product_id!,
+        vender_id: updatedData.vender_id!,
         domain_id: updatedData.domain_id!,
         client_id: updatedData.client_id!,
         quantity: updatedData.quantity || 0,
@@ -342,7 +356,8 @@ export default function EmailsPage() {
         end_date: "", // Empty as per requirement
         expiry_date: updatedData.expiry_date!,
         status: updatedData.status ?? 1,
-        remarks: updatedData.remarks || ""
+        remarks: updatedData.remarks || "",
+        remark_id: updatedData.remark_id,
       }
 
       const response = await apiService.editRecord(payload as any)
@@ -616,7 +631,10 @@ export default function EmailsPage() {
                       Client
                     </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[180px]">
-                      Email Plan
+                      Product
+                    </th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[180px]">
+                      Vender
                     </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[100px]">
                       Quantity
@@ -628,7 +646,7 @@ export default function EmailsPage() {
                       Start Date
                     </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
-                      Expiry Date
+                      Renewal Date
                     </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
                       Days to Expire
@@ -638,6 +656,9 @@ export default function EmailsPage() {
                     </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[180px]">
                       Remarks
+                    </th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[180px]">
+                      Last Updated
                     </th>
                     <th className="py-3 px-4 text-right text-sm font-medium text-gray-300 min-w-[140px]">
                       Actions
@@ -733,7 +754,32 @@ export default function EmailsPage() {
                                   option?.label ?? "",
                                 );
                               }}
-                              placeholder="Select Email Plan"
+                              placeholder="Product"
+                              className="min-h-[32px]"
+                            />
+                          </td>
+                          <td className="py-3 px-4">
+                            <ApiDropdown
+                              endpoint="get-venders"
+                              value={
+                                newRecordData.vender_id
+                                  ? {
+                                      value: newRecordData.vender_id,
+                                      label: newRecordData.vender_name,
+                                    }
+                                  : null
+                              }
+                              onChange={(option) => {
+                                handleNewRecordChange(
+                                  "vender_id",
+                                  option?.value ?? null,
+                                );
+                                handleNewRecordChange(
+                                  "vender_name",
+                                  option?.label ?? "",
+                                );
+                              }}
+                              placeholder="Vender"
                               className="min-h-[32px]"
                             />
                           </td>
@@ -810,6 +856,9 @@ export default function EmailsPage() {
                               placeholder="Remarks"
                             />
                           </td>
+                          <td className="py-3 px-4 text-sm text-gray-300">
+                                  {"- -"}
+                                </td>
                           <td className="py-3 px-4">
                             <div className="flex items-center justify-end gap-2">
                               <GlassButton
@@ -954,7 +1003,34 @@ export default function EmailsPage() {
                                         option?.label ?? "",
                                       );
                                     }}
-                                    placeholder="Select Email Plan"
+                                    placeholder="Product"
+                                    className="min-h-[32px]"
+                                  />
+                                </td>
+                                <td className="py-3 px-4">
+                                  <ApiDropdown
+                                    endpoint="get-venders"
+                                    value={
+                                      editData[item.id]?.vender_id
+                                        ? {
+                                            value: editData[item.id]?.vender_id!,
+                                            label: editData[item.id]?.vender_name || "",
+                                          }
+                                        : null
+                                    }
+                                    onChange={(option) => {
+                                      handleEditChange(
+                                        item.id,
+                                        "vender_id",
+                                        option?.value ?? null,
+                                      );
+                                      handleEditChange(
+                                        item.id,
+                                        "vender_name",
+                                        option?.label ?? "",
+                                      );
+                                    }}
+                                    placeholder="Vender"
                                     className="min-h-[32px]"
                                   />
                                 </td>
@@ -1023,12 +1099,15 @@ export default function EmailsPage() {
                                 <td className="py-3 px-4">
                                   <input
                                     type="text"
-                                    value={editData[item.id]?.remarks || item.remarks || ""}
+                                    value={editData[item.id]?.remarks || item.latest_remark?.remark || ""}
                                     onChange={(e) => handleEditChange(item.id, 'remarks', e.target.value)}
                                     className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
                                     style={{ minHeight: '32px' }}
                                     placeholder="Add remarks"
                                   />
+                                </td>
+                                <td className="py-3 px-4 text-sm text-gray-300">
+                                  {(item.updated_at)}
                                 </td>
                               </>
                             ) : (
@@ -1054,6 +1133,14 @@ export default function EmailsPage() {
                                     <Package className="w-4 h-4 text-gray-400 flex-shrink-0" />
                                     <span className="text-sm text-white font-medium">
                                       {item.product_name}
+                                    </span>
+                                  </div>
+                                </td>
+                                <td className="py-3 px-4">
+                                  <div className="flex items-center gap-2">
+                                    {/* <Package className="w-4 h-4 text-gray-400 flex-shrink-0" /> */}
+                                    <span className="text-sm text-white font-medium">
+                                      {item.vender_name}
                                     </span>
                                   </div>
                                 </td>
@@ -1112,9 +1199,12 @@ export default function EmailsPage() {
                                   <div className="flex items-center gap-2">
                                     <AlertCircle className="w-4 h-4 text-gray-400 flex-shrink-0" />
                                     <span className="text-sm text-gray-300 truncate max-w-[180px]">
-                                      {item.remarks || "No remarks"}
+                                      {item.latest_remark?.remark || "No remarks"}
                                     </span>
                                   </div>
+                                </td>
+                                <td className="py-3 px-4 text-sm text-gray-300">
+                                  {(item.updated_at)}
                                 </td>
                               </>
                             )}
