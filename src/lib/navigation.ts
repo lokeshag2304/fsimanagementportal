@@ -51,7 +51,7 @@ export const roleNavigationMap: Record<Role, NavItem[]> = {
       submenu: [
       { name: "Products", href: "/SuperAdmin/products"},
     { name: "Domain", href: "/SuperAdmin/domain" },
-    { name: "Vender", href: "/UserAdmin/vender" },
+    { name: "Vendors", href: "/SuperAdmin/vendors" },
   ],
 },
  { name: "Activity", href: "/SuperAdmin/activity", icon: Rocket },
@@ -120,7 +120,7 @@ export const roleNavigationMap: Record<Role, NavItem[]> = {
       submenu: [
       { name: "Products", href: "/UserAdmin/products"},
     { name: "Domain", href: "/UserAdmin/domain" },
-    { name: "Vender", href: "/UserAdmin/vender" },
+    { name: "Vendors", href: "/UserAdmin/vendors" },
   ],
 },
  { name: "Activity", href: "/UserAdmin/activity", icon: Rocket },

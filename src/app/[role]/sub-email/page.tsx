@@ -798,7 +798,7 @@ export default function EmailsPage() {
                             <select
                               value={newRecordData.bill_type}
                               onChange={(e) => handleNewRecordChange('bill_type', e.target.value)}
-                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
                               style={{ minHeight: '32px' }}
                             >
                               {billTypeOptions.map(option => (
@@ -1153,30 +1153,30 @@ export default function EmailsPage() {
                                   </div>
                                 </td>
                                 <td className="py-3 px-4">
-                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm border ${getBillTypeColor(item.bill_type)} ${
+                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${getBillTypeColor(item.bill_type)} ${
                                     item.bill_type.toLowerCase() === 'yearly' ? 'bg-blue-500/20 border-blue-500/20' :
                                     item.bill_type.toLowerCase() === 'monthly' ? 'bg-purple-500/20 border-purple-500/20' :
                                     item.bill_type.toLowerCase() === 'quarterly' ? 'bg-yellow-500/20 border-yellow-500/20' :
                                     'bg-gray-500/20 border-gray-500/20'
                                   }`}>
-                                    <CreditCard className="w-3 h-3" />
+                                    {/* <CreditCard className="w-3 h-3" /> */}
                                     {item.bill_type.charAt(0).toUpperCase() + item.bill_type.slice(1)}
                                   </div>
                                 </td>
-                                <td className="py-3 px-4 text-sm text-gray-300">
+                                <td className="py-3 px-4 text-xs text-gray-300">
                                   <div className="flex items-center gap-2">
                                     <Calendar className="w-4 h-4 text-gray-400" />
                                     {formatDate(item.start_date)}
                                   </div>
                                 </td>
-                                <td className="py-3 px-4 text-sm text-gray-300">
+                                <td className="py-3 px-4 text-xs text-gray-300">
                                   <div className="flex items-center gap-2">
                                     <Calendar className="w-4 h-4 text-gray-400" />
                                     {formatDate(item.expiry_date)}
                                   </div>
                                 </td>
                                 <td className="py-3 px-4">
-                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm border ${
+                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${
                                     calculateDays(item.expiry_date) < 0 
                                       ? 'bg-red-500/20 text-red-400 border-red-500/20' 
                                       : calculateDays(item.expiry_date) <= 30 
@@ -1188,7 +1188,7 @@ export default function EmailsPage() {
                                   </div>
                                 </td>
                                 <td className="py-3 px-4">
-                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm border ${getStatusColor(item.status)} ${
+                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${getStatusColor(item.status)} ${
                                     item.status === 1 ? 'bg-green-500/20 border-green-500/20' : 'bg-red-500/20 border-red-500/20'
                                   }`}>
                                     {getStatusIcon(item.status)}

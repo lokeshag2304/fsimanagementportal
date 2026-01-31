@@ -748,7 +748,7 @@ export default function CounterPage() {
                               type="number"
                               value={calculateDays(newRecordData.valid_till)}
                               readOnly
-                              className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-sm cursor-not-allowed"
+                              className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-xs cursor-not-allowed"
                               style={{ minHeight: '32px' }}
                             />
                           </td>
@@ -964,7 +964,7 @@ export default function CounterPage() {
                                     type="number"
                                     value={calculateDays(editData[item.id]?.valid_till || item.valid_till)}
                                     readOnly
-                                    className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-sm cursor-not-allowed"
+                                    className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-xs cursor-not-allowed"
                                     style={{ minHeight: '32px' }}
                                   />
                                 </td>
@@ -981,7 +981,7 @@ export default function CounterPage() {
                                   <select
                                     value={editData[item.id]?.status?.toString() || item.status.toString()}
                                     onChange={(e) => handleEditChange(item.id, 'status', parseInt(e.target.value) as 0 | 1)}
-                                    className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                    className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
                                     style={{ minHeight: '32px' }}
                                   >
                                     <option value="1" className="bg-gray-900 text-white">Active</option>

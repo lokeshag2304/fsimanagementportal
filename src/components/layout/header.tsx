@@ -106,9 +106,9 @@ export function Header({ title, tabs }: HeaderProps) {
           {/* Logo */}
           <Link
             href={`/${user?.role}/dashboard`}
-            className="flex items-center gap-3 group"
+            className="flex items-center gap-6 group"
           >
-            <div className="w-24 h-16 ml-2 relative">
+            <div className="w-36 h-24 ml-2 relative">
               {logo ? (
                 <Image
                   src={logo}

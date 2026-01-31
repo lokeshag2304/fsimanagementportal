@@ -108,6 +108,7 @@ interface DashboardResponse {
   };
   stats: DynamicStats;
   recent_categories: RecentCategoriesResponse;
+  type_counts?: Array<{ count: number; type?: string }>;
 }
 
 interface PaginationState {
@@ -152,6 +153,14 @@ export default function Dashboard() {
     try {
       setLoading(true);
 
+      // Check if token exists
+      if (!token) {
+        console.error("No authentication token found");
+        setDashboardData(null);
+        setMainLoading(false);
+        return;
+      }
+
       const payload = {
         start_date: startDate,
         end_date: endDate,
@@ -190,8 +199,13 @@ export default function Dashboard() {
           total: 0,
         }));
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching dashboard data:", error);
+      if (error.response?.status === 401) {
+        console.error("Unauthorized: Token may be invalid or expired");
+        // You may want to redirect to login or refresh token here
+      }
+      setDashboardData(null);
     } finally {
       setLoading(false);
       setMainLoading(false);
@@ -334,50 +348,58 @@ export default function Dashboard() {
         </div>
 
         {/* Dynamic Stats Row */}
-        <GlassCard variant="liquid" noPadding className="overflow-hidden p-5">
-        <StatsRow
-          stats={[
-            {
-              title: "Subscription",
-              value: dashboardData.type_counts[0].count,
-              icon: (
-                <GraduationCap className="w-5 h-5 text-[var(--text-muted)]" />
-              ),
-              url: `${user?.role}/products`,
-            },
-            {
-              title: "SSL",
-              value: dashboardData.type_counts[1].count,
-              icon: <BookOpen className="w-5 h-5 text-[var(--text-muted)]" />,
-              url: `${user?.role}/domains`,
-            },
-            {
-              title: "Hosting",
-              value: dashboardData.type_counts[2].count,
-              icon: <UserCheck className="w-5 h-5 text-[var(--text-muted)]" />,
-              url: `${user?.role}/users`,
-            },
-            {
-              title: "Domains",
-              value: dashboardData.type_counts[3].count,
-              icon: <Users className="w-5 h-5 text-[var(--text-muted)]" />,
-              url: `${user?.role}/clients`,
-            },
-             {
-              title: "Emails",
-              value: dashboardData.type_counts[4].count,
-              icon: <BookOpen className="w-5 h-5 text-[var(--text-muted)]" />,
-              url: `${user?.role}/domains`,
-            },
-            {
-              title: "Counter",
-              value: dashboardData.type_counts[5].count,
-              icon: <UserCheck className="w-5 h-5 text-[var(--text-muted)]" />,
-              url: `${user?.role}/users`,
-            },
-          ]}
-        />
-</GlassCard>
+        {dashboardData && dashboardData.type_counts ? (
+          <GlassCard variant="liquid" noPadding className="overflow-hidden p-5">
+            <StatsRow
+              stats={[
+                {
+                  title: "Subscription",
+                  value: dashboardData.type_counts[0]?.count || 0,
+                  icon: (
+                    <GraduationCap className="w-5 h-5 text-[var(--text-muted)]" />
+                  ),
+                  url: `${user?.role}/products`,
+                },
+                {
+                  title: "SSL",
+                  value: dashboardData.type_counts[1]?.count || 0,
+                  icon: <BookOpen className="w-5 h-5 text-[var(--text-muted)]" />,
+                  url: `${user?.role}/domains`,
+                },
+                {
+                  title: "Hosting",
+                  value: dashboardData.type_counts[2]?.count || 0,
+                  icon: <UserCheck className="w-5 h-5 text-[var(--text-muted)]" />,
+                  url: `${user?.role}/users`,
+                },
+                {
+                  title: "Domains",
+                  value: dashboardData.type_counts[3]?.count || 0,
+                  icon: <Users className="w-5 h-5 text-[var(--text-muted)]" />,
+                  url: `${user?.role}/clients`,
+                },
+                {
+                  title: "Emails",
+                  value: dashboardData.type_counts[4]?.count || 0,
+                  icon: <BookOpen className="w-5 h-5 text-[var(--text-muted)]" />,
+                  url: `${user?.role}/domains`,
+                },
+                {
+                  title: "Counter",
+                  value: dashboardData.type_counts[5]?.count || 0,
+                  icon: <UserCheck className="w-5 h-5 text-[var(--text-muted)]" />,
+                  url: `${user?.role}/users`,
+                },
+              ]}
+            />
+          </GlassCard>
+        ) : (
+          <GlassCard variant="liquid" noPadding className="overflow-hidden p-5">
+            <div className="text-center py-8 text-[var(--text-muted)]">
+              <p>No dashboard data available. Please check your authentication or try again.</p>
+            </div>
+          </GlassCard>
+        )}
 {/* <GlassCard> */}
   <SearchResultsPage />
 {/* </GlassCard> */}

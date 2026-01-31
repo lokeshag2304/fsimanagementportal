@@ -133,6 +133,18 @@ const themeColorMap: Record<ThemeColor, ThemeColors> = {
     name: "Slate",
     chartColors: { primary: "#94a2b4", secondary: "#b0a5c1", tertiary: "#a5b5b0" }
   },
+   orange2: {
+    primary: "25 95% 55%", // Changed from "25 70% 63%"
+    primaryRgb: "250, 119, 32", // Changed from "217, 152, 105"
+    gradientFrom: "#fa7720", // Changed from "#d99869"
+    gradientTo: "#e06610", // Changed from "#c78555"
+    name: "Orange",
+    chartColors: { 
+      primary: "#fa7720", 
+      secondary: "#ff9c50", 
+      tertiary: "#ffb880" 
+    }
+  },
   orange: {
     primary: "25 70% 63%",
     primaryRgb: "217, 152, 105",
