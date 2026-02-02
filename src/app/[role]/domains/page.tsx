@@ -21,7 +21,8 @@ import {
   Loader2,
   Save,
   X,
-  Lock
+  Lock,
+  Eye
 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/useToast"
@@ -432,7 +433,7 @@ export default function DomainsPage() {
       const payload: any = {
         record_type: 4,
         id,
-        s_id: user?.id || 6,
+        s_id: user?.id || 0,
         product_id: updatedData.product_id!,
         vender_id: updatedData.vender_id!,
         domain_id: updatedData.domain_id!,
@@ -689,6 +690,20 @@ export default function DomainsPage() {
       return 0
     }
   }
+
+    const handleViewDetails = (item: DomainRecord) => {
+    if (!item.id) {
+      toast({
+        title: "Error",
+        description: "Product ID not found",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Redirect to details page with recordType and recordId
+    router.push(`/${user?.role}/categaries-details/${item.id}?recordType=4`);
+  };
 
   return (
     <div className="min-h-screen pb-8">
@@ -1467,6 +1482,13 @@ export default function DomainsPage() {
                                     </>
                                   ) : !item.deleted_at ? (
                                     <>
+                                     <GlassButton
+                                                                        onClick={() => handleViewDetails(item)}
+                                                                        className="p-1.5 min-w-0 hover:bg-blue-500/20"
+                                                                        title="View Details"
+                                                                      >
+                                                                        <Eye className="w-4 h-4 text-gray-300 hover:text-blue-400 transition-colors" />
+                                                                      </GlassButton>
                                       <GlassButton
                                         onClick={() => handleEdit(item)}
                                         className="p-1.5 min-w-0 hover:bg-white/10"

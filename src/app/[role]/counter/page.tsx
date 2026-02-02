@@ -5,7 +5,7 @@ import { Header } from "@/components/layout"
 import { GlassCard, GlassButton } from "@/components/glass"
 import { DeleteConfirmationModal } from "@/common/services/DeleteConfirmationModal"
 import { useDetailsModal } from "@/hooks/useDetailsModal"
-import DynamicDetailsPage from "../categaries-details/[id]/DynamicDetailsPage/page"
+import DynamicDetailsPage from "../categaries-details/[id]/page"
 import {
   Edit,
   Trash2,
@@ -22,7 +22,8 @@ import {
   Save,
   X,
   Loader2,
-  LucideChartColumnStacked
+  LucideChartColumnStacked,
+  Eye
 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/useToast"
@@ -40,7 +41,7 @@ interface CounterRecord {
   product_name: string
   product_id?: number
   vender_name: string
-  vender_id?: number
+  vendor_id?: number
   counter_count: number
   valid_till: string
   days_to_expire: number
@@ -60,7 +61,7 @@ interface AddEditCounter {
   id?: number
   s_id: number
   product_id: number
-  vender_id: number
+  vendor_id: number
   client_id: number
   counter_count: number
   valid_till: string
@@ -91,7 +92,7 @@ export default function CounterPage() {
     client_id: null as number | null,
     client_name: "",
     product_id: null as number | null,
-    vender_id: null as number | null,
+    vendor_id: null as number | null,
     product_name: "",
     counter_count: "",
     valid_till: "",
@@ -223,7 +224,7 @@ export default function CounterPage() {
       client_id: null,
       client_name: "",
       product_id: null,
-      vender_id: null,
+      vendor_id: null,
       product_name: "",
       counter_count: "",
       valid_till: today,
@@ -239,7 +240,7 @@ export default function CounterPage() {
       client_id: null,
       client_name: "",
       product_id: null,
-      vender_id: null,
+      vendor_id: null,
       product_name: "",
       counter_count: "",
       valid_till: "",
@@ -254,7 +255,7 @@ export default function CounterPage() {
       setIsSaving(true)
       
       if (!newRecordData.client_id || !newRecordData.product_id || 
-          !newRecordData.counter_count || !newRecordData.vender_id || !newRecordData.valid_till) {
+          !newRecordData.counter_count || !newRecordData.vendor_id || !newRecordData.valid_till) {
         toast({
           title: "Error",
           description: "Please fill all required fields",
@@ -267,7 +268,7 @@ export default function CounterPage() {
         record_type: 6,
         s_id: user?.id || 6,
         product_id: newRecordData.product_id!,
-        vender_id: newRecordData.vender_id!,
+        vendor_id: newRecordData.vendor_id!,
         client_id: newRecordData.client_id!,
         counter_count: parseInt(newRecordData.counter_count),
         valid_till: newRecordData.valid_till,
@@ -290,7 +291,7 @@ export default function CounterPage() {
           client_id: null,
           client_name: "",
           product_id: null,
-          vender_id: null,
+          vendor_id: null,
           product_name: "",
           counter_count: "",
           valid_till: new Date().toISOString().split('T')[0],
@@ -324,7 +325,7 @@ export default function CounterPage() {
         ...record,
         client_id: record.client_id || undefined,
         product_id: record.product_id || undefined,
-        vender_id: record.vender_id || undefined,
+        vendor_id: record.vendor_id || undefined,
         counter_count: record.counter_count || 0,
         valid_till: record.valid_till || "",
         remarks: record.remarks || "",
@@ -340,9 +341,9 @@ export default function CounterPage() {
       const updatedData = editData[id]
       
       if (!updatedData) return
-      
+      console.log(updatedData);
       if (!updatedData.client_id || !updatedData.product_id || 
-          !updatedData.counter_count || !updatedData.vender_id || !updatedData.valid_till) {
+          !updatedData.counter_count || !updatedData.vendor_id || !updatedData.valid_till) {
         toast({
           title: "Error",
           description: "Please fill all required fields",
@@ -356,7 +357,7 @@ export default function CounterPage() {
         id,
         s_id: user?.id || 6,
         product_id: updatedData.product_id!,
-        vender_id: updatedData.vender_id!,
+        vendor_id: updatedData.vendor_id!,
         client_id: updatedData.client_id!,
         counter_count: updatedData.counter_count || 0,
         valid_till: updatedData.valid_till!,
@@ -542,6 +543,20 @@ export default function CounterPage() {
       return 0
     }
   }
+
+    const handleViewDetails = (item: CounterRecord) => {
+    if (!item.id) {
+      toast({
+        title: "Error",
+        description: "Product ID not found",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Redirect to details page with recordType and recordId
+    router.push(`/${user?.role}/categaries-details/${item.id}?recordType=6`);
+  };
 
   // Get count color based on value
   const getCountColor = (count: number) => {
@@ -738,16 +753,16 @@ export default function CounterPage() {
                             <ApiDropdown
                               endpoint="get-venders"
                               value={
-                                newRecordData.vender_id
+                                newRecordData.vendor_id
                                   ? {
-                                      value: newRecordData.vender_id,
+                                      value: newRecordData.vendor_id,
                                       label: newRecordData.vender_name,
                                     }
                                   : null
                               }
                               onChange={(option) => {
                                 handleNewRecordChange(
-                                  "vender_id",
+                                  "vendor_id",
                                   option?.value ?? null,
                                 );
                                 handleNewRecordChange(
@@ -947,9 +962,9 @@ export default function CounterPage() {
                                   <ApiDropdown
                                     endpoint="get-venders"
                                     value={
-                                      editData[item.id]?.vender_id
+                                      editData[item.id]?.vendor_id
                                         ? {
-                                            value: editData[item.id]?.vender_id!,
+                                            value: editData[item.id]?.vendor_id!,
                                             label: editData[item.id]?.vender_name || "",
                                           }
                                         : null
@@ -957,7 +972,7 @@ export default function CounterPage() {
                                     onChange={(option) => {
                                       handleEditChange(
                                         item.id,
-                                        "vender_id",
+                                        "vendor_id",
                                         option?.value ?? null,
                                       );
                                       handleEditChange(
@@ -1132,6 +1147,13 @@ export default function CounterPage() {
                                   </>
                                 ) : (
                                   <>
+                                   <GlassButton
+                                                                        onClick={() => handleViewDetails(item)}
+                                                                        className="p-1.5 min-w-0 hover:bg-blue-500/20"
+                                                                        title="View Details"
+                                                                      >
+                                                                        <Eye className="w-4 h-4 text-gray-300 hover:text-blue-400 transition-colors" />
+                                                                      </GlassButton>
                                     <GlassButton
                                       onClick={() => handleEdit(item)}
                                       className="p-1.5 min-w-0 hover:bg-white/10"

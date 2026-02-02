@@ -6,7 +6,7 @@ import { GlassCard, GlassButton } from "@/components/glass";
 import { EditRow } from "@/common/services/EditRow";
 import { DeleteConfirmationModal } from "@/common/services/DeleteConfirmationModal";
 import { useDetailsModal } from "@/hooks/useDetailsModal";
-import DynamicDetailsPage from "../categaries-details/[id]/DynamicDetailsPage/page";
+import DynamicDetailsPage from "../categaries-details/[id]/page";
 import {
   Edit,
   Trash2,
@@ -24,6 +24,7 @@ import {
   ChevronRight,
   Save,
   X,
+  Eye,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/useToast";
@@ -92,7 +93,6 @@ export default function SubscriptionsPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<number | null>(null);
-  const { isOpen, modalData, openDetails, closeDetails } = useDetailsModal();
 
   const [newRecordData, setNewRecordData] = useState({
     product_id: "",
@@ -255,7 +255,7 @@ export default function SubscriptionsPage() {
         expiry_date: newRecordData.expiry_date,
         status: parseInt(newRecordData.status) as 0 | 1,
         remarks: newRecordData.remarks,
-        remark_id: editData[0]?.remark_id || null, // FIXED: updatedData से editData में change
+        remark_id: editData[0]?.remark_id || null,
       };
 
       const response = await apiService.addRecord(payload);
@@ -525,25 +525,20 @@ export default function SubscriptionsPage() {
     setPagination((prev) => ({ ...prev, page }));
   };
 
-  // Handle row click
-// Make sure product_id is available in Subscription interface
-// It seems it's already there: product_id?: number;
-
-const handleRowClick = (e: React.MouseEvent, item: Subscription) => {
-  // ... existing code ...
-
-  if (!item.id) {
-    toast({
-      title: "Error",
-      description: "Product ID not found",
-      variant: "destructive",
-    });
-    return;
-  }
-
-  // Open details modal with product/category ID
-  openDetails(1, item.id, item.product_name);
-};
+  // Handle View Details (redirect to details page)
+  const handleViewDetails = (item: Subscription) => {
+    if (!item.id) {
+      toast({
+        title: "Error",
+        description: "Product ID not found",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Redirect to details page with recordType and recordId
+    router.push(`/${user?.role}/categaries-details/${item.id}?recordType=1`);
+  };
 
   return (
     <div className="min-h-screen pb-8">
@@ -650,7 +645,7 @@ const handleRowClick = (e: React.MouseEvent, item: Subscription) => {
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
                       Last Updated
                     </th>
-                    <th className="py-3 px-4 text-right text-sm font-medium text-gray-300 min-w-[140px]">
+                    <th className="py-3 px-4 text-right text-sm font-medium text-gray-300 min-w-[160px]">
                       Actions
                     </th>
                   </tr>
@@ -841,15 +836,11 @@ const handleRowClick = (e: React.MouseEvent, item: Subscription) => {
                         data.map((item, index) => (
                           <tr
                             key={item.id}
-                            className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors cursor-pointer group ${
+                            className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors ${
                               editingId === item.id ? "bg-blue-500/5" : ""
                             }`}
-                            onClick={(e) => handleRowClick(e, item)}
                           >
-                            <td
-                              className="py-3 px-4"
-                              onClick={(e) => e.stopPropagation()}
-                            >
+                            <td className="py-3 px-4">
                               <input
                                 type="checkbox"
                                 checked={selectedItems.includes(item.id)}
@@ -1085,7 +1076,6 @@ const handleRowClick = (e: React.MouseEvent, item: Subscription) => {
                             <td className="py-3 px-4">
                               <div
                                 className="flex items-center justify-end gap-2"
-                                onClick={(e) => e.stopPropagation()}
                               >
                                 {editingId === item.id ? (
                                   <>
@@ -1113,20 +1103,21 @@ const handleRowClick = (e: React.MouseEvent, item: Subscription) => {
                                 ) : (
                                   <>
                                     <GlassButton
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleEdit(item);
-                                      }}
+                                      onClick={() => handleViewDetails(item)}
+                                      className="p-1.5 min-w-0 hover:bg-blue-500/20"
+                                      title="View Details"
+                                    >
+                                      <Eye className="w-4 h-4 text-gray-300 hover:text-blue-400 transition-colors" />
+                                    </GlassButton>
+                                    <GlassButton
+                                      onClick={() => handleEdit(item)}
                                       className="p-1.5 min-w-0 hover:bg-white/10"
                                       title="Edit"
                                     >
                                       <Edit className="w-4 h-4 text-gray-300 hover:text-blue-400 transition-colors" />
                                     </GlassButton>
                                     <GlassButton
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDeleteClick(item.id);
-                                      }}
+                                      onClick={() => handleDeleteClick(item.id)}
                                       className="p-1.5 min-w-0 hover:bg-red-500/20"
                                       title="Delete"
                                     >
@@ -1206,27 +1197,6 @@ const handleRowClick = (e: React.MouseEvent, item: Subscription) => {
             : "Are you sure you want to delete the selected subscriptions? This action cannot be undone."
         }
       />
-      {isOpen && modalData && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm"
-            onClick={closeDetails}
-          />
-
-          {/* Modal Container */}
-          <div className="relative min-h-screen px-4 py-8 flex items-start justify-center">
-            {/* Modal Content */}
-            <div className="relative w-full max-w-7xl bg-transparent">
-              <DynamicDetailsPage
-                recordType={modalData.recordType}
-                recordId={modalData.recordId}
-                onClose={closeDetails}
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

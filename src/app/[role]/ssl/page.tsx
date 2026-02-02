@@ -23,6 +23,7 @@ import {
   X,
   Shield,
   DollarSign,
+  Eye,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/useToast";
@@ -48,7 +49,7 @@ interface SSLRecord {
   client_id: number | null;
   client_name: string;
   product_id: number | null;
-  vender_id: number | null;
+  vendor_id: number | null;
   vender_name: string;
   product_name: string;
   renewal_date: string;
@@ -66,7 +67,7 @@ interface AddEditSSL {
   id?: number;
   s_id: number;
   product_id: number;
-  vender_id: number;
+  vendor_id: number;
   domain_id: number;
   client_id: number;
   amount: number;
@@ -115,7 +116,7 @@ export default function SSLPage() {
     client_id: null as number | null,
     client_name: "",
     product_id: null as number | null,
-    vender_id: null as number | null,
+    vendor_id: null as number | null,
     product_name: "",
     amount: "",
     renewal_date: "",
@@ -195,7 +196,7 @@ useEffect(() => {
       client_id: null,
       client_name: "",
       product_id: null,
-      vender_id: null,
+      vendor_id: null,
       product_name: "",
       amount: "",
       renewal_date: "",
@@ -220,8 +221,8 @@ useEffect(() => {
         !newRecordData.domain_id ||
         !newRecordData.client_id ||
         !newRecordData.product_id ||
-        !newRecordData.vender_id ||
-        !newRecordData.renewal_date ||
+        !newRecordData.vendor_id ||
+        // !newRecordData.renewal_date ||
         !newRecordData.expiry_date
       ) {
         toast({
@@ -236,7 +237,7 @@ useEffect(() => {
         record_type: 2,
         s_id: user?.id || 0,
         product_id: newRecordData.product_id!,
-        vender_id: newRecordData.vender_id!,
+        vendor_id: newRecordData.vendor_id!,
         domain_id: newRecordData.domain_id!,
         client_id: newRecordData.client_id!,
         amount: parseFloat(newRecordData.amount) || 0,
@@ -264,7 +265,7 @@ useEffect(() => {
           client_id: null,
           client_name: "",
           product_id: null,
-          vender_id: null,
+          vendor_id: null,
           product_name: "",
           amount: "",
           renewal_date: "",
@@ -310,15 +311,15 @@ useEffect(() => {
     try {
       setIsSaving(true);
       const updatedData = editData[id];
-
       if (!updatedData) return;
-
+      
+      console.log(updatedData);
       if (
         !updatedData.domain_id ||
         !updatedData.client_id ||
         !updatedData.product_id ||
-        !updatedData.vender_id ||
-        !updatedData.renewal_date ||
+        !updatedData.vendor_id ||
+        // !updatedData.renewal_date ||
         !updatedData.expiry_date
       ) {
         toast({
@@ -334,7 +335,7 @@ useEffect(() => {
         id,
         s_id: user?.id || 0,
         product_id: updatedData.product_id!,
-        vender_id: updatedData.vender_id!,
+        vendor_id: updatedData.vendor_id!,
         domain_id: updatedData.domain_id!,
         client_id: updatedData.client_id!,
         amount: updatedData.amount || 0,
@@ -519,6 +520,20 @@ useEffect(() => {
     } catch {
       return 0;
     }
+  };
+
+    const handleViewDetails = (item: SSLRecord) => {
+    if (!item.id) {
+      toast({
+        title: "Error",
+        description: "Product ID not found",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Redirect to details page with recordType and recordId
+    router.push(`/${user?.role}/categaries-details/${item.id}?recordType=2`);
   };
 
   const handlePageChange = (newPage: number) => {
@@ -755,16 +770,16 @@ useEffect(() => {
                             <ApiDropdown
                               endpoint="get-venders"
                               value={
-                                newRecordData.vender_id
+                                newRecordData.vendor_id
                                   ? {
-                                      value: newRecordData.vender_id,
-                                      label: newRecordData.product_name,
+                                      value: newRecordData.vendor_id,
+                                      label: newRecordData.vender_name,
                                     }
                                   : null
                               }
                               onChange={(option) => {
                                 handleNewRecordChange(
-                                  "vender_id",
+                                  "vendor_id",
                                   option?.value ?? null,
                                 );
                                 handleNewRecordChange(
@@ -1018,9 +1033,9 @@ useEffect(() => {
                                   <ApiDropdown
                                     endpoint="get-venders"
                                     value={
-                                      editData[item.id]?.vender_id
+                                      editData[item.id]?.vendor_id
                                         ? {
-                                            value: editData[item.id]?.vender_id!,
+                                            value: editData[item.id]?.vendor_id!,
                                             label: editData[item.id]?.vender_name || "",
                                           }
                                         : null
@@ -1265,7 +1280,7 @@ useEffect(() => {
                             <td className="py-3 px-4">
                               <div className="flex items-center justify-end gap-2">
                                 {editingId === item.id ? (
-                                  <>
+                                  <>                                 
                                     <GlassButton
                                       onClick={() => handleSave(item.id)}
                                       disabled={isSaving}
@@ -1289,6 +1304,13 @@ useEffect(() => {
                                   </>
                                 ) : (
                                   <>
+                                   <GlassButton
+                                                                        onClick={() => handleViewDetails(item)}
+                                                                        className="p-1.5 min-w-0 hover:bg-blue-500/20"
+                                                                        title="View Details"
+                                                                      >
+                                                                        <Eye className="w-4 h-4 text-gray-300 hover:text-blue-400 transition-colors" />
+                                                                      </GlassButton>
                                     <GlassButton
                                       onClick={() => handleEdit(item)}
                                       className="p-1.5 min-w-0 hover:bg-white/10"

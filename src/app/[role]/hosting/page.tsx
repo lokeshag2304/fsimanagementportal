@@ -21,7 +21,8 @@ import {
   Loader2,
   Save,
   X,
-  DollarSign
+  DollarSign,
+  Eye
 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/useToast"
@@ -539,6 +540,20 @@ export default function HostingPage() {
       setShowDeleteModal(false)
     }
   }
+
+    const handleViewDetails = (item: HostingRecord) => {
+    if (!item.id) {
+      toast({
+        title: "Error",
+        description: "Product ID not found",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Redirect to details page with recordType and recordId
+    router.push(`/${user?.role}/categaries-details/${item.id}?recordType=3`);
+  };
 
   const handlePageChange = (newPage: number) => {
     setPagination(prev => ({ ...prev, page: newPage }))
@@ -1421,6 +1436,13 @@ export default function HostingPage() {
                                     </>
                                   ) : !item.deleted_at ? (
                                     <>
+                                     <GlassButton
+                                                                        onClick={() => handleViewDetails(item)}
+                                                                        className="p-1.5 min-w-0 hover:bg-blue-500/20"
+                                                                        title="View Details"
+                                                                      >
+                                                                        <Eye className="w-4 h-4 text-gray-300 hover:text-blue-400 transition-colors" />
+                                                                      </GlassButton>
                                       <GlassButton
                                         onClick={() => handleEdit(item)}
                                         className="p-1.5 min-w-0 hover:bg-white/10"

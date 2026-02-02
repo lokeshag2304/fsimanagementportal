@@ -260,6 +260,11 @@
 //     </div>
 //   )
 // }
+
+
+
+
+
 "use client"
 
 import { useEffect, useState } from "react"
@@ -332,14 +337,42 @@ export const glassSelectStyles = {
         : "1px solid #e5e7eb",
       borderRadius: "8px",
       overflow: "hidden",
+      zIndex: 99999,
     }
   },
 
   /* MENU PORTAL (Z-INDEX FIX) */
   menuPortal: (base: any) => ({
     ...base,
-    zIndex: 99999,
+    zIndex: 999999,
   }),
+
+  /* MENU LIST WITH SCROLLBAR */
+  menuList: (base: any) => {
+    const dark = isDarkMode()
+    return {
+      ...base,
+      maxHeight: "200px",
+      overflowY: "auto",
+      scrollbarWidth: "thin",
+      scrollbarColor: dark 
+        ? "#4b5563 transparent" 
+        : "#d1d5db transparent",
+      "&::-webkit-scrollbar": {
+        width: "6px",
+      },
+      "&::-webkit-scrollbar-track": {
+        background: "transparent",
+      },
+      "&::-webkit-scrollbar-thumb": {
+        backgroundColor: dark ? "#4b5563" : "#d1d5db",
+        borderRadius: "3px",
+      },
+      "&::-webkit-scrollbar-thumb:hover": {
+        backgroundColor: dark ? "#6b7280" : "#9ca3af",
+      },
+    }
+  },
 
   /* OPTION */
   option: (base: any, state: any) => {
@@ -465,14 +498,17 @@ const AddItemModal = ({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+    <div 
+      className="fixed inset-0 z-[999999] flex items-center justify-center bg-black/50"
+      style={{ zIndex: 999999 }}
+    >
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md shadow-xl">
         <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
           Add New Item
         </h3>
         
         <form onSubmit={handleSubmit}>
-          <div className="mb-4">
+          <div className="mb-6">
             <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
               Name
             </label>
@@ -480,8 +516,8 @@ const AddItemModal = ({
               type="text"
               value={itemName}
               onChange={(e) => setItemName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              placeholder="Enter name"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+              placeholder="Enter item name"
               autoFocus
             />
           </div>
@@ -490,14 +526,14 @@ const AddItemModal = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
+              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors disabled:opacity-50"
               disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50 transition-colors"
               disabled={loading || !itemName.trim()}
             >
               {loading ? "Adding..." : "Add Item"}
@@ -521,11 +557,11 @@ const CustomMenuList = (props: any) => {
         {children}
       </div>
       {showAddButton && (
-        <div className="border-t border-gray-200 dark:border-gray-700">
+        <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 sticky bottom-0">
           <button
             type="button"
             onClick={onAddClick}
-            className="w-full px-3 py-2 text-left text-sm flex items-center hover:bg-gray-100 dark:hover:bg-gray-800 text-blue-600 dark:text-blue-400"
+            className="w-full px-3 py-2 text-left text-sm flex items-center hover:bg-gray-100 dark:hover:bg-gray-700 text-blue-600 dark:text-blue-400 transition-colors"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add New Item
@@ -661,21 +697,11 @@ export function ApiDropdown({
     }
   }
 
-  // Custom styles with Add button
-  const customStyles = {
-    ...glassSelectStyles,
-    menuList: (base: any) => ({
-      ...base,
-      padding: 0,
-      maxHeight: "200px",
-    }),
-  }
-
   return (
     <>
-      <div>
+      <div className="relative">
         {label && (
-          <label className="block text-sm mb-1 text-gray-700 dark:text-gray-300">
+          <label className="block text-sm mb-1 text-gray-700 dark:text-gray-300 font-medium">
             {label}
           </label>
         )}
@@ -689,7 +715,7 @@ export function ApiDropdown({
           isClearable={isClearable}
           isSearchable={isSearchable}
           placeholder={loading ? "Loading..." : placeholder}
-          styles={customStyles}
+          styles={glassSelectStyles}
           className="text-sm"
           menuPortalTarget={typeof window !== "undefined" ? document.body : null}
           menuPosition="fixed"

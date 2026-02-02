@@ -13,7 +13,7 @@ export function useDetailsModal() {
 
   const openDetails = (recordType: number, recordId: number, title?: string) => {
     setModalData({ recordType, recordId, title });
-    setIsOpen(true);
+    // setIsOpen(true);
   };
 
   const closeDetails = () => {
@@ -24,6 +24,7 @@ export function useDetailsModal() {
   return {
     isOpen,
     modalData,
+    setModalData,
     openDetails,
     closeDetails,
   };
