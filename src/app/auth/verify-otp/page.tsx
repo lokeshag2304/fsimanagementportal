@@ -707,7 +707,7 @@ export default function VerifyOTPPage() {
                   router.push("/UserAdmin/dashboard");
                   break;
                 case 3:
-                  router.push("/ClientAdmin/dashboard");
+                  router.push("/ClientAdmin/client-details");
                   break;
                 default:
                   router.push("/");

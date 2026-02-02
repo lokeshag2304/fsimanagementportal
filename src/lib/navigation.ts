@@ -59,13 +59,13 @@ export const roleNavigationMap: Record<Role, NavItem[]> = {
 
 
   ClientAdmin: [
-     { name: "Dashboard", href: "/ClientAdmin/dashboard", icon: Home },
-    { name: "Subscription", href: "/ClientAdmin/subscription", icon: UserPlus },
-    { name: "SSL", href: "/ClientAdmin/ssl", icon: Book },
-    { name: "Counter", href: "/ClientAdmin/counter", icon: BookOpen },
-    { name: "Domains", href: "/ClientAdmin/domains", icon: Globe },
-    { name: "Emails", href: "/ClientAdmin/sub-email", icon: Rocket },
-    { name: "Hosting", href: "/ClientAdmin/hosting", icon: Rocket },
+     { name: "Dashboard", href: "/ClientAdmin/client-details", icon: Home },
+    // { name: "Subscription", href: "/ClientAdmin/subscription", icon: UserPlus },
+    // { name: "SSL", href: "/ClientAdmin/ssl", icon: Book },
+    // { name: "Counter", href: "/ClientAdmin/counter", icon: BookOpen },
+    // { name: "Domains", href: "/ClientAdmin/domains", icon: Globe },
+    // { name: "Emails", href: "/ClientAdmin/sub-email", icon: Rocket },
+    // { name: "Hosting", href: "/ClientAdmin/hosting", icon: Rocket },
 //     {
 //       name: "User Management",
 //       href: "/ClientAdmin/user-management",

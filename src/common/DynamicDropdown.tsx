@@ -664,16 +664,9 @@ export function ApiDropdown({
 
       const data = await response.json()
 
-      if (data.status) {
+      if (data.success) {
         // Add new item to options
-        const newItem = {
-          value: data.data?.id || Date.now(),
-          label: name
-        }
-        setOptions(prev => [newItem, ...prev])
-        
-        // Select the newly added item
-        onChange(newItem)
+       fetchOptions()
         
         // Close modal
         setShowModal(false)

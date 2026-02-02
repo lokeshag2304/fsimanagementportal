@@ -304,9 +304,6 @@ export default function DynamicDetailsPage({
           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-2xl font-bold text-white">Service Overview</h2>
-              <p className="text-gray-400 mt-1">
-                Welcome back, <span className="text-blue-400 font-medium">{user?.email?.split('@')[0] || "User"}</span>
-              </p>
             </div>
             <button
               onClick={handleRefresh}
