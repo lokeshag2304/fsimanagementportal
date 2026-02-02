@@ -332,9 +332,7 @@ export default function DynamicDetailsPage({
                       <div className={`p-3 rounded-lg ${color.bg}`}>
                         {getTypeIcon(type.type_name)}
                       </div>
-                      <div className={`text-xs px-2 py-1 rounded-full ${color.bg} ${color.text} ${color.border}`}>
-                        ID: {type.type_id}
-                      </div>
+                     
                     </div>
                     
                     <div className="mb-2">
@@ -392,9 +390,9 @@ export default function DynamicDetailsPage({
                       <tr className="bg-white/5 border-b border-white/10">
                         <th className="py-4 px-6 text-left text-sm font-medium text-gray-300">ID</th>
                         <th className="py-4 px-6 text-left text-sm font-medium text-gray-300">Service Type</th>
+                        <th className="py-4 px-6 text-left text-sm font-medium text-gray-300">Products</th>
                         <th className="py-4 px-6 text-left text-sm font-medium text-gray-300">Status</th>
                         <th className="py-4 px-6 text-left text-sm font-medium text-gray-300">Created Date</th>
-                        <th className="py-4 px-6 text-left text-sm font-medium text-gray-300">Expiry Status</th>
                         <th className="py-4 px-6 text-left text-sm font-medium text-gray-300">Days Left</th>
                       </tr>
                     </thead>
@@ -419,8 +417,13 @@ export default function DynamicDetailsPage({
                               </div>
                               <div>
                                 <span className="text-sm font-medium text-white block">{item.record_type}</span>
-                                <span className="text-xs text-gray-400">Service</span>
                               </div>
+                            </div>
+                          </td>
+                          <td className="py-4 px-6">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-gray-300">{item.product_name}
+                              </span>
                             </div>
                           </td>
                           <td className="py-4 px-6">
@@ -434,16 +437,7 @@ export default function DynamicDetailsPage({
                               <span className="text-sm text-gray-300">{item.created_at}</span>
                             </div>
                           </td>
-                          <td className="py-4 px-6">
-                            <div className="flex items-center gap-2">
-                              {getDaysIcon(item.days_to_expired)}
-                              <span className="text-sm text-gray-300">
-                                {item.days_to_expired < 0 ? "Expired" : 
-                                 item.days_to_expired <= 7 ? "Expiring Soon" : 
-                                 "Active"}
-                              </span>
-                            </div>
-                          </td>
+                          
                           <td className="py-4 px-6">
                             <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${
                               item.days_to_expired < 0 
