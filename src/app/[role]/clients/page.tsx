@@ -853,7 +853,7 @@ export default function ClientsPage() {
                         
                         {/* Name field */}
                         <td className="py-3 px-4">
-                          <span className="text-sm text-white font-medium">{item.name}</span>
+                          <span className="text-sm text-white font-medium hover:text-blue-400 cursor-pointer" onClick={()=> router.push(`/${user?.role}/client-details/${item.id}`)}>{item.name}</span>
                         </td>
                         
                         {/* Email field */}

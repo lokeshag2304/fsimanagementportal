@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from "react"
 import { Header } from "@/components/layout"
 import { GlassCard, GlassButton } from "@/components/glass"
 import { DeleteConfirmationModal } from "@/common/services/DeleteConfirmationModal"
+import { useDetailsModal } from "@/hooks/useDetailsModal"
+import DynamicDetailsPage from "../categaries-details/[id]/DynamicDetailsPage/page"
 import {
   Edit,
   Trash2,
@@ -72,6 +74,7 @@ export default function CounterPage() {
   const navigationTabs = getNavigationByRole(user?.role);
   const { toast } = useToast()
   const router = useRouter()
+  const { isOpen, modalData, openDetails, closeDetails } = useDetailsModal();
   
   const [data, setData] = useState<CounterRecord[]>([])
   const [loading, setLoading] = useState(true)
@@ -109,6 +112,39 @@ export default function CounterPage() {
 
   const searchTimeoutRef = useRef<NodeJS.Timeout>()
   const isMountedRef = useRef(true)
+
+  // Handle row click to open details modal
+  const handleRowClick = (e: React.MouseEvent, item: CounterRecord) => {
+    // Prevent click if clicking on checkbox, button, or editing
+    if (
+      (e.target as HTMLElement).closest('input[type="checkbox"]') ||
+      (e.target as HTMLElement).closest('button') ||
+      editingId === item.id
+    ) {
+      return;
+    }
+
+    // Check if we have the necessary data for opening details
+    if (!item.product_id) {
+      // Try to find product_id from the item or use item.id as fallback
+      if (!item.id) {
+        toast({
+          title: "Error",
+          description: "Product ID not found",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Open details modal with product/category ID
+      // For counters, you might want to use a different recordType
+      // Assuming recordType 1 is for products/categories, adjust if needed
+      openDetails(1, item.id, item.product_name || "Counter");
+    } else {
+      // Open details modal with product/category ID
+      openDetails(1, item.product_id, item.product_name);
+    }
+  }
 
   // Fetch counter records
   const fetchCounterRecords = async () => {
@@ -783,13 +819,6 @@ export default function CounterPage() {
                             />
                           </td>
                           <td className="py-3 px-4 text-sm text-gray-300">
-                            {/* <input
-                              type="text"
-                              value={new Date().toLocaleString()}
-                              readOnly
-                              className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-sm cursor-not-allowed"
-                              style={{ minHeight: '32px' }}
-                            /> */}
                             {"- -"}
                           </td>
                           <td className="py-3 px-4">
@@ -841,11 +870,12 @@ export default function CounterPage() {
                         data.map((item, index) => (
                           <tr
                             key={item.id}
-                            className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors ${
+                            className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors cursor-pointer group ${
                               editingId === item.id ? 'bg-blue-500/5' : ''
                             }`}
+                            onClick={(e) => handleRowClick(e, item)}
                           >
-                            <td className="py-3 px-4">
+                            <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
                               <input
                                 type="checkbox"
                                 checked={selectedItems.includes(item.id)}
@@ -1022,7 +1052,6 @@ export default function CounterPage() {
                                 </td>
                                 <td className="py-3 px-4">
                                   <div className="flex items-center gap-2">
-                                    {/* <Package className="w-4 h-4 text-gray-400 flex-shrink-0" /> */}
                                     <span className="text-sm text-white font-medium">
                                       {item.vender_name}
                                     </span>
@@ -1038,7 +1067,6 @@ export default function CounterPage() {
                                 </td>
                                 <td className="py-3 px-4 text-sm text-gray-300">
                                   <div className="flex items-center gap-2">
-                                    {/* <Calendar className="w-4 h-4 text-gray-400" /> */}
                                     {formatDate(item.valid_till)}
                                   </div>
                                 </td>
@@ -1050,7 +1078,6 @@ export default function CounterPage() {
                                         ? 'bg-orange-500/20 text-orange-400 border-orange-500/20'
                                         : 'bg-green-500/20 text-green-400 border-green-500/20'
                                   }`}>
-                                    {/* <Clock className="w-3 h-3" /> */}
                                     {calculateDays(item.valid_till)} days
                                   </div>
                                 </td>
@@ -1067,7 +1094,6 @@ export default function CounterPage() {
                                 </td>
                                 <td className="py-3 px-4">
                                   <div className="flex items-center gap-2">
-                                    {/* <AlertCircle className="w-4 h-4 text-gray-400 flex-shrink-0" /> */}
                                     <span className="text-sm text-gray-300 truncate max-w-[180px]">
                                       {item?.latest_remark?.remark || "No remarks"}
                                     </span>
@@ -1080,7 +1106,7 @@ export default function CounterPage() {
                             )}
                             
                             <td className="py-3 px-4">
-                              <div className="flex items-center justify-end gap-2">
+                              <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                                 {editingId === item.id ? (
                                   <>
                                     <GlassButton
@@ -1188,11 +1214,32 @@ export default function CounterPage() {
           : "Are you sure you want to delete the selected counter records? This action cannot be undone."
         }
       />
+
+      {/* Details Modal */}
+      {isOpen && modalData && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm"
+            onClick={closeDetails}
+          />
+          
+          {/* Modal Container */}
+          <div className="relative min-h-screen px-4 py-8 flex items-start justify-center">
+            {/* Modal Content */}
+            <div className="relative w-full max-w-7xl bg-transparent">
+              <DynamicDetailsPage
+                recordType={modalData.recordType}
+                recordId={modalData.recordId}
+                onClose={closeDetails}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
-
-
 
 
 

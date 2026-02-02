@@ -526,21 +526,24 @@ export default function SubscriptionsPage() {
   };
 
   // Handle row click
-  const handleRowClick = (e: React.MouseEvent, item: Subscription) => {
-    // Prevent opening when clicking on checkbox or action buttons
-    if (
-      (e.target as HTMLElement).closest('input[type="checkbox"]') ||
-      (e.target as HTMLElement).closest("button") ||
-      editingId === item.id
-    ) {
-      return;
-    }
+// Make sure product_id is available in Subscription interface
+// It seems it's already there: product_id?: number;
 
-    // Open details modal (or navigate to details page)
-    openDetails(1, item.id, item.product_name);
-    // OR if you want to navigate to a page:
-    // router.push(`/subscriptions/${item.id}`);
-  };
+const handleRowClick = (e: React.MouseEvent, item: Subscription) => {
+  // ... existing code ...
+
+  if (!item.id) {
+    toast({
+      title: "Error",
+      description: "Product ID not found",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  // Open details modal with product/category ID
+  openDetails(1, item.id, item.product_name);
+};
 
   return (
     <div className="min-h-screen pb-8">

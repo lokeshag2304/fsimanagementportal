@@ -1,230 +1,159 @@
-// src/components/dynamic/DynamicDetailsPage.tsx
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { GlassCard } from "@/components/glass";
-import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/useToast";
-import { apiService } from "@/common/services/apiService";
 import DashboardLoader from "@/common/DashboardLoader";
-import {
-  Package,
-  Calendar,
-  DollarSign,
+import { 
+  X, 
+  MessageSquare, 
+  Activity, 
+  Calendar, 
+  User, 
+  Package, 
+  Globe, 
+  UserCircle,
   Clock,
   CheckCircle,
-  XCircle,
-  ArrowLeft,
-  MessageSquare,
-  Globe,
-  User,
-  Activity,
-  AlertCircle,
-  TrendingUp,
-  RefreshCw,
-  FileText,
-  Shield,
-  Server,
-  Database,
-  Cpu,
-  Layers,
-  Zap,
-  Building,
-  Mail,
-  Phone,
-  MapPin,
-  CreditCard,
-  BarChart,
-  Settings,
-  Users,
-  Key,
-  Network,
-  HardDrive,
-  Cloud,
-  Wifi,
-  ShieldCheck,
-  Terminal,
+  AlertCircle
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
-interface DynamicDetailsPageProps {
-  recordType: number; // 1=Subscription, 2=Clients, etc.
-  recordId: number;
-  onClose?: () => void;
-  config?: {
-    title?: string;
-    icon?: React.ReactNode;
-    fields?: string[];
-  };
+interface Remark {
+  id: number;
+  remark: string;
+  created_at: string;
 }
 
-// Configuration for different record types
-const RECORD_TYPE_CONFIG: Record<number, {
-  title: string;
-  icon: React.ReactNode;
-  primaryFields: string[];
-  sections: Array<{
-    title: string;
-    icon: React.ReactNode;
-    fields: string[];
-    color: string;
-  }>;
-}> = {
-  1: { // Subscriptions
-    title: "Subscription Details",
-    icon: <Package className="w-6 h-6 text-blue-400" />,
-    primaryFields: ["product_name", "client_name", "amount", "status"],
-    sections: [
-      {
-        title: "Billing Information",
-        icon: <DollarSign className="w-5 h-5" />,
-        fields: ["amount", "renewal_date", "expiry_date", "payment_method"],
-        color: "blue",
-      },
-      {
-        title: "Technical Details",
-        icon: <Server className="w-5 h-5" />,
-        fields: ["server_type", "storage", "bandwidth", "databases", "ssl_enabled"],
-        color: "purple",
-      },
-      {
-        title: "Contact Information",
-        icon: <User className="w-5 h-5" />,
-        fields: ["client_name", "email", "phone", "company"],
-        color: "green",
-      },
-    ],
-  },
-  2: { // Clients
-    title: "Client Details",
-    icon: <Users className="w-6 h-6 text-green-400" />,
-    primaryFields: ["client_name", "email", "phone", "status"],
-    sections: [
-      {
-        title: "Contact Information",
-        icon: <User className="w-5 h-5" />,
-        fields: ["client_name", "email", "phone", "address"],
-        color: "blue",
-      },
-      {
-        title: "Company Details",
-        icon: <Building className="w-5 h-5" />,
-        fields: ["company", "industry", "employee_count", "revenue"],
-        color: "purple",
-      },
-      {
-        title: "Subscription Info",
-        icon: <Package className="w-5 h-5" />,
-        fields: ["active_subscriptions", "total_spent", "last_payment"],
-        color: "green",
-      },
-    ],
-  },
-  3: { // Products
-    title: "Product Details",
-    icon: <Package className="w-6 h-6 text-orange-400" />,
-    primaryFields: ["product_name", "category", "price", "status"],
-    sections: [
-      {
-        title: "Product Information",
-        icon: <Package className="w-5 h-5" />,
-        fields: ["product_name", "description", "category", "sku"],
-        color: "blue",
-      },
-      {
-        title: "Pricing",
-        icon: <DollarSign className="w-5 h-5" />,
-        fields: ["price", "cost", "margin", "discount"],
-        color: "green",
-      },
-      {
-        title: "Inventory",
-        icon: <Database className="w-5 h-5" />,
-        fields: ["stock", "reorder_level", "warehouse", "supplier"],
-        color: "purple",
-      },
-    ],
-  },
-};
+interface Activity {
+  id: number;
+  action: string;
+  message: string;
+  creator_name: string;
+  created_at: string;
+}
+
+interface Category {
+  id: number;
+  record_type: string;
+  client_name: string | null;
+  domain_name: string | null;
+  product_name: string;
+  expiry_date: string;
+  days_to_expired: number;
+  today_date: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface CategoryDetailsData {
+  status: boolean;
+  category: Category;
+  remarks: Remark[];
+  activities: Activity[];
+}
+
+interface DynamicDetailsPageProps {
+  recordType: number;
+  recordId: number;
+  onClose: () => void;
+}
 
 export default function DynamicDetailsPage({
   recordType,
   recordId,
   onClose,
-  config,
 }: DynamicDetailsPageProps) {
-  const { user } = useAuth();
   const { toast } = useToast();
-  const router = useRouter();
-
-  const [record, setRecord] = useState<any>(null);
+  const { getToken } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<any>({});
-  
-  const pageConfig = config ? {
-    title: config.title || RECORD_TYPE_CONFIG[recordType]?.title || "Details",
-    icon: config.icon || RECORD_TYPE_CONFIG[recordType]?.icon,
-    sections: RECORD_TYPE_CONFIG[recordType]?.sections || [],
-  } : RECORD_TYPE_CONFIG[recordType] || {
-    title: "Details",
-    icon: <FileText className="w-6 h-6 text-gray-400" />,
-    sections: [],
-  };
+  const [data, setData] = useState<CategoryDetailsData | null>(null);
+  const [activeTab, setActiveTab] = useState<"remarks" | "activities">("remarks");
 
   useEffect(() => {
-    fetchRecordDetails();
-    fetchRecordStats();
+    if (recordType && recordId) {
+      fetchCategoryDetails();
+    }
   }, [recordType, recordId]);
 
-  const fetchRecordDetails = async () => {
+  const fetchCategoryDetails = async () => {
     try {
       setLoading(true);
-      const response = await apiService.getRecordDetails(recordType, recordId);
+      
+      console.log("Fetching details for recordId:", recordId);
+      
+      const token = getToken();
+      
+      if (!token) {
+        toast({
+          title: "Authentication Error",
+          description: "Please login again to continue.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+      
+      const response = await fetch(
+        'https://rainbowsolutionandtechnology.com/FSISubscriptionPortal/public/api/secure/Categories/get-categories-details',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'accept': 'application/json, text/plain, */*',
+          },
+          body: JSON.stringify({ cat_id: recordId }),
+        }
+      );
 
-      if (response.status) {
-        setRecord(response.data);
+      const result = await response.json();
+      console.log("API Response:", result);
+      
+      if (result.status) {
+        setData(result);
       } else {
         toast({
           title: "Error",
-          description: "Failed to fetch details",
+          description: result.message || "Failed to fetch category details",
           variant: "destructive",
         });
-        handleClose();
       }
     } catch (error) {
-      console.error("Error fetching record:", error);
+      console.error("Error fetching category details:", error);
       toast({
         title: "Error",
-        description: "Failed to load details",
+        description: "Failed to fetch category details",
         variant: "destructive",
       });
-      handleClose();
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchRecordStats = async () => {
-    // Fetch stats based on record type
-    try {
-      const response = await apiService.getRecordStats(recordType, recordId);
-      if (response.status) {
-        setStats(response.data);
-      }
-    } catch (error) {
-      console.error("Error fetching stats:", error);
-    }
-  };
-
-  const handleClose = () => {
-    if (onClose) {
-      onClose();
-    } else {
-      router.back();
-    }
-  };
-
+  // Format date function
   const formatDate = (dateString: string) => {
+    try {
+      // If date is already in readable format, return as is
+      if (dateString.includes(", ")) {
+        return dateString;
+      }
+      
+      const date = new Date(dateString);
+      return date.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
+  // Format simple date (without time)
+  const formatSimpleDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
       return date.toLocaleDateString("en-US", {
@@ -237,408 +166,342 @@ export default function DynamicDetailsPage({
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount);
+  // Get days status color
+  const getDaysStatusColor = (days: number) => {
+    if (days < 0) return "text-red-400";
+    if (days <= 7) return "text-orange-400";
+    return "text-green-400";
   };
 
-  const getStatusConfig = (status: any) => {
-    const statusStr = String(status).toLowerCase();
-    if (statusStr === "active" || statusStr === "1" || statusStr === "true") {
-      return {
-        label: "Active",
-        icon: CheckCircle,
-        color: "text-green-400",
-        bgColor: "bg-green-500/10",
-        borderColor: "border-green-500/20",
-      };
-    } else {
-      return {
-        label: "Inactive",
-        icon: XCircle,
-        color: "text-red-400",
-        bgColor: "bg-red-500/10",
-        borderColor: "border-red-500/20",
-      };
-    }
+  // Get days status badge
+  const getDaysStatusBadge = (days: number) => {
+    if (days < 0) return "Expired";
+    if (days <= 7) return "Expiring Soon";
+    return "Active";
   };
 
-  const getFieldIcon = (fieldName: string) => {
-    const iconMap: Record<string, React.ReactNode> = {
-      // General
-      id: <Key className="w-4 h-4" />,
-      name: <User className="w-4 h-4" />,
-      status: <Activity className="w-4 h-4" />,
-      created_at: <Calendar className="w-4 h-4" />,
-      updated_at: <Clock className="w-4 h-4" />,
-      
-      // Contact
-      email: <Mail className="w-4 h-4" />,
-      phone: <Phone className="w-4 h-4" />,
-      address: <MapPin className="w-4 h-4" />,
-      client_name: <User className="w-4 h-4" />,
-      
-      // Financial
-      amount: <DollarSign className="w-4 h-4" />,
-      price: <DollarSign className="w-4 h-4" />,
-      cost: <DollarSign className="w-4 h-4" />,
-      revenue: <BarChart className="w-4 h-4" />,
-      payment_method: <CreditCard className="w-4 h-4" />,
-      
-      // Technical
-      server_type: <Server className="w-4 h-4" />,
-      storage: <HardDrive className="w-4 h-4" />,
-      bandwidth: <Wifi className="w-4 h-4" />,
-      databases: <Database className="w-4 h-4" />,
-      ssl_enabled: <ShieldCheck className="w-4 h-4" />,
-      domain_name: <Globe className="w-4 h-4" />,
-      
-      // Product
-      product_name: <Package className="w-4 h-4" />,
-      description: <FileText className="w-4 h-4" />,
-      category: <Layers className="w-4 h-4" />,
-      sku: <Key className="w-4 h-4" />,
-      stock: <Database className="w-4 h-4" />,
-      
-      // Company
-      company: <Building className="w-4 h-4" />,
-      industry: <Network className="w-4 h-4" />,
-      employee_count: <Users className="w-4 h-4" />,
-    };
-    
-    return iconMap[fieldName] || <FileText className="w-4 h-4" />;
-  };
-
-  const getFieldValue = (fieldName: string, value: any) => {
-    if (value === null || value === undefined || value === "") {
-      return "N/A";
-    }
-    
-    // Date fields
-    if (fieldName.includes("date") || fieldName.includes("_at")) {
-      return formatDate(value);
-    }
-    
-    // Amount/price fields
-    if (fieldName.includes("amount") || fieldName.includes("price") || 
-        fieldName.includes("cost") || fieldName.includes("revenue")) {
-      return formatCurrency(Number(value));
-    }
-    
-    // Boolean fields
-    if (typeof value === "boolean") {
-      return value ? "Yes" : "No";
-    }
-    
-    // Status fields
-    if (fieldName === "status") {
-      return String(value) === "1" || value === true ? "Active" : "Inactive";
-    }
-    
-    return String(value);
+  // Get days status icon
+  const getDaysStatusIcon = (days: number) => {
+    if (days < 0) return <AlertCircle className="w-4 h-4" />;
+    if (days <= 7) return <Clock className="w-4 h-4" />;
+    return <CheckCircle className="w-4 h-4" />;
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen">
-        <GlassCard className="p-8">
-          <DashboardLoader label="Loading details..." />
-        </GlassCard>
+      <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+        <div className="relative z-10">
+          <DashboardLoader label="Loading category details..." />
+        </div>
       </div>
     );
   }
 
-  if (!record) {
-    return null;
+  if (!data) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+        <div className="relative z-10 bg-gradient-to-br from-gray-900/90 via-black/90 to-gray-900/90 border border-white/10 rounded-2xl p-8 backdrop-blur-xl max-w-md text-center">
+          <h3 className="text-xl font-semibold text-white mb-2">No Data Found</h3>
+          <p className="text-gray-400 mb-6">Unable to load category details.</p>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg border border-red-500/20 transition-all"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
   }
 
-  const StatusIcon = getStatusConfig(record.status).icon;
+  const { category } = data;
 
   return (
-    <div className="min-h-screen pb-8">
-      {/* Back Button */}
-      <button
-        onClick={handleClose}
-        className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6 group"
-      >
-        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-        Back
-      </button>
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      {/* Backdrop */}
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Main Card */}
-      <GlassCard className="p-6 backdrop-blur-xl bg-gradient-to-br from-gray-900/80 via-black/80 to-gray-900/80 border border-white/10 shadow-2xl">
-        {/* Header Section */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8">
-          <div className="flex items-start gap-4">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30">
-              {pageConfig.icon}
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-                {record.name || record.product_name || record.client_name || `Record #${record.id}`}
-                <span
-                  className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
-                    getStatusConfig(record.status).bgColor
-                  } ${getStatusConfig(record.status).color} border ${
-                    getStatusConfig(record.status).borderColor
-                  }`}
+      {/* Modal Container */}
+      <div className="relative min-h-screen px-4 py-8 flex items-start justify-center">
+        {/* Modal Content */}
+        <div className="relative w-full max-w-5xl bg-transparent">
+          <GlassCard className="p-0 overflow-hidden backdrop-blur-xl bg-gradient-to-br from-gray-900/90 via-black/90 to-gray-900/90 border border-white/10 shadow-2xl">
+            {/* Header */}
+            <div className="p-6 border-b border-white/10">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-white">Subscription Details</h2>
+                  {/*<p className="text-gray-400 mt-1">
+                    Subscription ID: <span className="text-blue-400 font-medium">{category.id}</span>
+                  </p>*/}
+                </div>
+                <button
+                  onClick={onClose}
+                  className="p-2 hover:bg-white/10 rounded-lg transition-colors group"
                 >
-                  <StatusIcon className="w-4 h-4" />
-                  {getStatusConfig(record.status).label}
-                </span>
-              </h1>
-              <p className="text-gray-400 mt-2">
-                {record.description || record.product_description || "No description available"}
-              </p>
-              <div className="flex flex-wrap items-center gap-4 mt-3 text-sm">
-                {record.email && (
-                  <span className="flex items-center gap-2 text-gray-300">
-                    <Mail className="w-4 h-4" />
-                    {record.email}
-                  </span>
-                )}
-                {record.phone && (
-                  <span className="flex items-center gap-2 text-gray-300">
-                    <Phone className="w-4 h-4" />
-                    {record.phone}
-                  </span>
-                )}
-                {record.domain_name && (
-                  <span className="flex items-center gap-2 text-gray-300">
-                    <Globe className="w-4 h-4" />
-                    {record.domain_name}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-3">
-            <button className="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 rounded-lg text-blue-400 text-sm font-medium transition-colors flex items-center gap-2">
-              <Edit className="w-4 h-4" />
-              Edit
-            </button>
-            <button className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white text-sm font-medium transition-colors">
-              More Actions
-            </button>
-          </div>
-        </div>
-
-        {/* Quick Stats Boxes */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
-          {/* Box 1: ID */}
-          <div className="group relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent rounded-xl blur-xl group-hover:blur-2xl transition-all duration-300" />
-            <GlassCard className="p-5 relative backdrop-blur-xl border border-white/10 hover:border-blue-500/30 transition-all duration-300">
-              <div className="flex items-center justify-between mb-3">
-                <Key className="w-5 h-5 text-blue-400" />
-                <span className="text-xs text-gray-400">ID</span>
-              </div>
-              <p className="text-sm text-gray-400 mb-1">Record ID</p>
-              <p className="text-2xl font-bold text-white">#{record.id}</p>
-            </GlassCard>
-          </div>
-
-          {/* Box 2: Created Date */}
-          <div className="group relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent rounded-xl blur-xl group-hover:blur-2xl transition-all duration-300" />
-            <GlassCard className="p-5 relative backdrop-blur-xl border border-white/10 hover:border-purple-500/30 transition-all duration-300">
-              <div className="flex items-center justify-between mb-3">
-                <Calendar className="w-5 h-5 text-purple-400" />
-                <span className="text-xs text-gray-400">Created</span>
-              </div>
-              <p className="text-sm text-gray-400 mb-1">Created On</p>
-              <p className="text-lg font-bold text-white">
-                {formatDate(record.created_at)}
-              </p>
-            </GlassCard>
-          </div>
-
-          {/* Box 3: Updated Date */}
-          <div className="group relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent rounded-xl blur-xl group-hover:blur-2xl transition-all duration-300" />
-            <GlassCard className="p-5 relative backdrop-blur-xl border border-white/10 hover:border-green-500/30 transition-all duration-300">
-              <div className="flex items-center justify-between mb-3">
-                <Clock className="w-5 h-5 text-green-400" />
-                <span className="text-xs text-gray-400">Updated</span>
-              </div>
-              <p className="text-sm text-gray-400 mb-1">Last Updated</p>
-              <p className="text-lg font-bold text-white">
-                {formatDate(record.updated_at)}
-              </p>
-            </GlassCard>
-          </div>
-
-          {/* Dynamic Boxes based on record type */}
-          {recordType === 1 && record.amount && (
-            <div className="group relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-transparent rounded-xl blur-xl group-hover:blur-2xl transition-all duration-300" />
-              <GlassCard className="p-5 relative backdrop-blur-xl border border-white/10 hover:border-cyan-500/30 transition-all duration-300">
-                <div className="flex items-center justify-between mb-3">
-                  <DollarSign className="w-5 h-5 text-cyan-400" />
-                  <TrendingUp className="w-4 h-4 text-cyan-400" />
-                </div>
-                <p className="text-sm text-gray-400 mb-1">Amount</p>
-                <p className="text-2xl font-bold text-white">
-                  {formatCurrency(record.amount)}
-                </p>
-              </GlassCard>
-            </div>
-          )}
-
-          {/* Add more dynamic boxes as needed */}
-          {record.status !== undefined && (
-            <div className="group relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent rounded-xl blur-xl group-hover:blur-2xl transition-all duration-300" />
-              <GlassCard className="p-5 relative backdrop-blur-xl border border-white/10 hover:border-orange-500/30 transition-all duration-300">
-                <div className="flex items-center justify-between mb-3">
-                  <Activity className="w-5 h-5 text-orange-400" />
-                </div>
-                <p className="text-sm text-gray-400 mb-1">Status</p>
-                <div className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
-                  getStatusConfig(record.status).bgColor
-                } ${getStatusConfig(record.status).color}`}>
-                  {getStatusConfig(record.status).label}
-                </div>
-              </GlassCard>
-            </div>
-          )}
-        </div>
-
-        {/* Details Sections */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Left Column - Dynamic Sections */}
-          <div className="space-y-6">
-            {pageConfig.sections.map((section, index) => (
-              <GlassCard key={index} className="p-6 border border-white/10">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className={`p-2 rounded-lg bg-${section.color}-500/10`}>
-                    <div className={`text-${section.color}-400`}>
-                      {section.icon}
-                    </div>
-                  </div>
-                  <h3 className="text-lg font-semibold text-white">{section.title}</h3>
-                </div>
-                <div className="space-y-4">
-                  {section.fields.map((field) => (
-                    record[field] !== undefined && (
-                      <div key={field} className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
-                        <div className="flex items-center gap-3">
-                          <span className="text-gray-400">
-                            {getFieldIcon(field)}
-                          </span>
-                          <div>
-                            <p className="text-sm text-gray-400 capitalize">
-                              {field.replace(/_/g, ' ')}
-                            </p>
-                            <p className="text-white font-medium">
-                              {getFieldValue(field, record[field])}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  ))}
-                </div>
-              </GlassCard>
-            ))}
-          </div>
-
-          {/* Right Column - Common Sections */}
-          <div className="space-y-6">
-            {/* Remarks/Notes Section */}
-            <GlassCard className="p-6 border border-white/10">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 rounded-lg bg-purple-500/10">
-                  <MessageSquare className="w-5 h-5 text-purple-400" />
-                </div>
-                <h3 className="text-lg font-semibold text-white">Notes & Remarks</h3>
-              </div>
-              <div className="space-y-4">
-                {record.remarks || record.note || record.latest_remark ? (
-                  <div className="p-4 rounded-lg bg-white/5 border border-white/10">
-                    <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
-                          <User className="w-4 h-4 text-white" />
-                        </div>
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-white mb-2">
-                          {record.remarks || record.note || record.latest_remark?.remark || "No remarks"}
-                        </p>
-                        {record.updated_at && (
-                          <p className="text-xs text-gray-400">
-                            Updated: {formatDate(record.updated_at)}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-400">No remarks yet</p>
-                  </div>
-                )}
-              </div>
-              <div className="mt-6">
-                <textarea
-                  placeholder="Add a new note..."
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/30 backdrop-blur-sm"
-                  rows={3}
-                />
-                <button className="mt-3 px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 rounded-lg text-purple-400 text-sm font-medium transition-colors">
-                  Add Note
+                  <X className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" />
                 </button>
               </div>
-            </GlassCard>
+            </div>
 
-            {/* Activity Timeline */}
-            <GlassCard className="p-6 border border-white/10">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 rounded-lg bg-orange-500/10">
-                  <Activity className="w-5 h-5 text-orange-400" />
-                </div>
-                <h3 className="text-lg font-semibold text-white">Recent Activity</h3>
-              </div>
-              <div className="space-y-4">
-                <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-green-500" />
-                  <div>
-                    <p className="text-white">Record Created</p>
-                    <p className="text-sm text-gray-400">
-                      {formatDate(record.created_at)}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-blue-500" />
-                  <div>
-                    <p className="text-white">Last Updated</p>
-                    <p className="text-sm text-gray-400">
-                      {formatDate(record.updated_at)}
-                    </p>
-                  </div>
-                </div>
-                {record.expiry_date && (
-                  <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-purple-500" />
+            {/* Category Details Card */}
+            <div className="p-6 border-b border-white/10">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Product Name */}
+                <div className="p-4 rounded-lg bg-white/5 border border-white/10">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 bg-blue-500/20 rounded-lg">
+                      <Package className="w-4 h-4 text-blue-400" />
+                    </div>
                     <div>
-                      <p className="text-white">Expiry Date</p>
-                      <p className="text-sm text-gray-400">
-                        {formatDate(record.expiry_date)}
-                      </p>
+                      <h4 className="text-sm font-medium text-gray-400">Product</h4>
+                      <p className="text-white font-medium mt-1">{category.product_name}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Client Name (Conditional) */}
+                {category.client_name && (
+                  <div className="p-4 rounded-lg bg-white/5 border border-white/10">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="p-2 bg-purple-500/20 rounded-lg">
+                        <UserCircle className="w-4 h-4 text-purple-400" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-400">Client</h4>
+                        <p className="text-white font-medium mt-1">{category.client_name}</p>
+                      </div>
                     </div>
                   </div>
                 )}
+
+                {/* Domain Name (Conditional) */}
+                {category.domain_name && (
+                  <div className="p-4 rounded-lg bg-white/5 border border-white/10">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="p-2 bg-green-500/20 rounded-lg">
+                        <Globe className="w-4 h-4 text-green-400" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-400">Domain</h4>
+                        <p className="text-white font-medium mt-1">{category.domain_name}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Expiry Date */}
+                <div className="p-4 rounded-lg bg-white/5 border border-white/10">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 bg-orange-500/20 rounded-lg">
+                      <Calendar className="w-4 h-4 text-orange-400" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-400">Expiry Date</h4>
+                      <p className="text-white font-medium mt-1">{formatSimpleDate(category.expiry_date)}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Days to Expire */}
+                <div className="p-4 rounded-lg bg-white/5 border border-white/10">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 bg-yellow-500/20 rounded-lg">
+                      <Clock className="w-4 h-4 text-yellow-400" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-400">Days to Expire</h4>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className={`font-medium ${getDaysStatusColor(category.days_to_expired)}`}>
+                          {category.days_to_expired} days
+                        </span>
+                        <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
+                          category.days_to_expired < 0 
+                            ? "bg-red-500/20 text-red-400 border border-red-500/20"
+                            : category.days_to_expired <= 7
+                            ? "bg-orange-500/20 text-orange-400 border border-orange-500/20"
+                            : "bg-green-500/20 text-green-400 border border-green-500/20"
+                        }`}>
+                          {getDaysStatusIcon(category.days_to_expired)}
+                          {getDaysStatusBadge(category.days_to_expired)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Created Date */}
+                <div className="p-4 rounded-lg bg-white/5 border border-white/10">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 bg-indigo-500/20 rounded-lg">
+                      <Calendar className="w-4 h-4 text-indigo-400" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-400">Created Date</h4>
+                      <p className="text-white font-medium mt-1">{formatDate(category.created_at)}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Last Updated */}
+                <div className="p-4 rounded-lg bg-white/5 border border-white/10">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 bg-cyan-500/20 rounded-lg">
+                      <Calendar className="w-4 h-4 text-cyan-400" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-400">Last Updated</h4>
+                      <p className="text-white font-medium mt-1">{formatDate(category.updated_at)}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </GlassCard>
-          </div>
+            </div>
+
+            {/* Tabs Navigation */}
+            <div className="flex border-b border-white/10">
+              <button
+                onClick={() => setActiveTab("remarks")}
+                className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-all ${
+                  activeTab === "remarks"
+                    ? "border-blue-500 text-blue-400 bg-blue-500/10"
+                    : "border-transparent text-gray-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <MessageSquare className="w-4 h-4" />
+                Remarks ({data.remarks.length})
+              </button>
+              <button
+                onClick={() => setActiveTab("activities")}
+                className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-all ${
+                  activeTab === "activities"
+                    ? "border-green-500 text-green-400 bg-green-500/10"
+                    : "border-transparent text-gray-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <Activity className="w-4 h-4" />
+                Activities ({data.activities.length})
+              </button>
+            </div>
+
+            {/* Tab Content */}
+            <div className="p-6 max-h-[60vh] overflow-y-auto">
+              {activeTab === "remarks" ? (
+                // Remarks Tab Content
+                <div className="space-y-4">
+                  {data.remarks.length === 0 ? (
+                    <div className="text-center py-8">
+                      <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                      <h3 className="text-lg font-medium text-white mb-1">No Remarks</h3>
+                      <p className="text-gray-400">No remarks found for this category.</p>
+                    </div>
+                  ) : (
+                    data.remarks.map((remark) => (
+                      <div
+                        key={remark.id}
+                        className="p-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all group"
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-blue-500/20 rounded-lg">
+                              <MessageSquare className="w-4 h-4 text-blue-400" />
+                            </div>
+                            <div>
+                              <h4 className="text-white font-medium">Remark #{remark.id}</h4>
+                              <div className="flex items-center gap-2 text-sm text-gray-400 mt-1">
+                                <Calendar className="w-3 h-3" />
+                                {formatDate(remark.created_at)}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="pl-12">
+                          <p className="text-gray-300 whitespace-pre-wrap">{remark.remark}</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              ) : (
+                // Activities Tab Content
+                <div className="space-y-4">
+                  {data.activities.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Activity className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                      <h3 className="text-lg font-medium text-white mb-1">No Activities</h3>
+                      <p className="text-gray-400">No activity history found for this category.</p>
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      {/* Timeline line */}
+                      <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-white/10"></div>
+                      
+                      {data.activities.map((activity, index) => (
+                        <div key={activity.id} className="relative pl-12 pb-6 last:pb-0">
+                          {/* Timeline dot */}
+                          <div className={`absolute left-5 top-0 w-3 h-3 rounded-full border-2 border-white/20 ${
+                            index === 0 
+                              ? "bg-green-500 border-green-500" 
+                              : "bg-gray-700"
+                          }`}></div>
+                          
+                          {/* Activity card */}
+                          <div className="p-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all">
+                            <div className="flex items-start justify-between mb-3">
+                              <div>
+                                <h4 className="text-white font-medium flex items-center gap-2">
+                                  <span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>
+                                  {activity.action}
+                                </h4>
+                                <div className="flex items-center gap-4 text-sm text-gray-400 mt-2">
+                                  <div className="flex items-center gap-2">
+                                    <Calendar className="w-3 h-3" />
+                                    {formatDate(activity.created_at)}
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <User className="w-3 h-3" />
+                                    {activity.creator_name}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="mt-3 p-3 rounded bg-black/30 border border-white/5">
+                              <p className="text-sm text-gray-300 whitespace-pre-wrap">{activity.message}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-white/10 bg-black/20 flex items-center justify-between">
+              <div className="text-sm text-gray-400">
+                Showing {activeTab === "remarks" ? data.remarks.length : data.activities.length} items
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => fetchCategoryDetails()}
+                  className="px-4 py-2 text-sm bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white rounded-lg border border-white/10 transition-all"
+                >
+                  Refresh
+                </button>
+                <button
+                  onClick={onClose}
+                  className="px-4 py-2 text-sm bg-red-500/20 hover:bg-red-500/30 text-red-400 hover:text-red-300 rounded-lg border border-red-500/20 transition-all"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </GlassCard>
         </div>
-      </GlassCard>
+      </div>
     </div>
   );
 }

@@ -758,7 +758,7 @@ export default function UsersPage() {
                         
                         {/* Name field */}
                         <td className="py-3 px-4">
-                          <span className="text-sm text-white font-medium">{item.name}</span>
+                          <span className="text-sm text-white font-medium" onClick=>{item.name}</span>
                         </td>
                         
                         {/* Email field */}
