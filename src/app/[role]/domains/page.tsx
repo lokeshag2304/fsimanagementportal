@@ -31,7 +31,8 @@ import { apiService } from "@/common/services/apiService"
 import Pagination from "@/common/Pagination"
 import DashboardLoader from "@/common/DashboardLoader"
 import { getNavigationByRole } from "@/lib/getNavigationByRole"
-import { ApiDropdown } from "@/common/DynamicDropdown"
+import { ApiDropdown, glassSelectStyles } from "@/common/DynamicDropdown"
+import { GlassSelect } from "@/components/glass/GlassSelect"
 
 interface DomainRecord {
   id: number
@@ -42,7 +43,7 @@ interface DomainRecord {
   product_name: string
   product_id?: number
   vender_name: string
-  vender_id?: number
+  vendor_id?: number
   expiry_date: string
   renewal_date: string
   days_to_expire_today: number
@@ -58,7 +59,7 @@ interface DomainRecord {
   created_at: string
   updated_at: string
   deleted_at: string | null // This is coming from API
-  vender_id?: number // Added for consistency
+  vendor_id?: number // Added for consistency
   days_to_expired?: number // Added from API response
   amount?: number | null // Added from API response
   next_recurring_date?: string | null // Added from API response
@@ -76,7 +77,7 @@ interface AddEditDomain {
   id?: number
   s_id: number
   product_id: number
-  vender_id: number
+  vendor_id: number
   domain_id: number
   client_id: number
   domain_protected: "0" | "1" // Updated to string
@@ -112,7 +113,7 @@ export default function DomainsPage() {
     client_id: null as number | null,
     client_name: "",
     product_id: null as number | null,
-    vender_id: null as number | null,
+    vendor_id: null as number | null,
     product_name: "",
     expiry_date: "",
     renewal_date: "",
@@ -205,7 +206,7 @@ export default function DomainsPage() {
           product_name: item.product_name,
           product_id: item.product_id,
           vender_name: item.vender_name || "N/A",
-          vender_id: item.vender_id,
+          vendor_id: item.vendor_id,
           expiry_date: item.expiry_date,
           renewal_date: item.renewal_date,
           days_to_expire_today: item.days_to_expire_today || item.days_to_expired || 0,
@@ -282,7 +283,7 @@ export default function DomainsPage() {
       client_id: null,
       client_name: "",
       product_id: null,
-      vender_id: null,
+      vendor_id: null,
       product_name: "",
       expiry_date: "",
       renewal_date: today,
@@ -302,7 +303,7 @@ export default function DomainsPage() {
       client_id: null,
       client_name: "",
       product_id: null,
-      vender_id: null,
+      vendor_id: null,
       product_name: "",
       expiry_date: "",
       renewal_date: "",
@@ -320,7 +321,7 @@ export default function DomainsPage() {
       
       if (!newRecordData.domain_id || !newRecordData.client_id || 
           !newRecordData.product_id || !newRecordData.expiry_date || 
-          !newRecordData.vender_id || !newRecordData.renewal_date) {
+          !newRecordData.vendor_id || !newRecordData.renewal_date) {
         toast({
           title: "Error",
           description: "Please fill all required fields",
@@ -333,7 +334,7 @@ export default function DomainsPage() {
         record_type: 4,
         s_id: user?.id || 6,
         product_id: newRecordData.product_id!,
-        vender_id: newRecordData.vender_id!,
+        vendor_id: newRecordData.vendor_id!,
         domain_id: newRecordData.domain_id!,
         client_id: newRecordData.client_id!,
         domain_protected: newRecordData.domain_protected,
@@ -365,7 +366,7 @@ export default function DomainsPage() {
           client_id: null,
           client_name: "",
           product_id: null,
-          vender_id: null,
+          vendor_id: null,
           product_name: "",
           expiry_date: "",
           renewal_date: new Date().toISOString().split('T')[0],
@@ -402,7 +403,7 @@ export default function DomainsPage() {
         domain_id: record.domain_id || undefined,
         client_id: record.client_id || undefined,
         product_id: record.product_id || undefined,
-        vender_id: record.vender_id || undefined,
+        vendor_id: record.vendor_id || undefined,
         renewal_date: record.renewal_date || "",
         remarks: record.remarks || "",
         remark_id: record?.latest_remark?.id || null,
@@ -421,7 +422,7 @@ export default function DomainsPage() {
       
       if (!updatedData.domain_id || !updatedData.client_id || 
           !updatedData.product_id || !updatedData.expiry_date || 
-          !updatedData.vender_id || !updatedData.renewal_date) {
+          !updatedData.vendor_id || !updatedData.renewal_date) {
         toast({
           title: "Error",
           description: "Please fill all required fields",
@@ -435,7 +436,7 @@ export default function DomainsPage() {
         id,
         s_id: user?.id || 0,
         product_id: updatedData.product_id!,
-        vender_id: updatedData.vender_id!,
+        vendor_id: updatedData.vendor_id!,
         domain_id: updatedData.domain_id!,
         client_id: updatedData.client_id!,
         domain_protected: updatedData.domain_protected || "1",
@@ -950,16 +951,16 @@ export default function DomainsPage() {
                             <ApiDropdown
                               endpoint="get-venders"
                               value={
-                                newRecordData.vender_id
+                                newRecordData.vendor_id
                                   ? {
-                                      value: newRecordData.vender_id,
+                                      value: newRecordData.vendor_id,
                                       label: newRecordData.vender_name,
                                     }
                                   : null
                               }
                               onChange={(option) => {
                                 handleNewRecordChange(
-                                  "vender_id",
+                                  "vendor_id",
                                   option?.value ?? null,
                                 );
                                 handleNewRecordChange(
@@ -989,33 +990,49 @@ export default function DomainsPage() {
                               style={{ minHeight: '32px' }}
                             />
                           </td>
-                          <td className="py-3 px-4">
-                            <select
-                              value={newRecordData.domain_protected}
-                              onChange={(e) => handleNewRecordChange('domain_protected', e.target.value as "1" | "0")}
-                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                              style={{ minHeight: '32px' }}
-                            >
-                              {domainProtectOptions.map(option => (
-                                <option key={option.value} value={option.value} className="bg-gray-900 text-white">
-                                  {option.label}
-                                </option>
-                              ))}
-                            </select>
+                          <td className="py-1 px-2">
+                           <div className="w-35">
+  <GlassSelect
+    options={domainProtectOptions}
+    value={
+      domainProtectOptions.find(
+        (opt) => opt.value === newRecordData.domain_protected
+      ) || null
+    }
+    onChange={(selected: any) =>
+      handleNewRecordChange(
+        "domain_protected",
+        selected?.value as "1" | "0"
+      )
+    }
+    isSearchable={false}
+    isClearable
+    styles={glassSelectStyles}
+  />
+</div>
+
                           </td>
-                          <td className="py-3 px-4">
-                            <select
-                              value={newRecordData.status}
-                              onChange={(e) => handleNewRecordChange('status', e.target.value as "1" | "0" | "2")}
-                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                              style={{ minHeight: '32px' }}
-                            >
-                              {statusOptions.map(option => (
-                                <option key={option.value} value={option.value} className="bg-gray-900 text-white">
-                                  {option.label}
-                                </option>
-                              ))}
-                            </select>
+                          <td className="py-1 px-2">
+                           <div className="w-40">
+  <GlassSelect
+    options={statusOptions}
+    value={
+      statusOptions.find(
+        (opt) => opt.value === newRecordData.status
+      ) || null
+    }
+    onChange={(selected: any) =>
+      handleNewRecordChange(
+        "status",
+        selected?.value as "1" | "0" | "2"
+      )
+    }
+    isSearchable={false}
+    isClearable
+    styles={glassSelectStyles}
+  />
+</div>
+
                           </td>
                           <td className="py-3 px-4">
                             <input
@@ -1030,33 +1047,17 @@ export default function DomainsPage() {
                             />
                           </td>
                           <td className="py-3 px-4">
-                            <div className="flex flex-col gap-2">
-                              <div className="flex items-center gap-2">
-                                <input
-                                  type="datetime-local"
-                                  value={newRecordData.deleted_at || ''}
-                                  onChange={(e) => handleNewRecordChange('deleted_at', e.target.value)}
-                                  className="w-full px-2 py-1 bg-white/5 border border-gray-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                                  style={{ minHeight: '32px' }}
-                                />
-                              </div>
-                              <div className="flex items-center justify-between">
-                                <button
-                                  type="button"
-                                  onClick={() => handleNewRecordChange('deleted_at', null)}
-                                  className="text-xs text-gray-400 hover:text-gray-300"
-                                >
-                                  Clear
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleNewRecordChange('deleted_at', getCurrentDateTimeLocal())}
-                                  className="text-xs text-blue-400 hover:text-blue-300"
-                                >
-                                  Set to now
-                                </button>
-                              </div>
-                            </div>
+                           <div className="flex flex-col gap-2">
+  <div className="flex items-center gap-2">
+    <input
+      type="date"
+      value={newRecordData.deleted_at ? newRecordData.deleted_at.split('T')[0] : ''}
+      onChange={(e) => handleNewRecordChange('deleted_at', e.target.value)}
+      className="w-full px-2 py-1 bg-white/5 border border-gray-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+      style={{ minHeight: '32px' }}
+    />
+  </div>
+</div>
                           </td>
                           <td className="py-3 px-4 text-sm text-gray-300">
                             {new Date().toLocaleDateString('en-US', {
@@ -1228,9 +1229,9 @@ export default function DomainsPage() {
                                     <ApiDropdown
                                       endpoint="get-venders"
                                       value={
-                                        editData[item.id]?.vender_id
+                                        editData[item.id]?.vendor_id
                                           ? {
-                                              value: editData[item.id]?.vender_id!,
+                                              value: editData[item.id]?.vendor_id!,
                                               label: editData[item.id]?.vender_name || "",
                                             }
                                           : null
@@ -1238,7 +1239,7 @@ export default function DomainsPage() {
                                       onChange={(option) => {
                                         handleEditChange(
                                           item.id,
-                                          "vender_id",
+                                          "vendor_id",
                                           option?.value ?? null,
                                         );
                                         handleEditChange(
@@ -1265,37 +1266,51 @@ export default function DomainsPage() {
                                       type="number"
                                       value={calculateDays(editData[item.id]?.expiry_date || item.expiry_date)}
                                       readOnly
-                                      className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-sm cursor-not-allowed"
+                                      className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-xs cursor-not-allowed"
                                       style={{ minHeight: '32px' }}
                                     />
                                   </td>
-                                  <td className="py-3 px-4">
-                                    <select
-                                      value={editData[item.id]?.domain_protected?.toString() || item.domain_protected.toString()}
-                                      onChange={(e) => handleEditChange(item.id, 'domain_protected', e.target.value as "0" | "1")}
-                                      className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                                      style={{ minHeight: '32px' }}
-                                    >
-                                      {domainProtectOptions.map(option => (
-                                        <option key={option.value} value={option.value} className="bg-gray-900 text-white">
-                                          {option.label}
-                                        </option>
-                                      ))}
-                                    </select>
+                                  <td className="py-1 px-2">
+                                    <div className="w-35">
+  <GlassSelect
+    options={domainProtectOptions}
+    value={
+      domainProtectOptions.find(
+        (opt) => opt.value === newRecordData.domain_protected
+      ) || null
+    }
+    onChange={(selected: any) =>
+      handleNewRecordChange(
+        "domain_protected",
+        selected?.value as "1" | "0"
+      )
+    }
+    isSearchable={false}
+    isClearable
+    styles={glassSelectStyles}
+  />
+</div>
                                   </td>
-                                  <td className="py-3 px-4">
-                                    <select
-                                      value={editData[item.id]?.status?.toString() || item.status.toString()}
-                                      onChange={(e) => handleEditChange(item.id, 'status', parseInt(e.target.value) as 0 | 1 | 2)}
-                                      className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                                      style={{ minHeight: '32px' }}
-                                    >
-                                      {statusOptions.map(option => (
-                                        <option key={option.value} value={option.value} className="bg-gray-900 text-white">
-                                          {option.label}
-                                        </option>
-                                      ))}
-                                    </select>
+                                  <td className="py-1 px-2">
+                                      <div className="w-40">
+  <GlassSelect
+    options={statusOptions}
+    value={
+      statusOptions.find(
+        (opt) => opt.value === newRecordData.status
+      ) || null
+    }
+    onChange={(selected: any) =>
+      handleNewRecordChange(
+        "status",
+        selected?.value as "1" | "0" | "2"
+      )
+    }
+    isSearchable={false}
+    isClearable
+    styles={glassSelectStyles}
+  />
+</div>
                                   </td>
                                   <td className="py-3 px-4">
                                     <input
@@ -1313,31 +1328,15 @@ export default function DomainsPage() {
                                     />
                                   </td>
                                   <td className="py-3 px-4">
-                                    <div className="flex flex-col gap-2">
-                                      <input
-                                        type="datetime-local"
-                                        value={formatToDateTimeLocal(editData[item.id]?.deleted_at || item.deleted_at)}
-                                        onChange={(e) => handleEditChange(item.id, 'deleted_at', e.target.value ? formatToDatabaseDateTime(e.target.value) : null)}
-                                        className="w-full px-2 py-1 bg-white/5 border border-gray-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                                        style={{ minHeight: '32px' }}
-                                      />
-                                      <div className="flex items-center justify-between">
-                                        <button
-                                          type="button"
-                                          onClick={() => handleEditChange(item.id, 'deleted_at', null)}
-                                          className="text-xs text-gray-400 hover:text-gray-300"
-                                        >
-                                          Clear
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() => handleEditChange(item.id, 'deleted_at', getCurrentDateTimeLocal())}
-                                          className="text-xs text-blue-400 hover:text-blue-300"
-                                        >
-                                          Set to now
-                                        </button>
-                                      </div>
-                                    </div>
+                                    <div className="flex items-center gap-2">
+    <input
+      type="date"
+      value={newRecordData.deleted_at ? newRecordData.deleted_at.split('T')[0] : ''}
+      onChange={(e) => handleNewRecordChange('deleted_at', e.target.value)}
+      className="w-full px-2 py-1 bg-white/5 border border-gray-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+      style={{ minHeight: '32px' }}
+    />
+  </div>
                                   </td>
                                   <td className="py-3 px-4 text-sm text-gray-300">
                                     {formatDateTime(item.updated_at)}
@@ -1625,7 +1624,7 @@ export default function DomainsPage() {
 //   product_name: string
 //   product_id?: number
 //   vender_name: string
-//   vender_id?: number
+//   vendor_id?: number
 //   expiry_date: string
 //   renewal_date: string
 //   days_to_expire_today: number
@@ -1647,7 +1646,7 @@ export default function DomainsPage() {
 //   id?: number
 //   s_id: number
 //   product_id: number
-//   vender_id: number
+//   vendor_id: number
 //   domain_id: number
 //   client_id: number
 //   domain_protected: 0 | 1
@@ -1681,7 +1680,7 @@ export default function DomainsPage() {
 //     client_id: null as number | null,
 //     client_name: "",
 //     product_id: null as number | null,
-//     vender_id: null as number | null,
+//     vendor_id: null as number | null,
 //     product_name: "",
 //     expiry_date: "",
 //     renewal_date: "",
@@ -1775,7 +1774,7 @@ export default function DomainsPage() {
 //       client_id: null,
 //       client_name: "",
 //       product_id: null,
-//       vender_id: null,
+//       vendor_id: null,
 //       product_name: "",
 //       expiry_date: "",
 //       renewal_date: today,
@@ -1794,7 +1793,7 @@ export default function DomainsPage() {
 //       client_id: null,
 //       client_name: "",
 //       product_id: null,
-//       vender_id: null,
+//       vendor_id: null,
 //       product_name: "",
 //       expiry_date: "",
 //       renewal_date: "",
@@ -1811,7 +1810,7 @@ export default function DomainsPage() {
       
 //       if (!newRecordData.domain_id || !newRecordData.client_id || 
 //           !newRecordData.product_id || !newRecordData.expiry_date || 
-//           !newRecordData.vender_id || !newRecordData.renewal_date) {
+//           !newRecordData.vendor_id || !newRecordData.renewal_date) {
 //         toast({
 //           title: "Error",
 //           description: "Please fill all required fields",
@@ -1824,7 +1823,7 @@ export default function DomainsPage() {
 //         record_type: 4,
 //         s_id: user?.id || 6,
 //         product_id: newRecordData.product_id!,
-//         vender_id: newRecordData.vender_id!,
+//         vendor_id: newRecordData.vendor_id!,
 //         domain_id: newRecordData.domain_id!,
 //         client_id: newRecordData.client_id!,
 //         domain_protected: parseInt(newRecordData.domain_protected) as 0 | 1,
@@ -1851,7 +1850,7 @@ export default function DomainsPage() {
 //           client_id: null,
 //           client_name: "",
 //           product_id: null,
-//           vender_id: null,
+//           vendor_id: null,
 //           product_name: "",
 //           expiry_date: "",
 //           renewal_date: new Date().toISOString().split('T')[0],
@@ -1887,7 +1886,7 @@ export default function DomainsPage() {
 //         domain_id: record.domain_id || undefined,
 //         client_id: record.client_id || undefined,
 //         product_id: record.product_id || undefined,
-//         vender_id: record.vender_id || undefined,
+//         vendor_id: record.vendor_id || undefined,
 //         renewal_date: record.renewal_date || "",
 //         remarks: record.remarks || "",
 //         remark_id: record?.latest_remark?.id || null
@@ -1905,7 +1904,7 @@ export default function DomainsPage() {
       
 //       if (!updatedData.domain_id || !updatedData.client_id || 
 //           !updatedData.product_id || !updatedData.expiry_date || 
-//           !updatedData.vender_id || !updatedData.renewal_date) {
+//           !updatedData.vendor_id || !updatedData.renewal_date) {
 //         toast({
 //           title: "Error",
 //           description: "Please fill all required fields",
@@ -1919,7 +1918,7 @@ export default function DomainsPage() {
 //         id,
 //         s_id: user?.id || 6,
 //         product_id: updatedData.product_id!,
-//         vender_id: updatedData.vender_id!,
+//         vendor_id: updatedData.vendor_id!,
 //         domain_id: updatedData.domain_id!,
 //         client_id: updatedData.client_id!,
 //         domain_protected: updatedData.domain_protected || 1,
@@ -2334,16 +2333,16 @@ export default function DomainsPage() {
 //                             <ApiDropdown
 //                               endpoint="get-venders"
 //                               value={
-//                                 newRecordData.vender_id
+//                                 newRecordData.vendor_id
 //                                   ? {
-//                                       value: newRecordData.vender_id,
+//                                       value: newRecordData.vendor_id,
 //                                       label: newRecordData.vender_name,
 //                                     }
 //                                   : null
 //                               }
 //                               onChange={(option) => {
 //                                 handleNewRecordChange(
-//                                   "vender_id",
+//                                   "vendor_id",
 //                                   option?.value ?? null,
 //                                 );
 //                                 handleNewRecordChange(
@@ -2577,9 +2576,9 @@ export default function DomainsPage() {
 //                                   <ApiDropdown
 //                                     endpoint="get-venders"
 //                                     value={
-//                                       editData[item.id]?.vender_id
+//                                       editData[item.id]?.vendor_id
 //                                         ? {
-//                                             value: editData[item.id]?.vender_id!,
+//                                             value: editData[item.id]?.vendor_id!,
 //                                             label: editData[item.id]?.vender_name || "",
 //                                           }
 //                                         : null
@@ -2587,7 +2586,7 @@ export default function DomainsPage() {
 //                                     onChange={(option) => {
 //                                       handleEditChange(
 //                                         item.id,
-//                                         "vender_id",
+//                                         "vendor_id",
 //                                         option?.value ?? null,
 //                                       );
 //                                       handleEditChange(

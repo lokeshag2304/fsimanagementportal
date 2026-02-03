@@ -31,7 +31,8 @@ import { apiService } from "@/common/services/apiService"
 import Pagination from "@/common/Pagination"
 import DashboardLoader from "@/common/DashboardLoader"
 import { getNavigationByRole } from "@/lib/getNavigationByRole"
-import { ApiDropdown } from "@/common/DynamicDropdown"
+import { ApiDropdown, glassSelectStyles } from "@/common/DynamicDropdown"
+import { GlassSelect } from "@/components/glass/GlassSelect"
 
 interface HostingRecord {
   id: number
@@ -962,21 +963,39 @@ export default function HostingPage() {
                               type="number"
                               value={calculateDays(newRecordData.expiry_date)}
                               readOnly
-                              className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-sm cursor-not-allowed"
+                              className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-xs cursor-not-allowed"
                               style={{ minHeight: '32px' }}
                             />
                           </td>
-                          <td className="py-3 px-4">
-                            <select
-                              value={newRecordData.status}
-                              onChange={(e) => handleNewRecordChange('status', e.target.value as "1" | "0" | "2")}
-                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                              style={{ minHeight: '32px' }}
-                            >
-                              <option value="1" className="bg-gray-900 text-white">Active</option>
-                              <option value="0" className="bg-gray-900 text-white">Inactive</option>
-                              <option value="2" className="bg-gray-900 text-white">Expired</option>
-                            </select>
+                          <td className="py-1 px-2">
+                           <div className="w-40">
+  <GlassSelect
+    options={[
+      { value: "1", label: "Active" },
+      { value: "0", label: "Inactive" },
+      { value: "2", label: "Expired" },
+    ]}
+    value={
+      [
+        { value: "1", label: "Active" },
+        { value: "0", label: "Inactive" },
+        { value: "2", label: "Expired" },
+      ].find(
+        (opt) => opt.value === newRecordData.status
+      ) || null
+    }
+    onChange={(selected: any) =>
+      handleNewRecordChange(
+        "status",
+        selected?.value as "1" | "0" | "2"
+      )
+    }
+    isSearchable={false}
+    isClearable
+    styles={glassSelectStyles}
+  />
+</div>
+
                           </td>
                           <td className="py-3 px-4">
                             <input
@@ -991,33 +1010,17 @@ export default function HostingPage() {
                             />
                           </td>
                           <td className="py-3 px-4">
-                            <div className="flex flex-col gap-2">
-                              <div className="flex items-center gap-2">
-                                <input
-                                  type="datetime-local"
-                                  value={newRecordData.deleted_at || ''}
-                                  onChange={(e) => handleNewRecordChange('deleted_at', e.target.value)}
-                                  className="w-full px-2 py-1 bg-white/5 border border-gray-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                                  style={{ minHeight: '32px' }}
-                                />
-                              </div>
-                              <div className="flex items-center justify-between">
-                                <button
-                                  type="button"
-                                  onClick={() => handleNewRecordChange('deleted_at', null)}
-                                  className="text-xs text-gray-400 hover:text-gray-300"
-                                >
-                                  Clear
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleNewRecordChange('deleted_at', getCurrentDateTimeLocal())}
-                                  className="text-xs text-blue-400 hover:text-blue-300"
-                                >
-                                  Set to now
-                                </button>
-                              </div>
-                            </div>
+                          <div className="flex flex-col gap-2">
+  <div className="flex items-center gap-2">
+    <input
+      type="date"
+      value={newRecordData.deleted_at || ''}
+      onChange={(e) => handleNewRecordChange('deleted_at', e.target.value)}
+      className="w-full px-2 py-1 bg-white/5 border border-gray-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+      style={{ minHeight: '32px' }}
+    />
+  </div>
+</div>
                           </td>
                           <td className="py-3 px-4 text-sm text-gray-300">
                             {new Date().toLocaleDateString('en-US', {
@@ -1241,17 +1244,34 @@ export default function HostingPage() {
                                       style={{ minHeight: '32px' }}
                                     />
                                   </td>
-                                  <td className="py-3 px-4">
-                                    <select
-                                      value={editData[item.id]?.status?.toString() || item.status.toString()}
-                                      onChange={(e) => handleEditChange(item.id, 'status', parseInt(e.target.value) as 0 | 1 | 2)}
-                                      className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                                      style={{ minHeight: '32px' }}
-                                    >
-                                      <option value="1" className="bg-gray-900 text-white">Active</option>
-                                      <option value="0" className="bg-gray-900 text-white">Inactive</option>
-                                      <option value="2" className="bg-gray-900 text-white">Expired</option>
-                                    </select>
+                                  <td className="py-1 px-2">
+                                     <div className="w-40">
+  <GlassSelect
+    options={[
+      { value: "1", label: "Active" },
+      { value: "0", label: "Inactive" },
+      { value: "2", label: "Expired" },
+    ]}
+    value={
+      [
+        { value: "1", label: "Active" },
+        { value: "0", label: "Inactive" },
+        { value: "2", label: "Expired" },
+      ].find(
+        (opt) => opt.value === newRecordData.status
+      ) || null
+    }
+    onChange={(selected: any) =>
+      handleNewRecordChange(
+        "status",
+        selected?.value as "1" | "0" | "2"
+      )
+    }
+    isSearchable={false}
+    isClearable
+    styles={glassSelectStyles}
+  />
+</div>
                                   </td>
                                   <td className="py-3 px-4">
                                     <input
@@ -1269,31 +1289,17 @@ export default function HostingPage() {
                                     />
                                   </td>
                                   <td className="py-3 px-4">
-                                    <div className="flex flex-col gap-2">
-                                      <input
-                                        type="datetime-local"
-                                        value={formatToDateTimeLocal(editData[item.id]?.deleted_at || item.deleted_at)}
-                                        onChange={(e) => handleEditChange(item.id, 'deleted_at', e.target.value ? formatToDatabaseDateTime(e.target.value) : null)}
-                                        className="w-full px-2 py-1 bg-white/5 border border-gray-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                                        style={{ minHeight: '32px' }}
-                                      />
-                                      <div className="flex items-center justify-between">
-                                        <button
-                                          type="button"
-                                          onClick={() => handleEditChange(item.id, 'deleted_at', null)}
-                                          className="text-xs text-gray-400 hover:text-gray-300"
-                                        >
-                                          Clear
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() => handleEditChange(item.id, 'deleted_at', getCurrentDateTimeLocal())}
-                                          className="text-xs text-blue-400 hover:text-blue-300"
-                                        >
-                                          Set to now
-                                        </button>
-                                      </div>
-                                    </div>
+                                  <div className="flex flex-col gap-2">
+  <div className="flex items-center gap-2">
+    <input
+      type="date"
+      value={newRecordData.deleted_at || ''}
+      onChange={(e) => handleNewRecordChange('deleted_at', e.target.value)}
+      className="w-full px-2 py-1 bg-white/5 border border-gray-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+      style={{ minHeight: '32px' }}
+    />
+  </div>
+</div>
                                   </td>
                                   <td className="py-3 px-4 text-sm text-gray-300">
                                     {formatDateTime(item.updated_at)}

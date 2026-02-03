@@ -255,7 +255,7 @@ export default function ActivityLogPage() {
             </div>
           </td>
           <td className="py-3 px-4">
-            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${getActionColor(activity.action)} ${getActionBgColor(activity.action)}`}>
+            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${getActionColor(activity.action)} ${getActionBgColor(activity.action)}`}>
               {getActionIcon(activity.action)}
               {activity.s_action || activity.action}
             </div>

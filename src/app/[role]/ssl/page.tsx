@@ -32,7 +32,8 @@ import { apiService } from "@/common/services/apiService";
 import Pagination from "@/common/Pagination";
 import DashboardLoader from "@/common/DashboardLoader";
 import { getNavigationByRole } from "@/lib/getNavigationByRole";
-import { ApiDropdown } from "@/common/DynamicDropdown";
+import { ApiDropdown, glassSelectStyles } from "@/common/DynamicDropdown";
+import { GlassSelect } from "@/components/glass/GlassSelect";
 
 interface SSLRecord {
   id: number;
@@ -554,6 +555,27 @@ useEffect(() => {
 
   const startItem = pagination.page * pagination.rowsPerPage + 1;
 
+  const statusOptions = [
+  { value: "1", label: "Active" },
+  { value: "0", label: "Inactive" },
+];
+
+const getSelectedStatusOption = () => {
+  return (
+    statusOptions.find(
+      (option) => option.value === newRecordData.status
+    ) || null
+  );
+};
+
+const handleStatusSelect = (selected: any) => {
+  handleNewRecordChange(
+    "status",
+    selected?.value as "1" | "0"
+  );
+};
+
+
   return (
    <div className="min-h-screen pb-8">
       <Header title="SSL Certificate Management" tabs={navigationTabs} />
@@ -837,24 +859,18 @@ useEffect(() => {
                             --
                           </td>
                           <td className="py-3 px-4">
-                            <select
-                              value={newRecordData.status}
-                              onChange={(e) =>
-                                handleNewRecordChange(
-                                  "status",
-                                  e.target.value as "1" | "0",
-                                )
-                              }
-                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                              style={{ minHeight: "32px" }}
-                            >
-                              <option value="1" className="bg-gray-900 text-white">
-                                Active
-                              </option>
-                              <option value="0" className="bg-gray-900 text-white">
-                                Inactive
-                              </option>
-                            </select>
+                         <div className="w-40">
+  <GlassSelect
+    options={statusOptions}
+    value={getSelectedStatusOption()}
+    onChange={handleStatusSelect}
+    placeholder="Status"
+    isSearchable={false}
+    isClearable
+    styles={glassSelectStyles}
+  />
+</div>
+
                           </td>
                           <td className="py-3 px-4">
                             <input
@@ -1111,40 +1127,32 @@ useEffect(() => {
                                 </td>
                                 
                                 {/* Days to Expire (Read-only in edit mode) */}
-                                <td className="py-3 px-4 text-sm text-gray-300">
-                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm border ${
+                                <td className="py-3 px-4 text-xs text-gray-300">
+                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${
                                     calculateDays(editData[item.id]?.expiry_date || item.expiry_date) < 0
                                       ? 'bg-red-500/20 text-red-400 border-red-500/20'
                                       : calculateDays(editData[item.id]?.expiry_date || item.expiry_date) <= 30
                                         ? 'bg-orange-500/20 text-orange-400 border-orange-500/20'
                                         : 'bg-green-500/20 text-green-400 border-green-500/20'
                                   }`}>
-                                    <Clock className="w-3 h-3" />
+                                    
                                     {calculateDays(editData[item.id]?.expiry_date || item.expiry_date)} days
                                   </div>
                                 </td>
                                 
                                 {/* Status */}
                                 <td className="py-3 px-4">
-                                  <select
-                                    value={editData[item.id]?.status?.toString() || item.status.toString()}
-                                    onChange={(e) =>
-                                      handleEditChange(
-                                        item.id,
-                                        "status",
-                                        parseInt(e.target.value) as 0 | 1,
-                                      )
-                                    }
-                                    className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                                    style={{ minHeight: "32px" }}
-                                  >
-                                    <option value="1" className="bg-gray-900 text-white">
-                                      Active
-                                    </option>
-                                    <option value="0" className="bg-gray-900 text-white">
-                                      Inactive
-                                    </option>
-                                  </select>
+                                        <div className="w-40">
+  <GlassSelect
+    options={statusOptions}
+    value={getSelectedStatusOption()}
+    onChange={handleStatusSelect}
+    placeholder="Status"
+    isSearchable={false}
+    isClearable
+    styles={glassSelectStyles}
+  />
+</div>
                                 </td>
                                 
                                 {/* Remarks */}
@@ -1235,7 +1243,7 @@ useEffect(() => {
                                 
                                 {/* Days to Expire */}
                                 <td className="py-3 px-4">
-                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm border ${
+                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${
                                     calculateDays(item.expiry_date) < 0
                                       ? 'bg-red-500/20 text-red-400 border-red-500/20'
                                       : calculateDays(item.expiry_date) <= 30
@@ -1249,7 +1257,7 @@ useEffect(() => {
                                 
                                 {/* Status */}
                                 <td className="py-3 px-4">
-                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm border ${
+                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${
                                     item.status === 1 
                                       ? 'bg-green-500/20 text-green-400 border-green-500/20' 
                                       : 'bg-red-500/20 text-red-400 border-red-500/20'
@@ -1270,7 +1278,7 @@ useEffect(() => {
                                 </td>
                                 
                                 {/* Last Updated */}
-                                <td className="py-3 px-4 text-sm text-gray-300">
+                                <td className="py-3 px-4 text-sm text-gray-300 whitespace-nowrap">
                                   {(item.updated_at)}
                                 </td>
                               </>

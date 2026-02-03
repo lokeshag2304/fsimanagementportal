@@ -32,7 +32,8 @@ import { apiService } from "@/common/services/apiService"
 import Pagination from "@/common/Pagination"
 import DashboardLoader from "@/common/DashboardLoader"
 import { getNavigationByRole } from "@/lib/getNavigationByRole"
-import { ApiDropdown } from "@/common/DynamicDropdown"
+import { ApiDropdown, glassSelectStyles } from "@/common/DynamicDropdown"
+import { GlassSelect } from "@/components/glass/GlassSelect"
 
 interface CounterRecord {
   id: number
@@ -653,7 +654,7 @@ export default function CounterPage() {
                       Product
                     </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[180px]">
-                      Vender
+                      Vendor
                     </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[100px]">
                       Count
@@ -813,15 +814,30 @@ export default function CounterPage() {
                             />
                           </td>
                           <td className="py-3 px-4">
-                            <select
-                              value={newRecordData.status}
-                              onChange={(e) => handleNewRecordChange('status', e.target.value as "1" | "0")}
-                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                              style={{ minHeight: '32px' }}
-                            >
-                              <option value="1" className="bg-gray-900 text-white">Active</option>
-                              <option value="0" className="bg-gray-900 text-white">Inactive</option>
-                            </select>
+                            <div className="w-40">
+  <GlassSelect
+    options={[
+      { value: "1", label: "Active" },
+      { value: "0", label: "Inactive" },
+    ]}
+    value={
+      [
+        { value: "1", label: "Active" },
+        { value: "0", label: "Inactive" },
+      ].find((opt) => opt.value === newRecordData.status) || null
+    }
+    onChange={(selected: any) =>
+      handleNewRecordChange(
+        "status",
+        selected?.value as "1" | "0"
+      )
+    }
+    isSearchable={false}
+    isClearable
+    styles={glassSelectStyles}
+  />
+</div>
+
                           </td>
                           <td className="py-3 px-4">
                             <input
@@ -1023,15 +1039,29 @@ export default function CounterPage() {
                                   />
                                 </td>
                                 <td className="py-3 px-4">
-                                  <select
-                                    value={editData[item.id]?.status?.toString() || item.status.toString()}
-                                    onChange={(e) => handleEditChange(item.id, 'status', parseInt(e.target.value) as 0 | 1)}
-                                    className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                                    style={{ minHeight: '32px' }}
-                                  >
-                                    <option value="1" className="bg-gray-900 text-white">Active</option>
-                                    <option value="0" className="bg-gray-900 text-white">Inactive</option>
-                                  </select>
+                                                <div className="w-40">
+  <GlassSelect
+    options={[
+      { value: "1", label: "Active" },
+      { value: "0", label: "Inactive" },
+    ]}
+    value={
+      [
+        { value: "1", label: "Active" },
+        { value: "0", label: "Inactive" },
+      ].find((opt) => opt.value === newRecordData.status) || null
+    }
+    onChange={(selected: any) =>
+      handleNewRecordChange(
+        "status",
+        selected?.value as "1" | "0"
+      )
+    }
+    isSearchable={false}
+    isClearable
+    styles={glassSelectStyles}
+  />
+</div>
                                 </td>
                                 <td className="py-3 px-4">
                                   <input
@@ -1086,7 +1116,7 @@ export default function CounterPage() {
                                   </div>
                                 </td>
                                 <td className="py-3 px-4">
-                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm border ${
+                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${
                                     calculateDays(item.valid_till) < 0 
                                       ? 'bg-red-500/20 text-red-400 border-red-500/20' 
                                       : calculateDays(item.valid_till) <= 30 
@@ -1100,7 +1130,7 @@ export default function CounterPage() {
                                   {formatDate(item.today_date)}
                                 </td>
                                 <td className="py-3 px-4">
-                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm border ${getStatusColor(item.status)} ${
+                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${getStatusColor(item.status)} ${
                                     item.status === 1 ? 'bg-green-500/20 border-green-500/20' : 'bg-red-500/20 border-red-500/20'
                                   }`}>
                                     {getStatusIcon(item.status)}
@@ -1114,7 +1144,7 @@ export default function CounterPage() {
                                     </span>
                                   </div>
                                 </td>
-                                <td className="py-3 px-4 text-sm text-gray-300">
+                                <td className="py-3 px-4 text-sm text-gray-300 whitespace-nowrap">
                                   {item.updated_at}
                                 </td>
                               </>

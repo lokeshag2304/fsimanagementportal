@@ -32,7 +32,8 @@ import { apiService } from "@/common/services/apiService"
 import Pagination from "@/common/Pagination"
 import DashboardLoader from "@/common/DashboardLoader"
 import { getNavigationByRole } from "@/lib/getNavigationByRole"
-import { ApiDropdown } from "@/common/DynamicDropdown"
+import { ApiDropdown, glassSelectStyles } from "@/common/DynamicDropdown"
+import { GlassSelect } from "@/components/glass/GlassSelect"
 
 interface EmailRecord {
   id: number
@@ -809,19 +810,27 @@ export default function EmailsPage() {
                               placeholder="1"
                             />
                           </td>
-                          <td className="py-3 px-4">
-                            <select
-                              value={newRecordData.bill_type}
-                              onChange={(e) => handleNewRecordChange('bill_type', e.target.value)}
-                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                              style={{ minHeight: '32px' }}
-                            >
-                              {billTypeOptions.map(option => (
-                                <option key={option.value} value={option.value} className="bg-gray-900 text-white">
-                                  {option.label}
-                                </option>
-                              ))}
-                            </select>
+                          <td className="py-1 px-2">
+                           <div className="w-40">
+  <GlassSelect
+    options={billTypeOptions}
+    value={
+      billTypeOptions.find(
+        (opt) => opt.value === newRecordData.bill_type
+      ) || null
+    }
+    onChange={(selected: any) =>
+      handleNewRecordChange(
+        "bill_type",
+        selected?.value
+      )
+    }
+    isSearchable={false}
+    isClearable
+    styles={glassSelectStyles}
+  />
+</div>
+
                           </td>
                           <td className="py-3 px-4">
                             <input
@@ -846,20 +855,37 @@ export default function EmailsPage() {
                               type="number"
                               value={calculateDays(newRecordData.expiry_date)}
                               readOnly
-                              className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-sm cursor-not-allowed"
+                              className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-xs cursor-not-allowed"
                               style={{ minHeight: '32px' }}
                             />
                           </td>
-                          <td className="py-3 px-4">
-                            <select
-                              value={newRecordData.status}
-                              onChange={(e) => handleNewRecordChange('status', e.target.value as "1" | "0")}
-                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                              style={{ minHeight: '32px' }}
-                            >
-                              <option value="1" className="bg-gray-900 text-white">Active</option>
-                              <option value="0" className="bg-gray-900 text-white">Inactive</option>
-                            </select>
+                          <td className="py-1 px-2">
+                           <div className="w-40">
+  <GlassSelect
+    options={[
+      { value: "1", label: "Active" },
+      { value: "0", label: "Inactive" },
+    ]}
+    value={
+      [
+        { value: "1", label: "Active" },
+        { value: "0", label: "Inactive" },
+      ].find(
+        (opt) => opt.value === newRecordData.status
+      ) || null
+    }
+    onChange={(selected: any) =>
+      handleNewRecordChange(
+        "status",
+        selected?.value as "1" | "0"
+      )
+    }
+    isSearchable={false}
+    isClearable
+    styles={glassSelectStyles}
+  />
+</div>
+
                           </td>
                           <td className="py-3 px-4">
                             <input
@@ -1059,19 +1085,26 @@ export default function EmailsPage() {
                                     min="1"
                                   />
                                 </td>
-                                <td className="py-3 px-4">
-                                  <select
-                                    value={editData[item.id]?.bill_type || item.bill_type}
-                                    onChange={(e) => handleEditChange(item.id, 'bill_type', e.target.value)}
-                                    className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                                    style={{ minHeight: '32px' }}
-                                  >
-                                    {billTypeOptions.map(option => (
-                                      <option key={option.value} value={option.value} className="bg-gray-900 text-white">
-                                        {option.label}
-                                      </option>
-                                    ))}
-                                  </select>
+                                <td className="py-1 px-2">
+                                 <div className="w-40">
+  <GlassSelect
+    options={billTypeOptions}
+    value={
+      billTypeOptions.find(
+        (opt) => opt.value === newRecordData.bill_type
+      ) || null
+    }
+    onChange={(selected: any) =>
+      handleNewRecordChange(
+        "bill_type",
+        selected?.value
+      )
+    }
+    isSearchable={false}
+    isClearable
+    styles={glassSelectStyles}
+  />
+</div>
                                 </td>
                                 <td className="py-3 px-4">
                                   <input
@@ -1100,16 +1133,32 @@ export default function EmailsPage() {
                                     style={{ minHeight: '32px' }}
                                   />
                                 </td>
-                                <td className="py-3 px-4">
-                                  <select
-                                    value={editData[item.id]?.status?.toString() || item.status.toString()}
-                                    onChange={(e) => handleEditChange(item.id, 'status', parseInt(e.target.value) as 0 | 1)}
-                                    className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                                    style={{ minHeight: '32px' }}
-                                  >
-                                    <option value="1" className="bg-gray-900 text-white">Active</option>
-                                    <option value="0" className="bg-gray-900 text-white">Inactive</option>
-                                  </select>
+                                <td className="py-1 px-2">
+                                  <div className="w-40">
+  <GlassSelect
+    options={[
+      { value: "1", label: "Active" },
+      { value: "0", label: "Inactive" },
+    ]}
+    value={
+      [
+        { value: "1", label: "Active" },
+        { value: "0", label: "Inactive" },
+      ].find(
+        (opt) => opt.value === newRecordData.status
+      ) || null
+    }
+    onChange={(selected: any) =>
+      handleNewRecordChange(
+        "status",
+        selected?.value as "1" | "0"
+      )
+    }
+    isSearchable={false}
+    isClearable
+    styles={glassSelectStyles}
+  />
+</div>
                                 </td>
                                 <td className="py-3 px-4">
                                   <input

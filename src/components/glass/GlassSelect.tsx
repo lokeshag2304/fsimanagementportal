@@ -40,7 +40,7 @@ const glassSelectStyles = {
         : "rgba(0,0,0,0.15)",
       color: dark ? "#ffffff" : "#111827",
       borderRadius: "0.75rem",
-      minHeight: "40px",
+      minHeight: "30px",
       boxShadow: state.isFocused
         ? "0 0 0 2px rgba(59,130,246,0.25)"
         : "none",
@@ -126,6 +126,7 @@ const glassSelectStyles = {
 
   singleValue: (base: any) => ({
     ...base,
+    
     color: isDarkMode() ? "#ffffff" : "#111827",
     fontWeight: 500,
   }),
@@ -153,6 +154,8 @@ const glassSelectStyles = {
 
   clearIndicator: (base: any) => ({
     ...base,
+    padding: "5px", 
+     marginRight: "2px",
     color: isDarkMode()
       ? "rgba(255,255,255,0.45)"
       : "rgba(0,0,0,0.45)",
