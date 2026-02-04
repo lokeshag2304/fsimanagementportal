@@ -1,4 +1,5 @@
 // src/lib/apiService.ts
+import { useAuth } from '@/contexts/AuthContext'
 import axios from 'axios'
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://rainbowsolutionandtechnology.com/FSISubscriptionPortal/public/api"
@@ -48,20 +49,18 @@ class ApiService {
   }
 
   private getHeaders() {
-    const token = this.getAuthToken()
+    const {user, getToken } = useAuth()
+    const token = getToken();
     return {
       'Content-Type': 'application/json',
       'Authorization': token ? `Bearer ${token}` : ''
     }
   }
 
-  private getUserId(): number {
-    if (typeof window !== 'undefined') {
-      const userData = localStorage.getItem('user')
-      if (userData) {
-        const user = JSON.parse(userData)
+  private getUserId() {
+    const {user } = useAuth()
+      if (user) {
         return user?.id || ''
-      }
     }
     return 0 // default fallback
   }
