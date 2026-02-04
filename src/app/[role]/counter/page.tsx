@@ -455,7 +455,7 @@ export default function CounterPage() {
       
       const idsToDelete = itemToDelete ? [itemToDelete] : selectedItems
       
-      const response = await deleteRecords(idsToDelete, 6,user,token)
+      const response = await apiService.deleteRecords(idsToDelete, 6,user,token)
       
       if (response.success || response.status) {
         const successMessage = response.message || 
