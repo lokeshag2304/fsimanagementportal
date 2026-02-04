@@ -81,7 +81,8 @@ interface AddEditEmail {
 }
 
 export default function EmailsPage() {
-   const {user} = useAuth()
+   const {user, getToken } = useAuth()
+    const token = getToken();
   const navigationTabs = getNavigationByRole(user?.role)
   const { toast } = useToast()
   const router = useRouter()
@@ -146,7 +147,10 @@ export default function EmailsPage() {
         rowsPerPage: pagination.rowsPerPage,
         orderBy: pagination.orderBy,
         orderDir: pagination.orderDir
-      })
+      },
+        user,
+      token
+    )
       
       if (response.status) {
         setData(response.data || [])
@@ -264,7 +268,7 @@ export default function EmailsPage() {
         remarks: newRecordData.remarks
       }
 
-      const response = await apiService.addRecord(payload as any)
+      const response = await apiService.addRecord(payload as any,user,token)
       
       if (response.status) {
         toast({
@@ -364,7 +368,7 @@ export default function EmailsPage() {
         remark_id: updatedData.remark_id,
       }
 
-      const response = await apiService.editRecord(payload as any)
+      const response = await apiService.editRecord(payload as any,user,token)
       
       if (response.status) {
         toast({
@@ -444,7 +448,7 @@ export default function EmailsPage() {
       
       const idsToDelete = itemToDelete ? [itemToDelete] : selectedItems
       
-      const response = await apiService.deleteRecords(idsToDelete, 5)
+      const response = await apiService.deleteRecords(idsToDelete, 5,user,token)
       
       if (response.status) {
         toast({

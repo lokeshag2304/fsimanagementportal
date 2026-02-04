@@ -72,7 +72,8 @@ interface AddEditCounter {
 }
 
 export default function CounterPage() {
-  const { user } = useAuth()
+   const {user, getToken } = useAuth()
+    const token = getToken();
   const navigationTabs = getNavigationByRole(user?.role);
   const { toast } = useToast()
   const router = useRouter()
@@ -102,7 +103,8 @@ export default function CounterPage() {
   })
   
   const [editData, setEditData] = useState<Record<number, Partial<CounterRecord>>>({})
-  
+   // const {user, getToken } = useAuth()
+    // const token = getToken();
   const [pagination, setPagination] = useState({
     page: 0,
     rowsPerPage: 10,
@@ -161,8 +163,11 @@ export default function CounterPage() {
         page: pagination.page,
         rowsPerPage: pagination.rowsPerPage,
         orderBy: pagination.orderBy,
-        orderDir: pagination.orderDir
-      })
+        orderDir: pagination.orderDir,
+      },
+      user,
+      token
+    )
       
       if (isMountedRef.current) {
         if (response.status) {
@@ -276,8 +281,10 @@ export default function CounterPage() {
         status: parseInt(newRecordData.status) as 0 | 1,
         remarks: newRecordData.remarks,
       }
+        user,
+      token
 
-      const response = await apiService.addRecord(payload as any)
+      const response = await apiService.addRecord(payload as any,user,token)
       
       if (response.status) {
         toast({
@@ -368,7 +375,7 @@ export default function CounterPage() {
         remark_id: updatedData.remark_id || null
       }
 
-      const response = await apiService.editRecord(payload as any)
+      const response = await apiService.editRecord(payload as any,user,token)
       
       if (response.success || response.status) {
         toast({
@@ -448,7 +455,7 @@ export default function CounterPage() {
       
       const idsToDelete = itemToDelete ? [itemToDelete] : selectedItems
       
-      const response = await apiService.deleteRecords(idsToDelete, 6)
+      const response = await deleteRecords(idsToDelete, 6,user,token)
       
       if (response.success || response.status) {
         const successMessage = response.message || 

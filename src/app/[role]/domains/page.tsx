@@ -1660,7 +1660,8 @@ interface AddEditDomain {
 }
 
 export default function DomainsPage() {
-   const {user} = useAuth()
+   const {user, getToken } = useAuth()
+    const token = getToken();
   const navigationTabs = getNavigationByRole(user?.role)
   const { toast } = useToast()
   const router = useRouter()
@@ -1722,7 +1723,10 @@ export default function DomainsPage() {
         rowsPerPage: pagination.rowsPerPage,
         orderBy: pagination.orderBy,
         orderDir: pagination.orderDir
-      })
+      },
+       user,
+      token
+    )
       
       if (response.status) {
         setData(response.data || [])
@@ -1852,7 +1856,7 @@ export default function DomainsPage() {
         deleted_at: newRecordData.deleted_at
       }
 
-      const response = await apiService.addRecord(payload as any)
+      const response = await apiService.addRecord(payload as any,user,token)
       
       if (response.status) {
         toast({
@@ -1953,7 +1957,7 @@ export default function DomainsPage() {
         deleted_at: updatedData.deleted_at
       }
 
-      const response = await apiService.editRecord(payload as any)
+      const response = await apiService.editRecord(payload as any,user,token)
       
       if (response.status) {
         toast({
@@ -2033,7 +2037,7 @@ export default function DomainsPage() {
       
       const idsToDelete = itemToDelete ? [itemToDelete] : selectedItems
       
-      const response = await apiService.deleteRecords(idsToDelete, 4)
+      const response = await apiService.deleteRecords(idsToDelete, 4,user,token)
       
       if (response.status) {
         toast({

@@ -1,12 +1,9 @@
 "use client";
-
 import { useState, useEffect, useRef } from "react";
 import { Header } from "@/components/layout";
 import { GlassCard, GlassButton } from "@/components/glass";
-import { EditRow } from "@/common/services/EditRow";
 import { DeleteConfirmationModal } from "@/common/services/DeleteConfirmationModal";
-import { useDetailsModal } from "@/hooks/useDetailsModal";
-import DynamicDetailsPage from "../categaries-details/[id]/page";
+
 import {
   Edit,
   Trash2,
@@ -79,7 +76,8 @@ interface ProductOption {
 }
 
 export default function SubscriptionsPage() {
-  const { user } = useAuth();
+  const {user, getToken } = useAuth()
+    const token = getToken();
   const navigationTabs = getNavigationByRole(user?.role);
   const { toast } = useToast();
   const router = useRouter();
@@ -177,7 +175,10 @@ const handleStatusSelect = (selected: any) => {
         rowsPerPage: pagination.rowsPerPage,
         orderBy: pagination.orderBy,
         orderDir: pagination.orderDir,
-      });
+      },
+        user,
+      token
+    );
 
       if (response.status) {
         setData(response.data || []);
@@ -280,7 +281,7 @@ const handleStatusSelect = (selected: any) => {
         remark_id: editData[0]?.remark_id || null,
       };
 
-      const response = await apiService.addRecord(payload);
+      const response = await apiService.addRecord(payload,user,token);
 
       if (response.status) {
         toast({
@@ -362,7 +363,7 @@ const handleStatusSelect = (selected: any) => {
         remark_id: updatedData.remark_id || null,
       };
 
-      const response = await apiService.editRecord(payload);
+      const response = await apiService.editRecord(payload,user,token);
 
       if (response.status) {
         toast({
@@ -449,7 +450,7 @@ const handleStatusSelect = (selected: any) => {
 
       const idsToDelete = itemToDelete ? [itemToDelete] : selectedItems;
 
-      const response = await apiService.deleteRecords(idsToDelete, 1);
+      const response = await apiService.deleteRecords(idsToDelete, 1,user,token);
 
       if (response.status) {
         toast({

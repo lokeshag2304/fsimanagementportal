@@ -41,41 +41,36 @@ interface SubscriptionRequest extends AddEditBaseRequest {
 type AddEditRequest = SubscriptionRequest
 
 class ApiService {
-  private getAuthToken(): string | null {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('authToken')
-    }
-    return null
-  }
+ 
 
-  private getHeaders() {
-    const {user, getToken } = useAuth()
-    const token = getToken();
+  private getHeaders(token) {
+    // const {user, getToken } = useAuth()
+    // const token = getToken();
     return {
       'Content-Type': 'application/json',
       'Authorization': token ? `Bearer ${token}` : ''
     }
   }
 
-  private getUserId() {
-    const {user } = useAuth()
-      if (user) {
-        return user?.id || ''
-    }
-    return 0 // default fallback
-  }
+  // private getUserId() {
+  //   const {user } = useAuth()
+  //     if (user) {
+  //       return user?.id || ''
+  //   }
+  //   return 0 // default fallback
+  // }
 
-  async listRecords(params: Omit<ListRequest, 's_id'>): Promise<ApiResponse> {
+  async listRecords(params: Omit<ListRequest, 's_id'>,user,token): Promise<ApiResponse> {
     try {
       const requestData = {
         ...params,
-        s_id: this.getUserId()
+        s_id: user.id
       }
       
       const response = await axios.post<ApiResponse>(
         `${BASE_URL}/secure/Categories/list-categories`,
         requestData,
-        { headers: this.getHeaders() }
+        { headers: this.getHeaders(token) }
       )
       return response.data
     } catch (error: any) {
@@ -87,17 +82,17 @@ class ApiService {
     }
   }
 
-  async addRecord(data: Omit<AddEditRequest, 's_id'>): Promise<ApiResponse> {
+  async addRecord(data: Omit<AddEditRequest, 's_id'>,user,token): Promise<ApiResponse> {
     try {
       const requestData = {
         ...data,
-        s_id: this.getUserId()
+        s_id: user.id
       }
       
       const response = await axios.post<ApiResponse>(
         `${BASE_URL}/secure/Categories/add-categories`,
         requestData,
-        { headers: this.getHeaders() }
+        { headers: this.getHeaders(token) }
       )
       return response.data
     } catch (error: any) {
@@ -109,17 +104,17 @@ class ApiService {
     }
   }
 
-  async editRecord(data: Omit<AddEditRequest & { id: number }, 's_id'>): Promise<ApiResponse> {
+  async editRecord(data: Omit<AddEditRequest & { id: number }, 's_id'>,user,token): Promise<ApiResponse> {
     try {
       const requestData = {
         ...data,
-        s_id: this.getUserId()
+        s_id: user.id
       }
       console.log(requestData)
       const response = await axios.post<ApiResponse>(
         `${BASE_URL}/secure/Categories/edit-categories`,
         requestData,
-        { headers: this.getHeaders() }
+        { headers: this.getHeaders(token) }
       )
       return response.data
     } catch (error: any) {
@@ -151,16 +146,16 @@ class ApiService {
     }
   }
 
-  async deleteRecords(ids: number[], record_type: number): Promise<ApiResponse> {
+  async deleteRecords(ids: number[], record_type: number,user,token): Promise<ApiResponse> {
     try {
       const response = await axios.post<ApiResponse>(
         `${BASE_URL}/secure/Categories/delete-categories`,
         {
           ids,
           record_type,
-          s_id: this.getUserId()
+          s_id: user.id
         },
-        { headers: this.getHeaders() }
+        { headers: this.getHeaders(token) }
       )
       return response.data
     } catch (error: any) {

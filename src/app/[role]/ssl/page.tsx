@@ -95,7 +95,8 @@ function useDebounce<T>(value: T, delay = 400): T {
 }
 
 export default function SSLPage() {
-  const { user } = useAuth();
+  const {user, getToken } = useAuth()
+    const token = getToken();
   const navigationTabs = getNavigationByRole(user?.role);
   const { toast } = useToast();
   const router = useRouter();
@@ -155,7 +156,10 @@ export default function SSLPage() {
         rowsPerPage: pagination.rowsPerPage,
         orderBy: pagination.orderBy,
         orderDir: pagination.orderDir,
-      });
+      },
+        user,
+      token
+    );
 
       if (response.status) {
         setData(response.data || []);
@@ -249,7 +253,7 @@ useEffect(() => {
         updated_at_custom: newRecordData.updated_at_custom,
       };
 
-      const response = await apiService.addRecord(payload as any);
+      const response = await apiService.addRecord(payload as any,user,token);
 
       if (response.status) {
         toast({
@@ -348,7 +352,7 @@ useEffect(() => {
         updated_at_custom: new Date().toISOString().split("T")[0], // Auto-update timestamp
       };
 
-      const response = await apiService.editRecord(payload as any);
+      const response = await apiService.editRecord(payload as any,user,token);
 
       if (response.status) {
         toast({
@@ -431,7 +435,7 @@ useEffect(() => {
 
       const idsToDelete = itemToDelete ? [itemToDelete] : selectedItems;
 
-      const response = await apiService.deleteRecords(idsToDelete, 2);
+      const response = await apiService.deleteRecords(idsToDelete, 2,user,token);
 
       if (response.status) {
         toast({
