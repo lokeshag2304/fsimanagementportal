@@ -43,8 +43,8 @@ interface EmailRecord {
   domain_id?: number
   product_name: string
   product_id?: number
-  vender_name: string
-  vender_id?: number
+  vendor_name: string
+  vendor_id?: number
   quantity: number
   bill_type: string
   start_date: string
@@ -67,7 +67,7 @@ interface AddEditEmail {
   id?: number
   s_id: number
   product_id: number
-  vender_id: number
+  vendor_id: number
   domain_id: number
   client_id: number
   quantity: number
@@ -103,7 +103,7 @@ export default function EmailsPage() {
     client_id: null as number | null,
     client_name: "",
     product_id: null as number | null,
-    vender_id: null as number | null,
+    vendor_id: null as number | null,
     product_name: "",
     quantity: "",
     bill_type: "yearly",
@@ -201,7 +201,7 @@ export default function EmailsPage() {
       client_id: null,
       client_name: "",
       product_id: null,
-      vender_id: null,
+      vendor_id: null,
       product_name: "",
       quantity: "",
       bill_type: "yearly",
@@ -221,7 +221,7 @@ export default function EmailsPage() {
       client_id: null,
       client_name: "",
       product_id: null,
-      vender_id: null,
+      vendor_id: null,
       product_name: "",
       quantity: "",
       bill_type: "yearly",
@@ -250,9 +250,10 @@ export default function EmailsPage() {
 
       const payload: AddEditEmail = {
         record_type: 5,
-        s_id: user?.id || 6,
+        s_id: user?.id,
         product_id: newRecordData.product_id!,
         domain_id: newRecordData.domain_id!,
+        vendor_id: newRecordData.vendor_id!,
         client_id: newRecordData.client_id!,
         quantity: parseInt(newRecordData.quantity),
         bill_type: newRecordData.bill_type,
@@ -280,6 +281,7 @@ export default function EmailsPage() {
           client_id: null,
           client_name: "",
           product_id: null,
+          vendor_id: null,
           product_name: "",
           quantity: "",
           bill_type: "yearly",
@@ -316,7 +318,7 @@ export default function EmailsPage() {
         domain_id: record.domain_id || undefined,
         client_id: record.client_id || undefined,
         product_id: record.product_id || undefined,
-        vender_id: record.vender_id || undefined,
+        vendor_id: record.vendor_id || undefined,
         start_date: record.start_date || "",
         expiry_date: record.expiry_date || "",
         remarks: record.remarks || "",
@@ -334,7 +336,7 @@ export default function EmailsPage() {
       if (!updatedData) return
       
       if (!updatedData.domain_id || !updatedData.client_id || 
-          !updatedData.product_id || !updatedData.vender_id || !updatedData.quantity || 
+          !updatedData.product_id || !updatedData.vendor_id || !updatedData.quantity || 
           !updatedData.start_date || !updatedData.expiry_date) {
         toast({
           title: "Error",
@@ -347,9 +349,9 @@ export default function EmailsPage() {
       const payload: AddEditEmail = {
         record_type: 5,
         id,
-        s_id: user?.id || 6,
+        s_id: user?.id,
         product_id: updatedData.product_id!,
-        vender_id: updatedData.vender_id!,
+        vendor_id: updatedData.vendor_id!,
         domain_id: updatedData.domain_id!,
         client_id: updatedData.client_id!,
         quantity: updatedData.quantity || 0,
@@ -778,20 +780,20 @@ export default function EmailsPage() {
                             <ApiDropdown
                               endpoint="get-venders"
                               value={
-                                newRecordData.vender_id
+                                newRecordData.vendor_id
                                   ? {
-                                      value: newRecordData.vender_id,
-                                      label: newRecordData.vender_name,
+                                      value: newRecordData.vendor_id,
+                                      label: newRecordData.vendor_name,
                                     }
                                   : null
                               }
                               onChange={(option) => {
                                 handleNewRecordChange(
-                                  "vender_id",
+                                  "vendor_id",
                                   option?.value ?? null,
                                 );
                                 handleNewRecordChange(
-                                  "vender_name",
+                                  "vendor_name",
                                   option?.label ?? "",
                                 );
                               }}
@@ -1052,22 +1054,22 @@ export default function EmailsPage() {
                                   <ApiDropdown
                                     endpoint="get-venders"
                                     value={
-                                      editData[item.id]?.vender_id
+                                      editData[item.id]?.vendor_id
                                         ? {
-                                            value: editData[item.id]?.vender_id!,
-                                            label: editData[item.id]?.vender_name || "",
+                                            value: editData[item.id]?.vendor_id!,
+                                            label: editData[item.id]?.vendor_name || "",
                                           }
                                         : null
                                     }
                                     onChange={(option) => {
                                       handleEditChange(
                                         item.id,
-                                        "vender_id",
+                                        "vendor_id",
                                         option?.value ?? null,
                                       );
                                       handleEditChange(
                                         item.id,
-                                        "vender_name",
+                                        "vendor_name",
                                         option?.label ?? "",
                                       );
                                     }}
@@ -1091,14 +1093,11 @@ export default function EmailsPage() {
     options={billTypeOptions}
     value={
       billTypeOptions.find(
-        (opt) => opt.value === newRecordData.bill_type
+        (opt) => opt.value === String(editData[item.id]?.bill_type || item.bill_type)
       ) || null
     }
     onChange={(selected: any) =>
-      handleNewRecordChange(
-        "bill_type",
-        selected?.value
-      )
+      handleEditChange(item.id, "bill_type", selected?.value || null)
     }
     isSearchable={false}
     isClearable
@@ -1145,14 +1144,11 @@ export default function EmailsPage() {
         { value: "1", label: "Active" },
         { value: "0", label: "Inactive" },
       ].find(
-        (opt) => opt.value === newRecordData.status
+        (opt) => opt.value === String(editData[item.id]?.status || item.status)
       ) || null
     }
     onChange={(selected: any) =>
-      handleNewRecordChange(
-        "status",
-        selected?.value as "1" | "0"
-      )
+      handleEditChange(item.id, "status", selected?.value || null)
     }
     isSearchable={false}
     isClearable
@@ -1204,7 +1200,7 @@ export default function EmailsPage() {
                                   <div className="flex items-center gap-2">
                                     {/* <Package className="w-4 h-4 text-gray-400 flex-shrink-0" /> */}
                                     <span className="text-sm text-white font-medium">
-                                      {item.vender_name}
+                                      {item.vendor_name}
                                     </span>
                                   </div>
                                 </td>
@@ -1261,7 +1257,7 @@ export default function EmailsPage() {
                                 </td>
                                 <td className="py-3 px-4">
                                   <div className="flex items-center gap-2">
-                                    <AlertCircle className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                    {/* <AlertCircle className="w-4 h-4 text-gray-400 flex-shrink-0" /> */}
                                     <span className="text-sm text-gray-300 truncate max-w-[180px]">
                                       {item.latest_remark?.remark || "No remarks"}
                                     </span>

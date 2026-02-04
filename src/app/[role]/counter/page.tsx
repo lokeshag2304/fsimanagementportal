@@ -41,7 +41,7 @@ interface CounterRecord {
   client_id?: number
   product_name: string
   product_id?: number
-  vender_name: string
+  vendor_name: string
   vendor_id?: number
   counter_count: number
   valid_till: string
@@ -330,7 +330,8 @@ export default function CounterPage() {
         counter_count: record.counter_count || 0,
         valid_till: record.valid_till || "",
         remarks: record.remarks || "",
-        remark_id: record.latest_remark?.id || null
+        remark_id: record.latest_remark?.id || null,
+        status: record.status?.toString() || "1"
       }
     })
   }
@@ -757,7 +758,7 @@ export default function CounterPage() {
                                 newRecordData.vendor_id
                                   ? {
                                       value: newRecordData.vendor_id,
-                                      label: newRecordData.vender_name,
+                                      label: newRecordData.vendor_name,
                                     }
                                   : null
                               }
@@ -767,7 +768,7 @@ export default function CounterPage() {
                                   option?.value ?? null,
                                 );
                                 handleNewRecordChange(
-                                  "vender_name",
+                                  "vendor_name",
                                   option?.label ?? "",
                                 );
                               }}
@@ -981,7 +982,7 @@ export default function CounterPage() {
                                       editData[item.id]?.vendor_id
                                         ? {
                                             value: editData[item.id]?.vendor_id!,
-                                            label: editData[item.id]?.vender_name || "",
+                                            label: editData[item.id]?.vendor_name || "",
                                           }
                                         : null
                                     }
@@ -993,7 +994,7 @@ export default function CounterPage() {
                                       );
                                       handleEditChange(
                                         item.id,
-                                        "vender_name",
+                                        "vendor_name",
                                         option?.label ?? "",
                                       );
                                     }}
@@ -1049,10 +1050,11 @@ export default function CounterPage() {
       [
         { value: "1", label: "Active" },
         { value: "0", label: "Inactive" },
-      ].find((opt) => opt.value === newRecordData.status) || null
+      ].find((opt) => opt.value === editData[item.id]?.status) || null
     }
     onChange={(selected: any) =>
-      handleNewRecordChange(
+      handleEditChange(
+        item.id,
         "status",
         selected?.value as "1" | "0"
       )
@@ -1098,7 +1100,7 @@ export default function CounterPage() {
                                 <td className="py-3 px-4">
                                   <div className="flex items-center gap-2">
                                     <span className="text-sm text-white font-medium">
-                                      {item.vender_name}
+                                      {item.vendor_name}
                                     </span>
                                   </div>
                                 </td>

@@ -51,7 +51,7 @@ interface SSLRecord {
   client_name: string;
   product_id: number | null;
   vendor_id: number | null;
-  vender_name: string;
+  vendor_name: string;
   product_name: string;
   renewal_date: string;
   amount: number | null;
@@ -575,6 +575,16 @@ const handleStatusSelect = (selected: any) => {
   );
 };
 
+const getEditSelectedStatusOption = (id: number) => {
+  const status = editData[id]?.status ?? data.find(d => d.id === id)?.status;
+  return statusOptions.find(opt => opt.value === String(status)) || null;
+};
+
+const handleEditStatusSelect = (id: number, selected: any) => {
+  handleEditChange(id, "status", selected ? Number(selected.value) : 1);
+};
+
+
 
   return (
    <div className="min-h-screen pb-8">
@@ -795,7 +805,7 @@ const handleStatusSelect = (selected: any) => {
                                 newRecordData.vendor_id
                                   ? {
                                       value: newRecordData.vendor_id,
-                                      label: newRecordData.vender_name,
+                                      label: newRecordData.vendor_name,
                                     }
                                   : null
                               }
@@ -805,7 +815,7 @@ const handleStatusSelect = (selected: any) => {
                                   option?.value ?? null,
                                 );
                                 handleNewRecordChange(
-                                  "vender_name",
+                                  "vendor_name",
                                   option?.label ?? "",
                                 );
                               }}
@@ -856,7 +866,13 @@ const handleStatusSelect = (selected: any) => {
                             />
                           </td>
                           <td className="py-3 px-4 text-sm text-gray-300">
-                            --
+                             <input
+                              type="number"
+                              value={calculateDays(newRecordData.expiry_date)}
+                              readOnly
+                              className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-xs cursor-not-allowed"
+                              style={{ minHeight: '32px' }}
+                            />
                           </td>
                           <td className="py-3 px-4">
                          <div className="w-40">
@@ -1052,19 +1068,19 @@ const handleStatusSelect = (selected: any) => {
                                       editData[item.id]?.vendor_id
                                         ? {
                                             value: editData[item.id]?.vendor_id!,
-                                            label: editData[item.id]?.vender_name || "",
+                                            label: editData[item.id]?.vendor_name || "",
                                           }
                                         : null
                                     }
                                     onChange={(option) => {
                                       handleEditChange(
                                         item.id,
-                                        "vender",
+                                        "vendor_id",
                                         option?.value ?? null,
                                       );
                                       handleEditChange(
                                         item.id,
-                                        "vender_name",
+                                        "vendor_name",
                                         option?.label ?? "",
                                       );
                                     }}
@@ -1143,15 +1159,16 @@ const handleStatusSelect = (selected: any) => {
                                 {/* Status */}
                                 <td className="py-3 px-4">
                                         <div className="w-40">
-  <GlassSelect
-    options={statusOptions}
-    value={getSelectedStatusOption()}
-    onChange={handleStatusSelect}
-    placeholder="Status"
-    isSearchable={false}
-    isClearable
-    styles={glassSelectStyles}
-  />
+<GlassSelect
+  options={statusOptions}
+  value={getEditSelectedStatusOption(item.id)}
+  onChange={(selected) => handleEditStatusSelect(item.id, selected)}
+  placeholder="Status"
+  isSearchable={false}
+  isClearable
+  styles={glassSelectStyles}
+/>
+
 </div>
                                 </td>
                                 
@@ -1214,7 +1231,7 @@ const handleStatusSelect = (selected: any) => {
                                   <div className="flex items-center gap-2">
                                     <Package className="w-4 h-4 text-gray-400 flex-shrink-0" />
                                     <span className="text-sm text-white font-medium">
-                                      {item.vender_name}
+                                      {item.vendor_name}
                                     </span>
                                   </div>
                                 </td>

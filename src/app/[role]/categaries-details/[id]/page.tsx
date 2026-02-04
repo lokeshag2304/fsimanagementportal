@@ -35,12 +35,14 @@ interface Activity {
 }
 
 interface Category {
+  valid_till(valid_till: any): import("react").ReactNode;
   id: number;
   record_type: string;
   client_name: string | null;
   domain_name: string | null;
   product_name: string;
   expiry_date: string;
+  vallid_till: string;
   days_to_expired: number;
   today_date: string;
   created_at: string;
@@ -226,7 +228,7 @@ export default function DynamicDetailsPage() {
           <div className="p-6 border-b border-white/10">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-white">Subscription Details</h2>
+                <h2 className="text-2xl font-bold text-white">Categories Details</h2>
                 {/* <p className="text-gray-400 mt-1">
                   Record Type: <span className="text-blue-400 font-medium">{recordType === '1' ? 'Subscription' : 'Other'}</span>
                 </p> */}
@@ -288,7 +290,7 @@ export default function DynamicDetailsPage() {
                   </div>
                   <div>
                     <h4 className="text-sm font-medium text-gray-400">Expiry Date</h4>
-                    <p className="text-white font-medium mt-1">{formatSimpleDate(category.expiry_date)}</p>
+                    <p className="text-white font-medium mt-1">{category.expiry_date ? formatSimpleDate(category.expiry_date):formatSimpleDate( category.valid_till)}</p>
                   </div>
                 </div>
               </div>
@@ -303,9 +305,9 @@ export default function DynamicDetailsPage() {
                     <h4 className="text-sm font-medium text-gray-400">Days to Expire</h4>
                     <div className="flex items-center gap-2 mt-1">
                       <span className={`font-medium ${getDaysStatusColor(category.days_to_expired)}`}>
-                        {category.days_to_expired} days
+                        {category.days_to_expired } days
                       </span>
-                      <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
+                      {/* <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
                         category.days_to_expired < 0 
                           ? "bg-red-500/20 text-red-400 border border-red-500/20"
                           : category.days_to_expired <= 7
@@ -314,7 +316,7 @@ export default function DynamicDetailsPage() {
                       }`}>
                         {getDaysStatusIcon(category.days_to_expired)}
                         {getDaysStatusBadge(category.days_to_expired)}
-                      </div>
+                      </div> */}
                     </div>
                   </div>
                 </div>

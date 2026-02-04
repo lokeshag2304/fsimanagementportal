@@ -255,7 +255,6 @@ const handleStatusSelect = (selected: any) => {
 
       if (
         !newRecordData.product_id ||
-        !newRecordData.renewal_date ||
         !newRecordData.expiry_date
       ) {
         toast({
@@ -647,9 +646,9 @@ const handleStatusSelect = (selected: any) => {
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[180px]">
                       Product
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
+                    {/* <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
                       Renewal Date
-                    </th>
+                    </th> */}
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
                       Amount
                     </th>
@@ -722,7 +721,7 @@ const handleStatusSelect = (selected: any) => {
                               />
                             )}
                           </td>
-                          <td className="py-3 px-4">
+                          {/* <td className="py-3 px-4">
                             <input
                               type="date"
                               value={newRecordData.renewal_date}
@@ -735,7 +734,7 @@ const handleStatusSelect = (selected: any) => {
                               className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
                               style={{ minHeight: "32px" }}
                             />
-                          </td>
+                          </td> */}
                           <td className="py-3 px-4">
                             <input
                               type="number"
@@ -765,7 +764,13 @@ const handleStatusSelect = (selected: any) => {
                             />
                           </td>
                           <td className="py-3 px-4 text-sm text-gray-300">
-                            --
+                           <input
+                              type="number"
+                              value={calculateDays(newRecordData.expiry_date)}
+                              readOnly
+                              className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-xs cursor-not-allowed"
+                              style={{ minHeight: '32px' }}
+                            />
                           </td>
                           <td className="py-3 px-4">
                          <div className="w-40">
@@ -906,7 +911,7 @@ const handleStatusSelect = (selected: any) => {
                                     />
                                   )}
                                 </td>
-                                <td className="py-3 px-4">
+                                {/* <td className="py-3 px-4">
                                   <input
                                     type="date"
                                     value={
@@ -923,7 +928,7 @@ const handleStatusSelect = (selected: any) => {
                                     className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-xs"
                                     style={{ minHeight: "32px" }}
                                   />
-                                </td>
+                                </td> */}
                                 <td className="py-3 px-4">
                                   <input
                                     type="number"
@@ -963,6 +968,15 @@ const handleStatusSelect = (selected: any) => {
                                     style={{ minHeight: "32px" }}
                                   />
                                 </td>
+                                <td className="py-3 px-4 text-sm text-gray-300">
+                           <input
+                              type="number"
+                              value={calculateDays(editData[item.id]?.expiry_date || item.expiry_date)}
+                              readOnly
+                              className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-xs cursor-not-allowed"
+                              style={{ minHeight: '32px' }}
+                            />
+                          </td>
                               </>
                             ) : (
                               <>
@@ -974,11 +988,11 @@ const handleStatusSelect = (selected: any) => {
                                     </span>
                                   </div>
                                 </td>
-                                <td className="py-3 px-4 text-sm text-gray-300">
+                                {/* <td className="py-3 px-4 text-sm text-gray-300">
                                   <div className="flex items-center gap-2">
                                     {formatDate(item.renewal_date)}
                                   </div>
-                                </td>
+                                </td> */}
                                 <td className="py-3 px-4 text-sm text-gray-300">
                                   <div className="flex items-center gap-2">
                                     {item.amount || "0.00"}
@@ -987,10 +1001,7 @@ const handleStatusSelect = (selected: any) => {
                                 <td className="py-3 px-4 text-sm text-gray-300">
                                   {formatDate(item.expiry_date)}
                                 </td>
-                              </>
-                            )}
-
-                            <td className="py-3 px-4">
+                                <td className="py-3 px-4">
                               <div
                                 className={`inline-flex items-center whitespace-nowrap gap-1 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm ${
                                   calculateDays(item.expiry_date) < 0
@@ -1003,6 +1014,10 @@ const handleStatusSelect = (selected: any) => {
                                 {calculateDays(item.expiry_date)} days
                               </div>
                             </td>
+                              </>
+                            )}
+
+                            
                             {editingId === item.id ? (
                               <td className="py-3 px-4">
                                 <div className="w-40">
