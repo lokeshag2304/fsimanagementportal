@@ -145,7 +145,7 @@ export function Header({ title, tabs }: HeaderProps) {
             {/* Settings - hidden on mobile */}
             <Tooltip>
               <TooltipTrigger asChild>
-                <Link href="/settings" className="hidden md:block">
+                <Link href={`/${user?.role}/settings`} className="hidden md:block">
                   <Button variant="glass-circle" size="icon-lg">
                     <Settings className="w-5 h-5" />
                   </Button>
@@ -299,7 +299,7 @@ export function Header({ title, tabs }: HeaderProps) {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-[rgba(255,255,255,var(--ui-opacity-10))]" />
-                <Link href="/settings" className="hidden md:block">
+                <Link href={`/${user?.role}/settings`} className="hidden md:block">
                 <DropdownMenuItem className="text-[var(--text-secondary)] focus:bg-[rgba(255,255,255,var(--ui-opacity-10))] focus:text-white cursor-pointer">
                   <User className="mr-2 h-4 w-4" />
                   <span>Profile</span>
