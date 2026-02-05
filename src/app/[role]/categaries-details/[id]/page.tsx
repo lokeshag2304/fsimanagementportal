@@ -19,6 +19,10 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { Header } from "@/components/layout";
+import { getNavigationByRole } from "@/lib/getNavigationByRole";
+
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
 interface Remark {
   id: number;
@@ -57,13 +61,14 @@ interface CategoryDetailsData {
 }
 
 export default function DynamicDetailsPage() {
+  const { user, getToken } = useAuth();
   const params = useParams();
+  const navigationTabs = getNavigationByRole(user?.role);
   const searchParams = useSearchParams();
   const id = params.id as string;
   const recordType = searchParams.get('recordType');
   const router = useRouter();
   const { toast } = useToast();
-  const { getToken } = useAuth();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<CategoryDetailsData | null>(null);
   const [activeTab, setActiveTab] = useState<"remarks" | "activities">("remarks");
@@ -98,11 +103,11 @@ export default function DynamicDetailsPage() {
       
       if (recordType === '1') {
         // Subscriptions
-        endpoint = 'https://rainbowsolutionandtechnology.com/FSISubscriptionPortal/public/api/secure/Categories/get-categories-details';
+        endpoint = `${BASE_URL}/secure/Categories/get-categories-details`;
         payload = { cat_id: id };
       } else {
         // Add other record types as needed
-        endpoint = 'https://rainbowsolutionandtechnology.com/FSISubscriptionPortal/public/api/secure/Categories/get-categories-details';
+        endpoint = BASE_URL + '/secure/Categories/get-categories-details';
         payload = { cat_id: id };
       }
       
@@ -221,8 +226,9 @@ export default function DynamicDetailsPage() {
   const { category } = data;
 
   return (
-    <div className="min-h-screen pb-8">
-      <div className="px-4 sm:px-6 mt-6">
+        <div className="min-h-screen pb-8">
+          <Header title="Subscription Management" tabs={navigationTabs} />
+          <div className="px-4 sm:px-6 mt-6">
         <GlassCard className="p-0 overflow-hidden backdrop-blur-xl bg-gradient-to-br from-gray-900/90 via-black/90 to-gray-900/90 border border-white/10 shadow-2xl">
           {/* Header */}
           <div className="p-6 border-b border-white/10">
@@ -490,7 +496,7 @@ export default function DynamicDetailsPage() {
             </div>
           </div>
         </GlassCard>
-      </div>
+    </div>
     </div>
   );
 }

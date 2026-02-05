@@ -27,7 +27,7 @@ import { getNavigationByRole } from "@/lib/getNavigationByRole"
 import Pagination from "@/common/Pagination"
 import DashboardLoader from "@/common/DashboardLoader"
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://rainbowsolutionandtechnology.com/FSISubscriptionPortal/public/api"
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 const ASSETS_URL = process.env.NEXT_PUBLIC_ASSETS_URL || BASE_URL
 
 interface UserType {
@@ -58,7 +58,8 @@ interface ApiResponse {
 }
 
 export default function UsersPage() {
-  const { user: authUser } = useAuth()
+  const { user: authUser, getToken } = useAuth()
+  const token = getToken();
   const navigationTabs = getNavigationByRole(authUser?.role)
   const { toast } = useToast()
   const router = useRouter()
@@ -98,21 +99,12 @@ export default function UsersPage() {
   })
   const [totalUsers, setTotalUsers] = useState(0)
 
-  // Function to get token from localStorage
-  const getAuthToken = () => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('authToken')
-    }
-    return null
-  }
-
   // Fetch users list
   const fetchUsers = async () => {
     if (!isMountedRef.current) return;
     
     try {
       setLoading(true)
-      const token = getAuthToken()
       
       if (!token) {
         toast({
@@ -256,7 +248,6 @@ export default function UsersPage() {
   // Fetch user details for editing
   const fetchUserDetails = async (id: number) => {
     try {
-      const token = getAuthToken()
       if (!token) return
 
       const response = await axios.post<UserDetailsResponse>(
@@ -343,7 +334,6 @@ export default function UsersPage() {
   const confirmDelete = async () => {
     try {
       setIsDeleting(true)
-      const token = getAuthToken()
       if (!token) {
         toast({
           title: "Error",
@@ -468,7 +458,6 @@ export default function UsersPage() {
 
     try {
       setIsSubmitting(true)
-      const token = getAuthToken()
       if (!token) {
         toast({
           title: "Error",

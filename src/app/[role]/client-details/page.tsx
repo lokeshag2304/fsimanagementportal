@@ -21,7 +21,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { Header } from "@/components/layout";
 import { getNavigationByRole } from "@/lib/getNavigationByRole";
-import { useParams, useRouter } from "next/navigation"
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
 // Type Counts Interface
 interface TypeCount {
@@ -101,7 +101,7 @@ export default function DynamicDetailsPage({
       }
       
       const response = await fetch(
-        'https://rainbowsolutionandtechnology.com/FSISubscriptionPortal/public/api/secure/Usermanagement/get-clients-details',
+       `${BASE_URL}/secure/Usermanagement/get-clients-details`,
         {
           method: 'POST',
           headers: {
