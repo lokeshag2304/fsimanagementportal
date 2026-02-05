@@ -1,6 +1,8 @@
 // src/lib/apiService.ts
 import { useAuth } from '@/contexts/AuthContext'
 import axios from 'axios'
+import { downloadBase64File } from '../DashboardLoader';
+import { toast } from '@/hooks/useToast';
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
@@ -44,21 +46,11 @@ class ApiService {
  
 
   private getHeaders(token) {
-    // const {user, getToken } = useAuth()
-    // const token = getToken();
     return {
       'Content-Type': 'application/json',
       'Authorization': token ? `Bearer ${token}` : ''
     }
   }
-
-  // private getUserId() {
-  //   const {user } = useAuth()
-  //     if (user) {
-  //       return user?.id || ''
-  //   }
-  //   return 0 // default fallback
-  // }
 
   async listRecords(params: Omit<ListRequest, 's_id'>,user: any,token: string): Promise<ApiResponse> {
     try {
@@ -100,6 +92,27 @@ class ApiService {
       return {
         success: false,
         message: error.response?.data?.message || 'Failed to add record'
+      }
+    }
+  }
+  async exportRecord(data: Omit<AddEditRequest, 's_id'>,user: any,token: string): Promise<ApiResponse> {
+    try {
+      const requestData = {
+        ...data,
+        s_id: user.id
+      }
+      
+      const response = await axios.post<any>(
+        `${BASE_URL}/secure/Categories/export-categories`,
+        requestData,
+        { headers: this.getHeaders(token) }
+      )
+      return response.data
+    } catch (error: any) {
+      console.error('Error exporting record:', error)
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to export record'
       }
     }
   }

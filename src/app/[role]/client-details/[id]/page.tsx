@@ -16,7 +16,8 @@ import {
   CheckCircle,
   AlertCircle,
   ArrowUpRight,
-  ChevronRight
+  ChevronRight,
+  Package2
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Header } from "@/components/layout";
@@ -301,7 +302,7 @@ export default function DynamicDetailsPage({
       <div className="px-4 sm:px-6 mt-6">
         <GlassCard className="p-6 backdrop-blur-xl bg-gradient-to-br from-gray-900/80 via-black/80 to-gray-900/80 border border-white/10 shadow-2xl">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
+          {/* <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-2xl font-bold text-white">Service Overview</h2>
             </div>
@@ -312,7 +313,7 @@ export default function DynamicDetailsPage({
               <Clock className="w-4 h-4" />
               Refresh
             </button>
-          </div>
+          </div> */}
 
           {/* 6 Boxes Section - Service Summary */}
           <div className="mb-10">
@@ -457,7 +458,7 @@ export default function DynamicDetailsPage({
           </div>
 
           {/* Footer Stats */}
-          <div className="mt-8 p-4 border-t border-white/10 bg-black/20 rounded-lg">
+          {/* <div className="mt-8 p-4 border-t border-white/10 bg-black/20 rounded-lg">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="text-sm text-gray-400">
                 Last updated: {new Date().toLocaleDateString('en-US', { 
@@ -484,7 +485,7 @@ export default function DynamicDetailsPage({
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
         </GlassCard>
       </div>
     </div>

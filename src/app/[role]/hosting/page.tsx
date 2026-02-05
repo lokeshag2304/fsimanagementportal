@@ -28,7 +28,7 @@ import { useToast } from "@/hooks/useToast"
 import { useRouter } from "next/navigation"
 import { apiService } from "@/common/services/apiService"
 import Pagination from "@/common/Pagination"
-import DashboardLoader from "@/common/DashboardLoader"
+import DashboardLoader, { downloadBase64File } from "@/common/DashboardLoader"
 import { getNavigationByRole } from "@/lib/getNavigationByRole"
 import { ApiDropdown } from "@/common/DynamicDropdown"
 
@@ -81,7 +81,7 @@ export default function HostingPage() {
   const navigationTabs = getNavigationByRole(user?.role)
   const { toast } = useToast()
   const router = useRouter()
-
+  const [exportLoading, setExportLoading] = useState(false);
   const [data, setData] = useState<HostingRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
@@ -219,6 +219,43 @@ export default function HostingPage() {
       deleted_at: ""
     })
   }
+
+      const handleExport = async () => {
+        try {
+          setExportLoading(true);
+    
+          const payload: Record<string, any> = {
+            record_type: 3,
+            s_id: user?.id || 0,
+          };
+    
+          const response = await apiService.exportRecord(payload,user,token);
+    
+          if (response.success) {
+            toast({
+              title: "Success",
+              description: response.message || "Hosting exported successfully",
+              variant: "default",
+            });
+            downloadBase64File(response.data.base64, response.data.filename);
+          } else {
+            toast({
+              title: "Error",
+              description: response.message || "Failed to export hosting",
+              variant: "destructive",
+            });
+          }
+        } catch (error) {
+          console.error("Error exporting hosting:", error);
+          toast({
+            title: "Error",
+            description: "Failed to export hosting",
+            variant: "destructive",
+          });
+        } finally {
+          setExportLoading(false);
+        }
+      };
 
   // Save New Record
   const handleSaveNew = async () => {
@@ -592,6 +629,14 @@ export default function HostingPage() {
                     Add Hosting
                   </GlassButton>
                 )}
+                 <GlassButton
+                    variant="primary"
+                    onClick={handleExport}
+                    className="flex items-center gap-2"
+                    disabled={exportLoading}
+                  >
+                    Export
+                  </GlassButton>
               </div>
             </div>
           </div>
@@ -624,7 +669,7 @@ export default function HostingPage() {
                        Product
                     </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[180px]">
-                       Vender
+                       Vendor
                     </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
                       Renewal Date
@@ -766,7 +811,7 @@ export default function HostingPage() {
                                   option?.label ?? "",
                                 );
                               }}
-                              placeholder="Vender"
+                              placeholder="Vendor"
                               className="min-h-[32px]"
                             />
                           </td>

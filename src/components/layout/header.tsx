@@ -120,9 +120,10 @@ export function Header({ title, tabs }: HeaderProps) {
                   className="object-contain scale-125"
                 />
               ) : (
-                <div className="w-full h-full rounded-xl bg-theme-gradient flex items-center justify-center">
-                  <span className="text-white font-bold text-xl">C</span>
-                </div>
+                // <div className="w-full h-full rounded-xl bg-theme-gradient flex items-center justify-center">
+                //   <span className="text-white font-bold text-xl">C</span>
+                // </div>
+                <></>
               )}
             </div>
           </Link>
@@ -298,18 +299,20 @@ export function Header({ title, tabs }: HeaderProps) {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-[rgba(255,255,255,var(--ui-opacity-10))]" />
+                <Link href="/settings" className="hidden md:block">
                 <DropdownMenuItem className="text-[var(--text-secondary)] focus:bg-[rgba(255,255,255,var(--ui-opacity-10))] focus:text-white cursor-pointer">
                   <User className="mr-2 h-4 w-4" />
                   <span>Profile</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="text-[var(--text-secondary)] focus:bg-[rgba(255,255,255,var(--ui-opacity-10))] focus:text-white cursor-pointer">
+                </Link>
+                {/* <DropdownMenuItem className="text-[var(--text-secondary)] focus:bg-[rgba(255,255,255,var(--ui-opacity-10))] focus:text-white cursor-pointer">
                   <CreditCard className="mr-2 h-4 w-4" />
                   <span>Billing</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="text-[var(--text-secondary)] focus:bg-[rgba(255,255,255,var(--ui-opacity-10))] focus:text-white cursor-pointer">
+                  </DropdownMenuItem> */}
+                {/* <DropdownMenuItem className="text-[var(--text-secondary)] focus:bg-[rgba(255,255,255,var(--ui-opacity-10))] focus:text-white cursor-pointer">
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Settings</span>
-                </DropdownMenuItem>
+                </DropdownMenuItem> */}
                 <DropdownMenuSeparator className="bg-[rgba(255,255,255,var(--ui-opacity-10))]" />
                 <DropdownMenuItem
                   className="text-red-400 focus:bg-[rgba(255,255,255,var(--ui-opacity-10))] focus:text-red-400 cursor-pointer"

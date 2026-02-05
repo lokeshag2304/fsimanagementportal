@@ -106,7 +106,7 @@ export default function VendersPage() {
         setTotalProducts(response.data.total)
       }
     } catch (error: any) {
-      console.error("Error fetching venders:", error)
+      console.error("Error fetching vendors:", error)
       
       if (error.response?.status === 401) {
         toast({
@@ -117,7 +117,7 @@ export default function VendersPage() {
       } else {
         toast({
           title: "Error",
-          description: "Failed to fetch venders",
+          description: "Failed to fetch vendors",
           variant: "destructive"
         })
       }
@@ -207,7 +207,7 @@ export default function VendersPage() {
     if (!editValue.trim()) {
       toast({
         title: "Error",
-        description: "Please enter a vender name",
+        description: "Please enter a vendor name",
         variant: "destructive"
       })
       return
@@ -250,7 +250,7 @@ export default function VendersPage() {
         })
       }
     } catch (error: any) {
-      handleError(error, "Failed to add vender")
+      handleError(error, "Failed to add vendor")
     } finally {
       setIsAdding(false)
     }
@@ -260,7 +260,7 @@ export default function VendersPage() {
     if (!editValue.trim()) {
       toast({
         title: "Error",
-        description: "Please enter a vender name",
+        description: "Please enter a vendor name",
         variant: "destructive"
       })
       return
@@ -304,7 +304,7 @@ export default function VendersPage() {
         })
       }
     } catch (error: any) {
-      handleError(error, "Failed to update venders")
+      handleError(error, "Failed to update vendors")
     } finally {
       setIsSaving(false)
     }
@@ -326,7 +326,7 @@ export default function VendersPage() {
     if (selectedItems.length === 0) {
       toast({
         title: "Error",
-        description: "Please select at least one vender",
+        description: "Please select at least one vendor",
         variant: "destructive"
       })
       return
@@ -377,8 +377,8 @@ export default function VendersPage() {
 
       if (response.data.success) {
         const successMessage = idsToDelete.length === 1 
-          ? "Vender deleted successfully"
-          : `${idsToDelete.length} vender(s) deleted successfully`
+          ? "Vendor deleted successfully"
+          : `${idsToDelete.length} vendor(s) deleted successfully`
         
         handleSuccess(successMessage)
         
@@ -396,7 +396,7 @@ export default function VendersPage() {
         })
       }
     } catch (error: any) {
-      handleError(error, "Failed to delete vender(s)")
+      handleError(error, "Failed to delete vendor(s)")
     } finally {
       setIsDeleting(false)
       setShowDeleteModal(false)
@@ -460,7 +460,7 @@ export default function VendersPage() {
 
   return (
     <div className="min-h-screen pb-8">
-      <Header title="Vender Management" tabs={navigationTabs} />
+      <Header title="Vendor Management" tabs={navigationTabs} />
 
       {/* Delete Confirmation Modal */}
       <DeleteConfirmationModal
@@ -472,10 +472,10 @@ export default function VendersPage() {
         onConfirm={confirmDelete}
         itemCount={itemToDelete ? 1 : selectedItems.length}
         isLoading={isDeleting}
-        title={itemToDelete ? "Delete Vender" : "Delete Multiple Venders"}
+        title={itemToDelete ? "Delete Vendor" : "Delete Multiple Vendors"}
         message={itemToDelete 
-          ? "Are you sure you want to delete this vender? This action cannot be undone."
-          : "Are you sure you want to delete the selected venders? This action cannot be undone."
+          ? "Are you sure you want to delete this vendor? This action cannot be undone."
+          : "Are you sure you want to delete the selected vendors? This action cannot be undone."
         }
       />
 
@@ -486,10 +486,10 @@ export default function VendersPage() {
             <div>
               <div className="flex items-center gap-2">
                 <ProjectorIcon className="w-6 h-6 text-[#CB8959]" />
-                <h2 className="text-xl font-semibold text-white">Venders</h2>
+                <h2 className="text-xl font-semibold text-white">Vendors</h2>
               </div>
               <p className="text-sm text-gray-400 mt-1">
-                Manage your vender and inventory
+                Manage your vendor and inventory
               </p>
             </div>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto">
@@ -497,7 +497,7 @@ export default function VendersPage() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search vender..."
+                  placeholder="Search vendor..."
                   defaultValue={searchQuery}
                   onChange={(e) => handleSearchInput(e.target.value)}
  className="w-full sm:w-64 pl-10 pr-4 py-2 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-lg text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
@@ -536,7 +536,7 @@ export default function VendersPage() {
                   ) : (
                     <>
                       <Plus className="w-4 h-4" />
-                      Add Vender
+                      Add Vendor
                     </>
                   )}
                 </GlassButton>
@@ -548,7 +548,7 @@ export default function VendersPage() {
           {editingId === -1 && (
             <div className="mb-6 p-4 bg-[rgba(255,255,255,0.05)] rounded-lg border border-[rgba(255,255,255,0.1)]">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-white font-medium">Add New Vender</h3>
+                <h3 className="text-white font-medium">Add New Vendor</h3>
                 <button
                   onClick={handleCancel}
                   className="p-1 hover:bg-[rgba(255,255,255,0.1)] rounded transition-colors"
@@ -562,7 +562,7 @@ export default function VendersPage() {
                     type="text"
                     value={editValue}
                     onChange={(e) => setEditValue(e.target.value)}
-                    placeholder="Enter vender name..."
+                    placeholder="Enter vendor name..."
                     className="w-full px-3 py-2 bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.1)] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     autoFocus
                     onKeyDown={(e) => {
@@ -585,7 +585,7 @@ export default function VendersPage() {
                     ) : (
                       <>
                         <Check className="w-4 h-4" />
-                        Add Vender
+                        Add Vendor
                       </>
                     )}
                   </button>
@@ -623,7 +623,7 @@ export default function VendersPage() {
                       onClick={() => handleSort("name")}
                     >
                       <div className="flex items-center gap-1">
-                        Vender Name
+                        Vendor Name
                         {pagination.orderBy === "name" && (
                           <span className="text-xs">
                             {pagination.order === "asc" ? "↑" : "↓"}
@@ -644,7 +644,7 @@ export default function VendersPage() {
                     <tr>
                       <td colSpan={5} className="text-center">
                         <div className="flex flex-col items-center justify-center">
-                          <DashboardLoader label="Loading venders... " />
+                          <DashboardLoader label="Loading vendors... " />
                         </div>
                       </td>
                     </tr>
@@ -652,7 +652,7 @@ export default function VendersPage() {
                     <tr>
                       <td colSpan={5} className="py-8 text-center">
                         <div className="flex flex-col items-center justify-center gap-2">
-                          <span className="text-gray-400">No venders found</span>
+                          <span className="text-gray-400">No vendors found</span>
                           {searchQuery && (
                             <button
                               onClick={() => {
@@ -782,7 +782,7 @@ export default function VendersPage() {
             <div className="mt-4 p-3 bg-[rgba(255,255,255,0.05)] rounded-lg border border-[rgba(255,255,255,0.1)]">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-300">
-                  {selectedItems.length} vender{selectedItems.length > 1 ? 's' : ''} selected
+                  {selectedItems.length} vendor{selectedItems.length > 1 ? 's' : ''} selected
                 </span>
                 <div className="flex gap-2">
                   <button
