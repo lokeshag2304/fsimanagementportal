@@ -31,7 +31,8 @@ import { apiService } from "@/common/services/apiService"
 import Pagination from "@/common/Pagination"
 import DashboardLoader, { downloadBase64File } from "@/common/DashboardLoader"
 import { getNavigationByRole } from "@/lib/getNavigationByRole"
-import { ApiDropdown } from "@/common/DynamicDropdown"
+import { ApiDropdown, glassSelectStyles } from "@/common/DynamicDropdown"
+import { GlassSelect } from "@/components/glass/GlassSelect"
 
 interface DomainRecord {
   id: number
@@ -872,30 +873,54 @@ export default function DomainsPage() {
                               style={{ minHeight: '32px' }}
                             />
                           </td>
-                          <td className="py-3 px-4">
-                            <select
-                              value={newRecordData.domain_protected}
-                              onChange={(e) => handleNewRecordChange('domain_protected', e.target.value as "1" | "0")}
-                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                              style={{ minHeight: '32px' }}
-                            >
-                              {domainProtectOptions.map(option => (
-                                <option key={option.value} value={option.value} className="bg-gray-900 text-white">
-                                  {option.label}
-                                </option>
-                              ))}
-                            </select>
+                          <td className="py-1 px-2">
+                           <div className="w-40">
+  <GlassSelect
+    options={domainProtectOptions}
+    value={
+      domainProtectOptions.find(
+        (opt) => opt.value === newRecordData.domain_protected
+      ) || null
+    }
+    onChange={(selected: any) =>
+      handleNewRecordChange(
+        "domain_protected",
+        selected?.value as "1" | "0"
+      )
+    }
+    isSearchable={false}
+    isClearable
+    styles={glassSelectStyles}
+  />
+</div>
+
                           </td>
-                          <td className="py-3 px-4">
-                            <select
-                              value={newRecordData.status}
-                              onChange={(e) => handleNewRecordChange('status', e.target.value as "1" | "0")}
-                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                              style={{ minHeight: '32px' }}
-                            >
-                              <option value="1" className="bg-gray-900 text-white">Active</option>
-                              <option value="0" className="bg-gray-900 text-white">Inactive</option>
-                            </select>
+                          <td className="py-1 px-2">
+                           <div className="w-40">
+  <GlassSelect
+    options={[
+      { value: "1", label: "Active" },
+      { value: "0", label: "Inactive" },
+    ]}
+    value={
+      [
+        { value: "1", label: "Active" },
+        { value: "0", label: "Inactive" },
+      ].find(opt => opt.value === newRecordData.status) || null
+    }
+    onChange={(selected: any) =>
+      handleNewRecordChange(
+        "status",
+        selected?.value as "1" | "0"
+      )
+    }
+    isSearchable={false}
+    isClearable
+    placeholder="Status"
+    styles={glassSelectStyles}
+  />
+</div>
+
                           </td>
                           <td className="py-3 px-4">
                             <input
@@ -1124,43 +1149,57 @@ export default function DomainsPage() {
                                   />
                                 </td>
                                 <td className="py-3 px-4">
-                                  <select
-  value={
-    (editData[item.id]?.domain_protected as "0" | "1") ??
-    item.domain_protected
-  }
-  onChange={(e) =>
-    handleEditChange(
-      item.id,
-      "domain_protected",
-      e.target.value as "0" | "1"
-    )
-  }
-  className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm"
->
-  {domainProtectOptions.map(option => (
-    <option
-      key={option.value}
-      value={option.value}
-      className="bg-gray-900 text-white"
-    >
-      {option.label}
-    </option>
-  ))}
-</select>
+                                  <td className="py-1 px-2">
+                           <div className="w-40">
+  <GlassSelect
+    options={domainProtectOptions}
+    value={
+      domainProtectOptions.find(
+        (opt) => opt.value === newRecordData.domain_protected
+      ) || null
+    }
+    onChange={(selected: any) =>
+      handleNewRecordChange(
+        "domain_protected",
+        selected?.value as "1" | "0"
+      )
+    }
+    isSearchable={false}
+    isClearable
+    styles={glassSelectStyles}
+  />
+</div>
+
+                          </td>  
 
                                 </td>
-                                <td className="py-3 px-4">
-                                  <select
-                                    value={editData[item.id]?.status?.toString() || item.status.toString()}
-                                    onChange={(e) => handleEditChange(item.id, 'status', parseInt(e.target.value) as 0 | 1)}
-                                    className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                                    style={{ minHeight: '32px' }}
-                                  >
-                                    <option value="1" className="bg-gray-900 text-white">Active</option>
-                                    <option value="0" className="bg-gray-900 text-white">Inactive</option>
-                                  </select>
-                                </td>
+                                <td className="py-1 px-2">
+                           <div className="w-40">
+  <GlassSelect
+    options={[
+      { value: "1", label: "Active" },
+      { value: "0", label: "Inactive" },
+    ]}
+    value={
+      [
+        { value: "1", label: "Active" },
+        { value: "0", label: "Inactive" },
+      ].find(opt => opt.value === newRecordData.status) || null
+    }
+    onChange={(selected: any) =>
+      handleNewRecordChange(
+        "status",
+        selected?.value as "1" | "0"
+      )
+    }
+    isSearchable={false}
+    isClearable
+    placeholder="Status"
+    styles={glassSelectStyles}
+  />
+</div>
+
+                          </td>
                                 <td className="py-3 px-4">
                                   <input
                                     type="text"
@@ -1185,7 +1224,7 @@ export default function DomainsPage() {
                               style={{ minHeight: '32px' }}
                             />
                                 </td>
-                                <td className="py-3 px-4 text-sm text-gray-300">
+                                <td className="py-3 px-4 text-sm text-gray-300 whitespace-nowrap">
                                   {(item.updated_at)}
                                 </td>
                               </>
@@ -1235,7 +1274,7 @@ export default function DomainsPage() {
                                   </div>
                                 </td> */}
                                 <td className="py-3 px-4">
-                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm border ${
+                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${
                                     calculateDays(item.expiry_date) < 0 
                                       ? 'bg-red-500/20 text-red-400 border-red-500/20' 
                                       : calculateDays(item.expiry_date) <= 30 
@@ -1247,7 +1286,7 @@ export default function DomainsPage() {
                                   </div>
                                 </td>
                                 <td className="py-3 px-4">
-                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm border ${getDomainProtectColor(item.domain_protected)} ${
+                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${getDomainProtectColor(item.domain_protected)} ${
                                     item.domain_protected == 1 ? 'bg-green-500/20 border-green-500/20' : 'bg-yellow-500/20 border-yellow-500/20'
                                   }`}>
                                     {/* {getDomainProtectIcon(item.domain_protected)} */}
@@ -1255,7 +1294,7 @@ export default function DomainsPage() {
                                   </div>
                                 </td>
                                 <td className="py-3 px-4">
-                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm border ${getStatusColor(item.status)} ${
+                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${getStatusColor(item.status)} ${
                                     item.status === 1 ? 'bg-green-500/20 border-green-500/20' : 'bg-red-500/20 border-red-500/20'
                                   }`}>
                                     {getStatusIcon(item.status)}
@@ -1273,7 +1312,7 @@ export default function DomainsPage() {
                                  <td className="py-3 px-4 text-sm text-gray-300">
                                   {(item.deleted_at)}
                                 </td>
-                                <td className="py-3 px-4 text-sm text-gray-300">
+                                <td className="py-3 px-4 text-sm text-gray-300 whitespace-nowrap">
                                   {(item.updated_at)}
                                 </td>
                               </>

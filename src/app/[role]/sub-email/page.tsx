@@ -1342,7 +1342,7 @@ export default function EmailsPage() {
                                     placeholder="Add remarks"
                                   />
                                 </td>
-                                <td className="py-3 px-4 text-sm text-gray-300">
+                                <td className="py-3 px-4 text-sm text-gray-300 whitespace-nowrap">
                                   {item.updated_at}
                                 </td>
                               </>
@@ -1429,7 +1429,7 @@ export default function EmailsPage() {
                                           : "bg-green-500/20 text-green-400 border-green-500/20"
                                     }`}
                                   >
-                                    <Clock className="w-3 h-3" />
+                                  
                                     {calculateDays(item.expiry_date)} days
                                   </div>
                                 </td>
@@ -1454,7 +1454,7 @@ export default function EmailsPage() {
                                     </span>
                                   </div>
                                 </td>
-                                <td className="py-3 px-4 text-sm text-gray-300">
+                                <td className="py-3 px-4 text-sm text-gray-300 whitespace-nowrap">
                                   {item.updated_at}
                                 </td>
                               </>

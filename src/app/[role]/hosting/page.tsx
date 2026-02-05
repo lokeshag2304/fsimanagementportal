@@ -30,7 +30,8 @@ import { apiService } from "@/common/services/apiService"
 import Pagination from "@/common/Pagination"
 import DashboardLoader, { downloadBase64File } from "@/common/DashboardLoader"
 import { getNavigationByRole } from "@/lib/getNavigationByRole"
-import { ApiDropdown } from "@/common/DynamicDropdown"
+import { ApiDropdown, glassSelectStyles } from "@/common/DynamicDropdown"
+import { GlassSelect } from "@/components/glass/GlassSelect"
 
 interface HostingRecord {
   deleted_at: ReactNode
@@ -845,16 +846,32 @@ export default function HostingPage() {
                               style={{ minHeight: '32px' }}
                             />
                           </td>
-                          <td className="py-3 px-4">
-                            <select
-                              value={newRecordData.status}
-                              onChange={(e) => handleNewRecordChange('status', e.target.value as "1" | "0")}
-                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                              style={{ minHeight: '32px' }}
-                            >
-                              <option value="1" className="bg-gray-900 text-white">Active</option>
-                              <option value="0" className="bg-gray-900 text-white">Inactive</option>
-                            </select>
+                          <td className="py-1 px-2">
+                           <div className="w-40">
+  <GlassSelect
+    options={[
+      { value: "1", label: "Active" },
+      { value: "0", label: "Inactive" },
+    ]}
+    value={
+      [
+        { value: "1", label: "Active" },
+        { value: "0", label: "Inactive" },
+      ].find(opt => opt.value === newRecordData.status) || null
+    }
+    onChange={(selected: any) =>
+      handleNewRecordChange(
+        "status",
+        selected?.value as "1" | "0"
+      )
+    }
+    placeholder="Status"
+    isSearchable={false}
+    isClearable
+    styles={glassSelectStyles}
+  />
+</div>
+
                           </td>
                           <td className="py-3 px-4">
                             <input
@@ -1084,17 +1101,33 @@ export default function HostingPage() {
                                     style={{ minHeight: '32px' }}
                                   />
                                 </td>
-                                <td className="py-3 px-4">
-                                  <select
-                                    value={editData[item.id]?.status?.toString() || item.status.toString()}
-                                    onChange={(e) => handleEditChange(item.id, 'status', parseInt(e.target.value) as 0 | 1)}
-                                    className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                                    style={{ minHeight: '32px' }}
-                                  >
-                                    <option value="1" className="bg-gray-900 text-white">Active</option>
-                                    <option value="0" className="bg-gray-900 text-white">Inactive</option>
-                                  </select>
-                                </td>
+                               <td className="py-1 px-2">
+                           <div className="w-40">
+  <GlassSelect
+    options={[
+      { value: "1", label: "Active" },
+      { value: "0", label: "Inactive" },
+    ]}
+    value={
+      [
+        { value: "1", label: "Active" },
+        { value: "0", label: "Inactive" },
+      ].find(opt => opt.value === newRecordData.status) || null
+    }
+    onChange={(selected: any) =>
+      handleNewRecordChange(
+        "status",
+        selected?.value as "1" | "0"
+      )
+    }
+    placeholder="Status"
+    isSearchable={false}
+    isClearable
+    styles={glassSelectStyles}
+  />
+</div>
+
+                          </td> 
                                 <td className="py-3 px-4">
                                   <input
                                     type="text"
@@ -1119,7 +1152,7 @@ export default function HostingPage() {
                                     style={{ minHeight: '32px' }}
                                   />
                                 </td>
-                                 <td className="py-3 px-4 text-sm text-gray-300">
+                                 <td className="py-3 px-4 text-sm text-gray-300 whitespace-nowrap">
                                   {(item.updated_at)}
                                 </td>
                               </>
@@ -1200,7 +1233,7 @@ export default function HostingPage() {
                                 <td className="py-3 px-4 text-sm text-gray-300">
                                   {(item.deleted_at)}
                                 </td>
-                                 <td className="py-3 px-4 text-sm text-gray-300">
+                                 <td className="py-3 px-4 text-sm text-gray-300 whitespace-nowrap">
                                   {(item.updated_at)}
                                 </td>
                               </>
