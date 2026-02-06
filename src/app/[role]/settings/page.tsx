@@ -74,9 +74,12 @@ export default function SettingsPage() {
   });
 
   // Fetch profile data on component mount
-  useEffect(() => {
+useEffect(() => {
+  if (user?.id) {
     fetchProfileData();
-  }, [user]);
+  }
+}, [user?.id]);
+
 
   const fetchProfileData = async () => {
     try {
@@ -108,9 +111,9 @@ export default function SettingsPage() {
         // Update user in auth context
         updateUser({
           ...user,
-          name: profileData.name,
-          email: profileData.email,
-          profile: profileData.profile,
+          name: data.name,
+          email: data.email,
+          profile: data.profile,
         });
 
       }
@@ -186,7 +189,7 @@ if (profileFile) {
 
 
       const response = await axios.post(
-        `${BASE_URL}/Profile/Update-Profile`,
+        `${BASE_URL}/secure/Profile/Update-Profile`,
         formData,
         {
           headers: {
@@ -195,7 +198,7 @@ if (profileFile) {
         },
       );
 
-      if (response.data.success) {
+      if (response.data.status) {
 
         // Clear password fields
         setProfileData((prev) => ({
@@ -210,6 +213,8 @@ if (profileFile) {
           description: response.data.message || "Profile updated successfully",
           variant: "default",
         });
+
+        fetchProfileData();
       } else {
         throw new Error(response.data.message || "Update failed");
       }

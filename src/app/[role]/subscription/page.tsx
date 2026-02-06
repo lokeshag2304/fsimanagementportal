@@ -205,7 +205,7 @@ const handleStatusSelect = (selected: any) => {
 
   useEffect(() => {
     fetchSubscriptions();
-    fetchProducts();
+    // fetchProducts();
   }, [pagination.page, pagination.orderBy, pagination.orderDir]);
 
   useEffect(() => {
