@@ -636,7 +636,7 @@ export default function HostingPage() {
                     className="flex items-center gap-2"
                     disabled={exportLoading}
                   >
-                    Export
+                    {exportLoading ? ("Exporting...") : (" Export" )}
                   </GlassButton>
               </div>
             </div>

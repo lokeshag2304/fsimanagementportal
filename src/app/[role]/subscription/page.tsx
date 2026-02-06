@@ -36,6 +36,7 @@ import { GlassSelect } from "@/components/glass/GlassSelect";
 interface Subscription {
   id: number;
   client_name: string | null;
+  client_id: number;
   domain_name: string | null;
   product_name: string;
   product_id?: number;
@@ -60,6 +61,7 @@ interface AddEditSubscription {
   id?: number;
   s_id: number;
   product_id: number;
+  client_id: number;
   renewal_date: string;
   amount: number;
   expiry_date: string;
@@ -96,6 +98,8 @@ export default function SubscriptionsPage() {
 
   const [newRecordData, setNewRecordData] = useState({
     product_id: "",
+    client_id: "",
+    client_name: "",
     product_name: "",
     renewal_date: "",
     amount: "",
@@ -142,28 +146,6 @@ const handleStatusSelect = (selected: any) => {
   );
 };
 
-
-  // Fetch products dropdown
-  const fetchProducts = async () => {
-    try {
-      setLoadingProducts(true);
-      const response = await apiService.getDropdownOptions("get-products");
-
-      if (response.data.status) {
-        setProducts(response.data.data);
-      }
-    } catch (error) {
-      console.error("Error fetching products:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load products",
-        variant: "destructive",
-      });
-    } finally {
-      setLoadingProducts(false);
-    }
-  };
-
   // Fetch subscriptions
   const fetchSubscriptions = async () => {
     try {
@@ -206,7 +188,7 @@ const handleStatusSelect = (selected: any) => {
   useEffect(() => {
     fetchSubscriptions();
     // fetchProducts();
-  }, [pagination.page, pagination.orderBy, pagination.orderDir]);
+  }, [pagination.page, pagination.orderBy, pagination.orderDir, token]);
 
   useEffect(() => {
     if (searchTimeoutRef.current) {
@@ -231,6 +213,8 @@ const handleStatusSelect = (selected: any) => {
     setNewRecordData({
       product_id: "",
       product_name: "",
+      client_id: "",
+      client_name: "",
       renewal_date: "",
       amount: "",
       expiry_date: "",
@@ -273,6 +257,8 @@ const handleStatusSelect = (selected: any) => {
         record_type: 1,
         s_id: user?.id || 0,
         product_id: Number(newRecordData.product_id),
+        client_id: parseInt(newRecordData.client_id),
+        client_name: newRecordData.client_name,
         product_name: productName,
         renewal_date: newRecordData.renewal_date,
         amount: parseFloat(newRecordData.amount) || 0,
@@ -294,6 +280,8 @@ const handleStatusSelect = (selected: any) => {
         fetchSubscriptions();
         setNewRecordData({
           product_id: "",
+          client_id: "",
+          client_name: "",
           product_name: "",
           renewal_date: "",
           amount: "",
@@ -365,6 +353,8 @@ const handleStatusSelect = (selected: any) => {
       [subscription.id]: {
         ...subscription,
         product_id: subscription.product_id || 0,
+        client_id: subscription.client_id || 0,
+        client_name: subscription.client_name || "",
         product_name: subscription.product_name || "",
         remarks: subscription.latest_remark?.remark || "",
         remark_id: subscription.latest_remark?.id || null,
@@ -392,6 +382,8 @@ const handleStatusSelect = (selected: any) => {
         id,
         s_id: user?.id || 6,
         product_id: Number(productId),
+        client_id: updatedData.client_id || 0,
+        client_name: updatedData.client_name || "",
         product_name: productName,
         renewal_date: updatedData.renewal_date || "",
         amount: updatedData.amount || 0,
@@ -666,7 +658,7 @@ const handleStatusSelect = (selected: any) => {
                     className="flex items-center gap-2"
                     disabled={exportLoading}
                   >
-                    Export
+                    {exportLoading ? ("Exporting...") : (" Export" )}
                   </GlassButton>
               </div>
             </div>
@@ -693,9 +685,9 @@ const handleStatusSelect = (selected: any) => {
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[180px]">
                       Product
                     </th>
-                    {/* <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
-                      Renewal Date
-                    </th> */}
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
+                      Client
+                    </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
                       Amount
                     </th>
@@ -768,20 +760,31 @@ const handleStatusSelect = (selected: any) => {
                               />
                             )}
                           </td>
-                          {/* <td className="py-3 px-4">
-                            <input
-                              type="date"
-                              value={newRecordData.renewal_date}
-                              onChange={(e) =>
-                                handleNewRecordChange(
-                                  "renewal_date",
-                                  e.target.value
-                                )
-                              }
-                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                              style={{ minHeight: "32px" }}
-                            />
-                          </td> */}
+                          <td className="py-3 px-4">
+                              <ApiDropdown
+                                label=""
+                                endpoint="get-clients"
+                                value={
+                                  newRecordData.client_id
+                                    ? {
+                                        value: newRecordData.client_id,
+                                        label: newRecordData.client_name,
+                                      }
+                                    : null
+                                }
+                                onChange={(option) => {
+                                  handleNewRecordChange(
+                                    "client_id",
+                                    option?.value ?? null
+                                  );
+                                  handleNewRecordChange(
+                                    "client_name",
+                                    option?.label ?? ""
+                                  );
+                                }}
+                                placeholder="Client"
+                              />                          
+                          </td>
                           <td className="py-3 px-4">
                             <input
                               type="number"
@@ -954,28 +957,44 @@ const handleStatusSelect = (selected: any) => {
                                           option?.label ?? ""
                                         );
                                       }}
-                                      placeholder="Select Product"
+                                      placeholder="Product"
                                     />
                                   )}
                                 </td>
-                                {/* <td className="py-3 px-4">
-                                  <input
-                                    type="date"
-                                    value={
-                                      editData[item.id]?.renewal_date ||
-                                      item.renewal_date
-                                    }
-                                    onChange={(e) =>
-                                      handleEditChange(
-                                        item.id,
-                                        "renewal_date",
-                                        e.target.value
-                                      )
-                                    }
-                                    className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-xs"
-                                    style={{ minHeight: "32px" }}
-                                  />
-                                </td> */}
+                                <td className="py-3 px-4">
+                                  <ApiDropdown
+                                      endpoint="get-clients"
+                                      value={
+                                        editData[item.id]?.client_id
+                                          ? {
+                                              value:
+                                                editData[item.id]?.client_id ||
+                                                0,
+                                              label:
+                                                editData[item.id]
+                                                  ?.client_name ||
+                                                getProductNameById(
+                                                  editData[item.id]
+                                                    ?.client_id || 0
+                                                ),
+                                            }
+                                          : null
+                                      }
+                                      onChange={(option) => {
+                                        handleEditChange(
+                                          item.id,
+                                          "client_id",
+                                          option?.value ?? null
+                                        );
+                                        handleEditChange(
+                                          item.id,
+                                          "client_name",
+                                          option?.label ?? ""
+                                        );
+                                      }}
+                                      placeholder="Client"
+                                    />
+                                </td>
                                 <td className="py-3 px-4">
                                   <input
                                     type="number"
@@ -1035,11 +1054,9 @@ const handleStatusSelect = (selected: any) => {
                                     </span>
                                   </div>
                                 </td>
-                                {/* <td className="py-3 px-4 text-sm text-gray-300">
-                                  <div className="flex items-center gap-2">
-                                    {formatDate(item.renewal_date)}
-                                  </div>
-                                </td> */}
+                                <td className="py-3 px-4 text-sm text-gray-300">
+                                    {item.client_name}
+                                </td>
                                 <td className="py-3 px-4 text-sm text-gray-300">
                                   <div className="flex items-center gap-2">
                                     {item.amount || "0.00"}

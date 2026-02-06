@@ -405,7 +405,7 @@ export default function DynamicDetailsPage() {
                             <MessageSquare className="w-4 h-4 text-blue-400" />
                           </div>
                           <div>
-                            <h4 className="text-white font-medium">Remark #{remark.id}</h4>
+                            <h4 className="text-white font-medium">{remark.creator_name}</h4>
                             <div className="flex items-center gap-2 text-sm text-gray-400 mt-1">
                               <Calendar className="w-3 h-3" />
                               {formatDate(remark.created_at)}

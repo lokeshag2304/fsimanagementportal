@@ -272,6 +272,7 @@ import Select from "react-select"
 import { useAuth } from "@/contexts/AuthContext"
 import { Plus } from "lucide-react"
 import { toast } from "@/hooks/useToast"
+import { on } from "events"
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL + "/secure/Dropdowns"
 
@@ -591,6 +592,7 @@ export function ApiDropdown({
   const [error, setError] = useState<string | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [adding, setAdding] = useState(false)
+  let set = false;
 
   // Check if this endpoint should show add button
   const shouldShowAddButton = () => {
@@ -632,6 +634,9 @@ export function ApiDropdown({
           value: item.id,
           label: item.name,
         }))
+            if (formatted.length > 0 && set) {
+        onChange(formatted[0])
+      }
         setOptions(formatted)
       } else {
         setError(data.message || "Failed to load dropdown")
@@ -665,9 +670,9 @@ export function ApiDropdown({
       const data = await response.json()
 
       if (data.success) {
-        // Add new item to options
-       fetchOptions()
-        
+        set = true
+         fetchOptions()
+
         // Close modal
         setShowModal(false)
         

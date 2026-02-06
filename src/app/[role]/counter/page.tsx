@@ -710,7 +710,7 @@ export default function CounterPage() {
                     className="flex items-center gap-2"
                     disabled={exportLoading}
                   >
-                    Export
+                     {exportLoading ? ("Exporting...") : (" Export" )}
                   </GlassButton>
               </div>
             </div>
