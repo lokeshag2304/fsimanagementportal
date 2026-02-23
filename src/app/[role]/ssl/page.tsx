@@ -143,7 +143,7 @@ export default function SSLPage() {
   const debouncedSearchQuery = useDebounce(searchQuery, 400);
   const [totalItems, setTotalItems] = useState(0);
 
-  const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch SSL records
   const fetchSSLRecords = async () => {
@@ -240,7 +240,7 @@ export default function SSLPage() {
         return;
       }
 
-      const payload: AddEditSSL = {
+      const payload: any = {
         record_type: 2,
         s_id: user?.id || 0,
         product_id: newRecordData.product_id!,
@@ -337,7 +337,7 @@ export default function SSLPage() {
         return;
       }
 
-      const payload: AddEditSSL = {
+      const payload: any = {
         record_type: 2,
         id,
         s_id: user?.id || 0,
@@ -388,14 +388,14 @@ export default function SSLPage() {
       try {
         setExportLoading(true);
   
-        const payload: AddEditSSL = {
+        const payload: any = {
           record_type: 2,
           s_id: user?.id || 0,
         };
   
         const response = await apiService.exportRecord(payload,user,token);
   
-        if (response.success) {
+        if ((response as any).success) {
           toast({
             title: "Success",
             description: response.message || "SSL exported successfully",
@@ -1384,7 +1384,7 @@ export default function SSLPage() {
                                   <div className="flex items-center gap-2">
                                     {/* <AlertCircle className="w-4 h-4 text-gray-400 flex-shrink-0" /> */}
                                     <span className="text-sm text-gray-300 truncate max-w-[180px]">
-                                      {item?.latest_remark?.remark}
+                                      {(item?.latest_remark?.remark as string) || ''}
                                     </span>
                                   </div>
                                 </td>

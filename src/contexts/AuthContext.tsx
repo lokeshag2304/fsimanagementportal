@@ -99,6 +99,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       path: "/",
     });
 
+    // Also store in localStorage so the global axios interceptor can read it
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('token', token);
+    }
+
     if (userData.modules) {
       setCookie("modules", JSON.stringify(userData.modules), {
         maxAge: 60 * 60 * 24 * 7,
@@ -199,11 +204,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const resetPassword = async (token: string, newPassword: string) => {
-    return authApi.resetPassword({
-      id: "",
-      token,
-      newPassword,
-    });
+    return authApi.resetPassword(token, newPassword);
   };
 
   const setForgotPasswordData = (
@@ -226,6 +227,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     deleteCookie("subadmin_id");
     deleteCookie("reset_method");
     deleteCookie("reset_contact");
+
+    // Also clear localStorage token
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+    }
 
     router.push("/auth/login");
   };

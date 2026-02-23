@@ -109,22 +109,15 @@ export function Header({ title, tabs }: HeaderProps) {
             href={`/${user?.role}/dashboard`}
             className="flex items-center gap-6 group"
           >
-            <div className="w-36 h-24 ml-2 relative">
-              {logo ? (
-                <Image
-                  src={logo}
-                  alt="Logo"
-                  sizes="100%"
-                  fill
-                  priority
-                  className="object-contain scale-125"
-                />
-              ) : (
-                // <div className="w-full h-full rounded-xl bg-theme-gradient flex items-center justify-center">
-                //   <span className="text-white font-bold text-xl">C</span>
-                // </div>
-                <></>
-              )}
+            <div className="w-[calc(9rem+1cm)] h-[calc(6rem+1cm)] ml-[calc(0.5rem+3cm)] relative">
+              <Image
+                src="/logo.webp"
+                alt="Logo"
+                sizes="100%"
+                fill
+                priority
+                className="object-contain scale-[1.35]"
+              />
             </div>
           </Link>
 
@@ -300,10 +293,10 @@ export function Header({ title, tabs }: HeaderProps) {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-[rgba(255,255,255,var(--ui-opacity-10))]" />
                 <Link href={`/${user?.role}/settings`} className="hidden md:block">
-                <DropdownMenuItem className="text-[var(--text-secondary)] focus:bg-[rgba(255,255,255,var(--ui-opacity-10))] focus:text-white cursor-pointer">
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
-                </DropdownMenuItem>
+                  <DropdownMenuItem className="text-[var(--text-secondary)] focus:bg-[rgba(255,255,255,var(--ui-opacity-10))] focus:text-white cursor-pointer">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </DropdownMenuItem>
                 </Link>
                 {/* <DropdownMenuItem className="text-[var(--text-secondary)] focus:bg-[rgba(255,255,255,var(--ui-opacity-10))] focus:text-white cursor-pointer">
                   <CreditCard className="mr-2 h-4 w-4" />
@@ -347,124 +340,123 @@ export function Header({ title, tabs }: HeaderProps) {
 
             {/* Tabs - hidden on mobile */}
             {tabs && tabs.length > 0 && (
-  <nav className="hidden md:flex items-center gap-1 ml-2 overflow-x-auto scrollbar-hide">
-    {tabs.map((tab) => {
-      const isActive =
-        pathname === tab.href ||
-        (tab.href !== "/" && pathname.startsWith(tab.href)) ||
-        (tab.href === "/" && pathname === "/");
+              <nav className="hidden md:flex items-center gap-1 ml-2 overflow-x-auto scrollbar-hide">
+                {tabs.map((tab) => {
+                  const isActive =
+                    pathname === tab.href ||
+                    (tab.href !== "/" && pathname.startsWith(tab.href)) ||
+                    (tab.href === "/" && pathname === "/");
 
-      return tab.hasDropdown && tab.submenu ? (
-        // <DropdownMenu
-        //   key={tab.name}
-        //   open={openDropdown === tab.name}
-        //   onOpenChange={(open) => {
-        //     if (!open) {
-        //       // Close only when not hovering over trigger or content
-        //       setTimeout(() => {
-        //         if (!isHoveringRef.current) {
-        //           setOpenDropdown(null);
-        //         }
-        //       }, 100);
-        //     } else {
-        //       setOpenDropdown(tab.name);
-        //     }
-        //   }}
-        // >
-        //   <DropdownMenuTrigger asChild>
-        //     <button
-        //       onMouseEnter={() => {
-        //         isHoveringRef.current = true;
-        //         setOpenDropdown(tab.name);
-        //       }}
-        //       onMouseLeave={(e) => {
-        //         // Check if we're moving to dropdown content
-        //         const relatedTarget = e.relatedTarget as HTMLElement;
-        //         const isMovingToDropdown = relatedTarget?.closest('.dropdown-content-wrapper');
-                
-        //         if (!isMovingToDropdown) {
-        //           isHoveringRef.current = false;
-        //           setTimeout(() => {
-        //             if (!isHoveringRef.current) {
-        //               setOpenDropdown(null);
-        //             }
-        //           }, 150);
-        //         }
-        //       }}
-        //       className={cn(
-        //         "flex items-center gap-1 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300",
-        //         isActive
-        //           ? "bg-theme-gradient text-white"
-        //           : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,var(--ui-opacity-10))]",
-        //       )}
-        //     >
-        //       {tab.name}
-        //       <ChevronDown className="w-4 h-4 ml-0.5" />
-        //     </button>
-        //   </DropdownMenuTrigger>
+                  return tab.hasDropdown && tab.submenu ? (
+                    // <DropdownMenu
+                    //   key={tab.name}
+                    //   open={openDropdown === tab.name}
+                    //   onOpenChange={(open) => {
+                    //     if (!open) {
+                    //       // Close only when not hovering over trigger or content
+                    //       setTimeout(() => {
+                    //         if (!isHoveringRef.current) {
+                    //           setOpenDropdown(null);
+                    //         }
+                    //       }, 100);
+                    //     } else {
+                    //       setOpenDropdown(tab.name);
+                    //     }
+                    //   }}
+                    // >
+                    //   <DropdownMenuTrigger asChild>
+                    //     <button
+                    //       onMouseEnter={() => {
+                    //         isHoveringRef.current = true;
+                    //         setOpenDropdown(tab.name);
+                    //       }}
+                    //       onMouseLeave={(e) => {
+                    //         // Check if we're moving to dropdown content
+                    //         const relatedTarget = e.relatedTarget as HTMLElement;
+                    //         const isMovingToDropdown = relatedTarget?.closest('.dropdown-content-wrapper');
 
-        //   <DropdownMenuContent
-        //     side="bottom"
-        //     align="start"
-        //     sideOffset={6}
-        //     className="glass-dropdown border-[rgba(255,255,255,var(--glass-border-opacity))] dropdown-content-wrapper"
-        //     onMouseEnter={() => {
-        //       isHoveringRef.current = true;
-        //       setOpenDropdown(tab.name);
-        //     }}
-        //     onMouseLeave={(e) => {
-        //       // Check if we're moving back to trigger
-        //       const relatedTarget = e.relatedTarget as HTMLElement;
-        //       const isMovingToTrigger = relatedTarget?.closest('button[data-state]');
-              
-        //       if (!isMovingToTrigger) {
-        //         isHoveringRef.current = false;
-        //         setTimeout(() => {
-        //           if (!isHoveringRef.current) {
-        //             setOpenDropdown(null);
-        //           }
-        //         }, 150);
-        //       }
-        //     }}
-        //   >
-        //     {tab.submenu.map((subItem) => (
-        //       <DropdownMenuItem key={subItem.name} asChild>
-        //         <Link
-        //           href={subItem.href}
-        //           className="text-[var(--text-secondary)] focus:bg-[rgba(255,255,255,var(--ui-opacity-10))] focus:text-white cursor-pointer"
-        //         >
-        //           {subItem.name}
-        //         </Link>
-        //       </DropdownMenuItem>
-        //     ))}
-        //   </DropdownMenuContent>
-        // </DropdownMenu>
-         <HoverDropdown
-     tab={tab}
-  isActive={isActive}
-  openDropdown={openDropdown}
-  setOpenDropdown={setOpenDropdown}
-  />
-      ) : (
-        <Link
-          key={tab.name}
-          href={tab.href}
-          className={cn(
-            "flex items-center gap-1 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300",
-            isActive
-              ? "bg-theme-gradient text-white"
-              : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,var(--ui-opacity-10))]",
-          )}
-        >
-          {tab.name}
-          {tab.hasDropdown && (
-            <ChevronDown className="w-4 h-4 ml-0.5" />
-          )}
-        </Link>
-      );
-    })}
-  </nav>
-)}
+                    //         if (!isMovingToDropdown) {
+                    //           isHoveringRef.current = false;
+                    //           setTimeout(() => {
+                    //             if (!isHoveringRef.current) {
+                    //               setOpenDropdown(null);
+                    //             }
+                    //           }, 150);
+                    //         }
+                    //       }}
+                    //       className={cn(
+                    //         "flex items-center gap-1 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300",
+                    //         isActive
+                    //           ? "bg-theme-gradient text-white"
+                    //           : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,var(--ui-opacity-10))]",
+                    //       )}
+                    //     >
+                    //       {tab.name}
+                    //       <ChevronDown className="w-4 h-4 ml-0.5" />
+                    //     </button>
+                    //   </DropdownMenuTrigger>
+
+                    //   <DropdownMenuContent
+                    //     side="bottom"
+                    //     align="start"
+                    //     sideOffset={6}
+                    //     className="glass-dropdown border-[rgba(255,255,255,var(--glass-border-opacity))] dropdown-content-wrapper"
+                    //     onMouseEnter={() => {
+                    //       isHoveringRef.current = true;
+                    //       setOpenDropdown(tab.name);
+                    //     }}
+                    //     onMouseLeave={(e) => {
+                    //       // Check if we're moving back to trigger
+                    //       const relatedTarget = e.relatedTarget as HTMLElement;
+                    //       const isMovingToTrigger = relatedTarget?.closest('button[data-state]');
+
+                    //       if (!isMovingToTrigger) {
+                    //         isHoveringRef.current = false;
+                    //         setTimeout(() => {
+                    //           if (!isHoveringRef.current) {
+                    //             setOpenDropdown(null);
+                    //           }
+                    //         }, 150);
+                    //       }
+                    //     }}
+                    //   >
+                    //     {tab.submenu.map((subItem) => (
+                    //       <DropdownMenuItem key={subItem.name} asChild>
+                    //         <Link
+                    //           href={subItem.href}
+                    //           className="text-[var(--text-secondary)] focus:bg-[rgba(255,255,255,var(--ui-opacity-10))] focus:text-white cursor-pointer"
+                    //         >
+                    //           {subItem.name}
+                    //         </Link>
+                    //       </DropdownMenuItem>
+                    //     ))}
+                    //   </DropdownMenuContent>
+                    // </DropdownMenu>
+                    <HoverDropdown
+                      key={tab.name}
+                      tab={tab}
+                      isActive={isActive}
+                    />
+                  ) : (
+                    <Link
+                      key={tab.name}
+                      href={tab.href}
+                      className={cn(
+                        "flex items-center gap-1 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300",
+                        isActive
+                          ? "bg-theme-gradient text-white"
+                          : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,var(--ui-opacity-10))]",
+                      )}
+                    >
+                      {tab.name}
+                      {tab.hasDropdown && (
+                        <ChevronDown className="w-4 h-4 ml-0.5" />
+                      )}
+                    </Link>
+                  );
+                })}
+              </nav>
+            )}
           </div>
         </div>
 

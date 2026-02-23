@@ -1,0 +1,294 @@
+src/app/[role]/categaries-details/[id]/page.tsx(299,145): error TS2345: Argument of type '(valid_till: any) => ReactNode' is not assignable to parameter of type 'string'.
+src/app/[role]/categaries-details/[id]/page.tsx(408,76): error TS2339: Property 'creator_name' does not exist on type 'Remark'.
+src/app/[role]/client-details/[id]/page.tsx(423,77): error TS2339: Property 'product_name' does not exist on type 'RecentCategory'.
+src/app/[role]/client-details/page.tsx(419,77): error TS2339: Property 'product_name' does not exist on type 'RecentCategory'.
+src/app/[role]/clients/page.tsx(102,28): error TS2554: Expected 1 arguments, but got 0.
+src/app/[role]/clients/page.tsx(416,25): error TS2339: Property 'success' does not exist on type 'ApiResponse'.
+src/app/[role]/clients/page.tsx(699,21): error TS2322: Type '"danger"' is not assignable to type '"primary" | "default" | "ghost" | undefined'.
+src/app/[role]/clients/page.tsx(1114,15): error TS2322: Type '{ isMulti: true; options: DomainOption[]; value: DomainOption[]; onChange: (selectedOptions: DomainOption[] | null) => void; placeholder: string; isSearchable: true; isClearable: true; noOptionsMessage: () => string; styles: { ...; }; }' is not assignable to type 'IntrinsicAttributes & GlassSelectProps'.
+  Property 'styles' does not exist on type 'IntrinsicAttributes & GlassSelectProps'.
+src/app/[role]/counter/page.tsx(119,28): error TS2554: Expected 1 arguments, but got 0.
+src/app/[role]/counter/page.tsx(172,9): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/app/[role]/counter/page.tsx(284,9): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+src/app/[role]/counter/page.tsx(293,8): error TS2695: Left side of comma operator is unused and has no side effects.
+src/app/[role]/counter/page.tsx(295,73): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/app/[role]/counter/page.tsx(340,17): error TS2345: Argument of type '{ [x: number]: { client_id: number | undefined; product_id: number | undefined; vendor_id: number | undefined; counter_count: number; valid_till: string; remarks: string; remark_id: number | null; ... 9 more ...; latest_remark?: { id: number; remark: string; }; }; }' is not assignable to parameter of type 'SetStateAction<Record<number, Partial<CounterRecord>>>'.
+src/app/[role]/counter/page.tsx(389,32): error TS2339: Property 'remark_id' does not exist on type 'Partial<CounterRecord>'.
+src/app/[role]/counter/page.tsx(392,74): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/app/[role]/counter/page.tsx(428,17): error TS2740: Type '{ record_type: 6; s_id: number; }' is missing the following properties from type 'AddEditCounter': product_id, vendor_id, client_id, counter_count, and 4 more.
+src/app/[role]/counter/page.tsx(433,58): error TS2345: Argument of type 'AddEditCounter' is not assignable to parameter of type 'Omit<SubscriptionRequest, "s_id">'.
+  Type 'AddEditCounter' is missing the following properties from type 'Omit<SubscriptionRequest, "s_id">': renewal_date, amount, expiry_date
+src/app/[role]/counter/page.tsx(522,9): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/app/[role]/counter/page.tsx(683,21): error TS2322: Type '"danger"' is not assignable to type '"primary" | "default" | "ghost" | undefined'.
+src/app/[role]/counter/page.tsx(812,31): error TS2322: Type '{ endpoint: string; value: { value: number; label: string; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/counter/page.tsx(837,31): error TS2322: Type '{ endpoint: string; value: { value: number; label: string; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/counter/page.tsx(847,60): error TS2339: Property 'vendor_name' does not exist on type '{ client_id: number | null; client_name: string; product_id: number | null; vendor_id: number | null; product_name: string; counter_count: string; valid_till: string; status: "0" | "1"; remarks: string; }'.
+src/app/[role]/counter/page.tsx(857,35): error TS2345: Argument of type '"vendor_name"' is not assignable to parameter of type '"status" | "product_id" | "remarks" | "product_name" | "client_name" | "counter_count" | "valid_till" | "client_id" | "vendor_id"'.
+src/app/[role]/counter/page.tsx(862,31): error TS2322: Type '{ endpoint: string; value: { value: number; label: any; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/counter/page.tsx(936,33): error TS2322: Type '{ options: { value: string; label: string; }[]; value: { value: string; label: string; } | null; onChange: (selected: any) => void; isSearchable: false; isClearable: true; styles: { control: (base: any, state: any) => any; ... 12 more ...; indicatorSeparator: (base: any) => any; }; }' is not assignable to type 'IntrinsicAttributes & GlassSelectProps'.
+  Property 'styles' does not exist on type 'IntrinsicAttributes & GlassSelectProps'.
+src/app/[role]/counter/page.tsx(1057,37): error TS2322: Type '{ endpoint: string; value: { value: number; label: string; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/counter/page.tsx(1087,37): error TS2322: Type '{ endpoint: string; value: { value: number; label: string; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/counter/page.tsx(1117,37): error TS2322: Type '{ endpoint: string; value: { value: number; label: string; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/counter/page.tsx(1194,45): error TS2367: This comparison appears to be unintentional because the types 'string' and 'number | undefined' have no overlap.
+src/app/[role]/counter/page.tsx(1207,39): error TS2322: Type '{ options: { value: string; label: string; }[]; value: { value: string; label: string; } | null; onChange: (selected: any) => void; isSearchable: false; isClearable: true; styles: { control: (base: any, state: any) => any; ... 12 more ...; indicatorSeparator: (base: any) => any; }; }' is not assignable to type 'IntrinsicAttributes & GlassSelectProps'.
+  Property 'styles' does not exist on type 'IntrinsicAttributes & GlassSelectProps'.
+src/app/[role]/counter/page.tsx(1459,17): error TS2322: Type '{ recordType: number; recordId: number; onClose: () => void; }' is not assignable to type 'IntrinsicAttributes'.
+  Property 'recordType' does not exist on type 'IntrinsicAttributes'.
+src/app/[role]/domains/page.tsx(130,28): error TS2554: Expected 1 arguments, but got 0.
+src/app/[role]/domains/page.tsx(146,7): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/app/[role]/domains/page.tsx(262,13): error TS2741: Property 'remark_id' is missing in type '{ record_type: 4; s_id: number; product_id: number; vendor_id: number; domain_id: number; client_id: number; domain_protected: 0 | 1; expiry_date: string; renewal_date: string; status: 0 | 1; remarks: string; deleted_at: string; }' but required in type 'AddEditDomain'.
+src/app/[role]/domains/page.tsx(277,71): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/app/[role]/domains/page.tsx(325,17): error TS2345: Argument of type '{ [x: number]: { domain_id: number | undefined; client_id: number | undefined; product_id: number | undefined; vendor_id: number | undefined; renewal_date: string; remarks: string; remark_id: number | null; ... 13 more ...; updated_at: string; }; }' is not assignable to parameter of type 'SetStateAction<Record<number, Partial<DomainRecord>>>'.
+src/app/[role]/domains/page.tsx(336,28): error TS2339: Property 'deleted_at' does not exist on type 'DomainRecord'.
+src/app/[role]/domains/page.tsx(345,17): error TS2740: Type '{ record_type: 4; s_id: number; }' is missing the following properties from type 'AddEditDomain': product_id, vendor_id, domain_id, client_id, and 7 more.
+src/app/[role]/domains/page.tsx(350,58): error TS2345: Argument of type 'AddEditDomain' is not assignable to parameter of type 'Omit<SubscriptionRequest, "s_id">'.
+  Property 'amount' is missing in type 'AddEditDomain' but required in type 'Omit<SubscriptionRequest, "s_id">'.
+src/app/[role]/domains/page.tsx(412,9): error TS2322: Type 'number | null' is not assignable to type 'number'.
+  Type 'null' is not assignable to type 'number'.
+src/app/[role]/domains/page.tsx(413,33): error TS2339: Property 'deleted_at' does not exist on type 'Partial<DomainRecord>'.
+src/app/[role]/domains/page.tsx(416,72): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/app/[role]/domains/page.tsx(496,75): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/app/[role]/domains/page.tsx(636,21): error TS2322: Type '"danger"' is not assignable to type '"primary" | "default" | "ghost" | undefined'.
+src/app/[role]/domains/page.tsx(771,31): error TS2322: Type '{ endpoint: string; value: { value: number; label: string; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/domains/page.tsx(796,31): error TS2322: Type '{ endpoint: string; value: { value: number; label: string; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/domains/page.tsx(821,31): error TS2322: Type '{ endpoint: string; value: { value: number; label: string; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/domains/page.tsx(831,60): error TS2339: Property 'vendor_name' does not exist on type '{ domain_id: number | null; domain_name: string; client_id: number | null; client_name: string; product_id: number | null; vendor_id: number | null; product_name: string; expiry_date: string; ... 4 more ...; deleted_at: string; }'.
+src/app/[role]/domains/page.tsx(841,35): error TS2345: Argument of type '"vendor_name"' is not assignable to parameter of type '"status" | "renewal_date" | "product_id" | "expiry_date" | "remarks" | "product_name" | "client_name" | "client_id" | "vendor_id" | "domain_name" | "deleted_at" | "domain_id" | "domain_protected"'.
+src/app/[role]/domains/page.tsx(846,31): error TS2322: Type '{ endpoint: string; value: { value: number; label: any; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/domains/page.tsx(893,5): error TS2322: Type '{ options: { value: string; label: string; }[]; value: { value: string; label: string; } | null; onChange: (selected: any) => void; isSearchable: false; isClearable: true; styles: { control: (base: any, state: any) => any; ... 12 more ...; indicatorSeparator: (base: any) => any; }; }' is not assignable to type 'IntrinsicAttributes & GlassSelectProps'.
+  Property 'styles' does not exist on type 'IntrinsicAttributes & GlassSelectProps'.
+src/app/[role]/domains/page.tsx(920,5): error TS2322: Type '{ options: { value: string; label: string; }[]; value: { value: string; label: string; } | null; onChange: (selected: any) => void; isSearchable: false; isClearable: true; placeholder: string; styles: { ...; }; }' is not assignable to type 'IntrinsicAttributes & GlassSelectProps'.
+  Property 'styles' does not exist on type 'IntrinsicAttributes & GlassSelectProps'.
+src/app/[role]/domains/page.tsx(1040,37): error TS2322: Type '{ endpoint: string; value: { value: number; label: string; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/domains/page.tsx(1067,37): error TS2322: Type '{ endpoint: string; value: { value: number; label: string; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/domains/page.tsx(1094,37): error TS2322: Type '{ endpoint: string; value: { value: number; label: string; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/domains/page.tsx(1121,37): error TS2322: Type '{ endpoint: string; value: { value: number; label: string; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/domains/page.tsx(1169,5): error TS2322: Type '{ options: { value: string; label: string; }[]; value: { value: string; label: string; } | null; onChange: (selected: any) => void; isSearchable: false; isClearable: true; styles: { control: (base: any, state: any) => any; ... 12 more ...; indicatorSeparator: (base: any) => any; }; }' is not assignable to type 'IntrinsicAttributes & GlassSelectProps'.
+  Property 'styles' does not exist on type 'IntrinsicAttributes & GlassSelectProps'.
+src/app/[role]/domains/page.tsx(1198,5): error TS2322: Type '{ options: { value: string; label: string; }[]; value: { value: string; label: string; } | null; onChange: (selected: any) => void; isSearchable: false; isClearable: true; placeholder: string; styles: { ...; }; }' is not assignable to type 'IntrinsicAttributes & GlassSelectProps'.
+  Property 'styles' does not exist on type 'IntrinsicAttributes & GlassSelectProps'.
+src/app/[role]/domains/page.tsx(1221,57): error TS2339: Property 'deleted_at' does not exist on type 'Partial<DomainRecord>'.
+src/app/[role]/domains/page.tsx(1222,74): error TS2345: Argument of type '"deleted_at"' is not assignable to parameter of type 'keyof DomainRecord'.
+src/app/[role]/domains/page.tsx(1289,174): error TS2345: Argument of type '"0" | "1"' is not assignable to parameter of type '0 | 1'.
+  Type '"0"' is not assignable to type '0 | 1'.
+src/app/[role]/domains/page.tsx(1290,37): error TS2367: This comparison appears to be unintentional because the types 'string' and 'number' have no overlap.
+src/app/[role]/domains/page.tsx(1293,59): error TS2345: Argument of type '"0" | "1"' is not assignable to parameter of type '0 | 1'.
+  Type '"0"' is not assignable to type '0 | 1'.
+src/app/[role]/domains/page.tsx(1313,42): error TS2339: Property 'deleted_at' does not exist on type 'DomainRecord'.
+src/app/[role]/hosting/page.tsx(37,3): error TS2300: Duplicate identifier 'deleted_at'.
+src/app/[role]/hosting/page.tsx(37,15): error TS2304: Cannot find name 'ReactNode'.
+src/app/[role]/hosting/page.tsx(60,3): error TS2300: Duplicate identifier 'deleted_at'.
+src/app/[role]/hosting/page.tsx(123,28): error TS2554: Expected 1 arguments, but got 0.
+src/app/[role]/hosting/page.tsx(139,7): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/app/[role]/hosting/page.tsx(233,58): error TS2345: Argument of type 'Record<string, any>' is not assignable to parameter of type 'Omit<SubscriptionRequest, "s_id">'.
+  Type 'Record<string, any>' is missing the following properties from type 'Omit<SubscriptionRequest, "s_id">': record_type, status, renewal_date, amount, and 3 more.
+src/app/[role]/hosting/page.tsx(276,13): error TS2741: Property 'remark_id' is missing in type '{ record_type: 3; s_id: number; product_id: number; vendor_id: number; domain_id: number; client_id: number; expiry_date: string; amount: number; status: 0 | 1; remarks: string; deleted_at: string; }' but required in type 'AddEditHosting'.
+src/app/[role]/hosting/page.tsx(290,71): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/app/[role]/hosting/page.tsx(383,9): error TS2322: Type 'number | null' is not assignable to type 'number'.
+  Type 'null' is not assignable to type 'number'.
+src/app/[role]/hosting/page.tsx(387,72): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/app/[role]/hosting/page.tsx(481,75): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/app/[role]/hosting/page.tsx(609,21): error TS2322: Type '"danger"' is not assignable to type '"primary" | "default" | "ghost" | undefined'.
+src/app/[role]/hosting/page.tsx(741,31): error TS2322: Type '{ endpoint: string; value: { value: number; label: string; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/hosting/page.tsx(766,31): error TS2322: Type '{ endpoint: string; value: { value: number; label: string; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/hosting/page.tsx(791,31): error TS2322: Type '{ endpoint: string; value: { value: number; label: string; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/hosting/page.tsx(801,60): error TS2339: Property 'vendor_name' does not exist on type '{ domain_id: number | null; domain_name: string; client_id: number | null; client_name: string; product_id: number | null; vendor_id: number | null; product_name: string; expiry_date: string; amount: string; status: "0" | "1"; remarks: string; deleted_at: string; }'.
+src/app/[role]/hosting/page.tsx(811,35): error TS2345: Argument of type '"vendor_name"' is not assignable to parameter of type '"status" | "amount" | "product_id" | "expiry_date" | "remarks" | "product_name" | "client_name" | "client_id" | "vendor_id" | "domain_name" | "deleted_at" | "domain_id"'.
+src/app/[role]/hosting/page.tsx(816,31): error TS2322: Type '{ endpoint: string; value: { value: number; label: any; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/hosting/page.tsx(871,5): error TS2322: Type '{ options: { value: string; label: string; }[]; value: { value: string; label: string; } | null; onChange: (selected: any) => void; placeholder: string; isSearchable: false; isClearable: true; styles: { ...; }; }' is not assignable to type 'IntrinsicAttributes & GlassSelectProps'.
+  Property 'styles' does not exist on type 'IntrinsicAttributes & GlassSelectProps'.
+src/app/[role]/hosting/page.tsx(991,37): error TS2322: Type '{ endpoint: string; value: { value: number; label: string; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/hosting/page.tsx(1018,37): error TS2322: Type '{ endpoint: string; value: { value: number; label: string; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/hosting/page.tsx(1045,37): error TS2322: Type '{ endpoint: string; value: { value: number; label: string; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/hosting/page.tsx(1072,37): error TS2322: Type '{ endpoint: string; value: { value: number; label: string; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/hosting/page.tsx(1126,5): error TS2322: Type '{ options: { value: string; label: string; }[]; value: { value: string; label: string; } | null; onChange: (selected: any) => void; placeholder: string; isSearchable: false; isClearable: true; styles: { ...; }; }' is not assignable to type 'IntrinsicAttributes & GlassSelectProps'.
+  Property 'styles' does not exist on type 'IntrinsicAttributes & GlassSelectProps'.
+src/app/[role]/ssl/page.tsx(146,28): error TS2554: Expected 1 arguments, but got 0.
+src/app/[role]/ssl/page.tsx(163,9): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/app/[role]/ssl/page.tsx(243,13): error TS2741: Property 'remark_id' is missing in type '{ record_type: 2; s_id: number; product_id: number; vendor_id: number; domain_id: number; client_id: number; amount: number; renewal_date: string; expiry_date: string; status: 0 | 1; remarks: string; updated_at_custom: string; }' but required in type 'AddEditSSL'.
+src/app/[role]/ssl/page.tsx(258,73): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/app/[role]/ssl/page.tsx(353,9): error TS2322: Type 'number | null' is not assignable to type 'number'.
+  Type 'null' is not assignable to type 'number'.
+src/app/[role]/ssl/page.tsx(357,74): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/app/[role]/ssl/page.tsx(391,15): error TS2740: Type '{ record_type: 2; s_id: number; }' is missing the following properties from type 'AddEditSSL': product_id, vendor_id, domain_id, client_id, and 7 more.
+src/app/[role]/ssl/page.tsx(396,69): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/app/[role]/ssl/page.tsx(481,9): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/app/[role]/ssl/page.tsx(667,21): error TS2322: Type '"danger"' is not assignable to type '"primary" | "default" | "ghost" | undefined'.
+src/app/[role]/ssl/page.tsx(799,31): error TS2322: Type '{ endpoint: string; value: { value: number; label: string; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/ssl/page.tsx(824,31): error TS2322: Type '{ endpoint: string; value: { value: number; label: string; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/ssl/page.tsx(849,31): error TS2322: Type '{ endpoint: string; value: { value: number; label: string; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/ssl/page.tsx(859,60): error TS2339: Property 'vendor_name' does not exist on type '{ domain_id: number | null; domain_name: string; client_id: number | null; client_name: string; product_id: number | null; vendor_id: number | null; product_name: string; amount: string; ... 4 more ...; updated_at_custom: string; }'.
+src/app/[role]/ssl/page.tsx(869,35): error TS2345: Argument of type '"vendor_name"' is not assignable to parameter of type '"status" | "renewal_date" | "amount" | "product_id" | "expiry_date" | "remarks" | "product_name" | "client_name" | "client_id" | "vendor_id" | "domain_name" | "domain_id" | "updated_at_custom"'.
+src/app/[role]/ssl/page.tsx(874,31): error TS2322: Type '{ endpoint: string; value: { value: number; label: any; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/ssl/page.tsx(937,33): error TS2322: Type '{ options: { value: string; label: string; }[]; value: { value: string; label: string; } | null; onChange: (selected: any) => void; placeholder: string; isSearchable: false; isClearable: true; styles: { ...; }; }' is not assignable to type 'IntrinsicAttributes & GlassSelectProps'.
+  Property 'styles' does not exist on type 'IntrinsicAttributes & GlassSelectProps'.
+src/app/[role]/ssl/page.tsx(954,45): error TS2339: Property 'updated_at' does not exist on type '{ domain_id: number | null; domain_name: string; client_id: number | null; client_name: string; product_id: number | null; vendor_id: number | null; product_name: string; amount: string; ... 4 more ...; updated_at_custom: string; }'.
+src/app/[role]/ssl/page.tsx(955,48): error TS2339: Property 'updated_at' does not exist on type '{ domain_id: number | null; domain_name: string; client_id: number | null; client_name: string; product_id: number | null; vendor_id: number | null; product_name: string; amount: string; ... 4 more ...; updated_at_custom: string; }'.
+src/app/[role]/ssl/page.tsx(1058,37): error TS2322: Type '{ endpoint: string; value: { value: number; label: string; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/ssl/page.tsx(1090,37): error TS2322: Type '{ endpoint: string; value: { value: number; label: string; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/ssl/page.tsx(1122,37): error TS2322: Type '{ endpoint: string; value: { value: number; label: string; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/ssl/page.tsx(1152,37): error TS2322: Type '{ endpoint: string; value: { value: number; label: string; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/ssl/page.tsx(1258,39): error TS2322: Type '{ options: { value: string; label: string; }[]; value: { value: string; label: string; } | null; onChange: (selected: any) => void; placeholder: string; isSearchable: false; isClearable: true; styles: { ...; }; }' is not assignable to type 'IntrinsicAttributes & GlassSelectProps'.
+  Property 'styles' does not exist on type 'IntrinsicAttributes & GlassSelectProps'.
+src/app/[role]/sub-email/page.tsx(138,28): error TS2554: Expected 1 arguments, but got 0.
+src/app/[role]/sub-email/page.tsx(155,9): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/app/[role]/sub-email/page.tsx(265,9): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+src/app/[role]/sub-email/page.tsx(279,73): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/app/[role]/sub-email/page.tsx(327,17): error TS2345: Argument of type '{ [x: number]: { domain_id: number | undefined; client_id: number | undefined; product_id: number | undefined; vendor_id: number | undefined; start_date: string; expiry_date: string; remarks: string; ... 14 more ...; latest_remark?: { id: number; remark: string; }; }; }' is not assignable to parameter of type 'SetStateAction<Record<number, Partial<EmailRecord>>>'.
+src/app/[role]/sub-email/page.tsx(370,9): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+src/app/[role]/sub-email/page.tsx(382,32): error TS2339: Property 'remark_id' does not exist on type 'Partial<EmailRecord>'.
+src/app/[role]/sub-email/page.tsx(385,74): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/app/[role]/sub-email/page.tsx(419,13): error TS2740: Type '{ record_type: 5; s_id: number; }' is missing the following properties from type 'AddEditEmail': product_id, vendor_id, domain_id, client_id, and 7 more.
+src/app/[role]/sub-email/page.tsx(424,54): error TS2345: Argument of type 'AddEditEmail' is not assignable to parameter of type 'Omit<SubscriptionRequest, "s_id">'.
+  Type 'AddEditEmail' is missing the following properties from type 'Omit<SubscriptionRequest, "s_id">': renewal_date, amount
+src/app/[role]/sub-email/page.tsx(513,9): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/app/[role]/sub-email/page.tsx(628,36): error TS2552: Cannot find name 'Subscription'. Did you mean 'PushSubscription'?
+src/app/[role]/sub-email/page.tsx(677,21): error TS2322: Type '"danger"' is not assignable to type '"primary" | "default" | "ghost" | undefined'.
+src/app/[role]/sub-email/page.tsx(812,31): error TS2322: Type '{ endpoint: string; value: { value: number; label: string; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/sub-email/page.tsx(837,31): error TS2322: Type '{ endpoint: string; value: { value: number; label: string; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/sub-email/page.tsx(862,31): error TS2322: Type '{ endpoint: string; value: { value: number; label: string; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/sub-email/page.tsx(872,60): error TS2339: Property 'vendor_name' does not exist on type '{ domain_id: number | null; domain_name: string; client_id: number | null; client_name: string; product_id: number | null; vendor_id: number | null; product_name: string; quantity: string; ... 4 more ...; remarks: string; }'.
+src/app/[role]/sub-email/page.tsx(882,35): error TS2345: Argument of type '"vendor_name"' is not assignable to parameter of type '"status" | "product_id" | "expiry_date" | "remarks" | "product_name" | "client_name" | "client_id" | "vendor_id" | "domain_name" | "domain_id" | "quantity" | "bill_type" | "start_date"'.
+src/app/[role]/sub-email/page.tsx(887,31): error TS2322: Type '{ endpoint: string; value: { value: number; label: any; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/sub-email/page.tsx(924,33): error TS2322: Type '{ options: { value: string; label: string; }[]; value: { value: string; label: string; } | null; onChange: (selected: any) => void; isSearchable: false; isClearable: true; styles: { control: (base: any, state: any) => any; ... 12 more ...; indicatorSeparator: (base: any) => any; }; }' is not assignable to type 'IntrinsicAttributes & GlassSelectProps'.
+  Property 'styles' does not exist on type 'IntrinsicAttributes & GlassSelectProps'.
+src/app/[role]/sub-email/page.tsx(988,33): error TS2322: Type '{ options: { value: string; label: string; }[]; value: { value: string; label: string; } | null; onChange: (selected: any) => void; isSearchable: false; isClearable: true; styles: { control: (base: any, state: any) => any; ... 12 more ...; indicatorSeparator: (base: any) => any; }; }' is not assignable to type 'IntrinsicAttributes & GlassSelectProps'.
+  Property 'styles' does not exist on type 'IntrinsicAttributes & GlassSelectProps'.
+src/app/[role]/sub-email/page.tsx(1105,37): error TS2322: Type '{ endpoint: string; value: { value: number; label: string; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/sub-email/page.tsx(1135,37): error TS2322: Type '{ endpoint: string; value: { value: number; label: string; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/sub-email/page.tsx(1165,37): error TS2322: Type '{ endpoint: string; value: { value: number; label: string; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/sub-email/page.tsx(1195,37): error TS2322: Type '{ endpoint: string; value: { value: number; label: string; } | null; onChange: (option: OptionType | null) => void; placeholder: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ApiDropdownProps'.
+  Property 'className' does not exist on type 'IntrinsicAttributes & ApiDropdownProps'.
+src/app/[role]/sub-email/page.tsx(1240,39): error TS2322: Type '{ options: { value: string; label: string; }[]; value: { value: string; label: string; } | null; onChange: (selected: any) => void; isSearchable: false; isClearable: true; styles: { control: (base: any, state: any) => any; ... 12 more ...; indicatorSeparator: (base: any) => any; }; }' is not assignable to type 'IntrinsicAttributes & GlassSelectProps'.
+  Property 'styles' does not exist on type 'IntrinsicAttributes & GlassSelectProps'.
+src/app/[role]/sub-email/page.tsx(1321,39): error TS2322: Type '{ options: { value: string; label: string; }[]; value: { value: string; label: string; } | null; onChange: (selected: any) => void; isSearchable: false; isClearable: true; styles: { control: (base: any, state: any) => any; ... 12 more ...; indicatorSeparator: (base: any) => any; }; }' is not assignable to type 'IntrinsicAttributes & GlassSelectProps'.
+  Property 'styles' does not exist on type 'IntrinsicAttributes & GlassSelectProps'.
+src/app/[role]/subscription/page.tsx(127,28): error TS2554: Expected 1 arguments, but got 0.
+src/app/[role]/subscription/page.tsx(163,7): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/app/[role]/subscription/page.tsx(268,9): error TS2322: Type 'number | null' is not assignable to type 'number'.
+  Type 'null' is not assignable to type 'number'.
+src/app/[role]/subscription/page.tsx(271,64): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/app/[role]/subscription/page.tsx(315,13): error TS2740: Type '{ record_type: 1; s_id: number; }' is missing the following properties from type 'AddEditSubscription': product_id, client_id, renewal_date, amount, and 5 more.
+src/app/[role]/subscription/page.tsx(320,67): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/app/[role]/subscription/page.tsx(352,17): error TS2345: Argument of type '{ [x: number]: { product_id: number; client_id: number; client_name: string; product_name: string; remarks: string; remark_id: number | null; id: number; domain_name: string | null; renewal_date: string; ... 7 more ...; updated_at: string; }; }' is not assignable to parameter of type 'SetStateAction<Record<number, Partial<Subscription> & { remark_id?: number | null | undefined; }>>'.
+src/app/[role]/subscription/page.tsx(393,9): error TS2322: Type 'number | null' is not assignable to type 'number'.
+  Type 'null' is not assignable to type 'number'.
+src/app/[role]/subscription/page.tsx(396,52): error TS2345: Argument of type 'AddEditSubscription' is not assignable to parameter of type 'Omit<SubscriptionRequest & { id: number; }, "s_id">'.
+  Types of property 'id' are incompatible.
+    Type 'number | undefined' is not assignable to type 'number'.
+      Type 'undefined' is not assignable to type 'number'.
+src/app/[role]/subscription/page.tsx(483,75): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/app/[role]/subscription/page.tsx(631,21): error TS2322: Type '"danger"' is not assignable to type '"primary" | "default" | "ghost" | undefined'.
+src/app/[role]/subscription/page.tsx(741,33): error TS2322: Type '{ value: string; label: string; } | null' is not assignable to type 'OptionType | null'.
+  Type '{ value: string; label: string; }' is not assignable to type 'OptionType'.
+    Types of property 'value' are incompatible.
+      Type 'string' is not assignable to type 'number'.
+src/app/[role]/subscription/page.tsx(767,33): error TS2322: Type '{ value: string; label: string; } | null' is not assignable to type 'OptionType | null'.
+  Type '{ value: string; label: string; }' is not assignable to type 'OptionType'.
+    Types of property 'value' are incompatible.
+      Type 'string' is not assignable to type 'number'.
+src/app/[role]/subscription/page.tsx(833,5): error TS2322: Type '{ options: { value: string; label: string; }[]; value: { value: string; label: string; } | null; onChange: (selected: any) => void; isSearchable: false; isClearable: true; styles: { control: (base: any, state: any) => any; ... 12 more ...; indicatorSeparator: (base: any) => any; }; }' is not assignable to type 'IntrinsicAttributes & GlassSelectProps'.
+  Property 'styles' does not exist on type 'IntrinsicAttributes & GlassSelectProps'.
+src/app/[role]/subscription/page.tsx(1094,5): error TS2322: Type '{ options: { value: string; label: string; }[]; value: { value: string; label: string; } | null; onChange: (selected: any) => void; isSearchable: false; isClearable: true; styles: { control: (base: any, state: any) => any; ... 12 more ...; indicatorSeparator: (base: any) => any; }; }' is not assignable to type 'IntrinsicAttributes & GlassSelectProps'.
+  Property 'styles' does not exist on type 'IntrinsicAttributes & GlassSelectProps'.
+src/app/auth/change-password/[token]/page.tsx(110,48): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/app/auth/change-password/[token]/page.tsx(277,15): error TS2322: Type '"secondary"' is not assignable to type '"primary" | "default" | "ghost" | undefined'.
+src/app/auth/forgot-password/page.tsx(115,15): error TS2322: Type '"secondary"' is not assignable to type '"primary" | "default" | "ghost" | undefined'.
+src/app/auth/forgot-password/send-code/page.tsx(274,17): error TS2322: Type '"secondary"' is not assignable to type '"primary" | "default" | "ghost" | undefined'.
+src/app/auth/login/page.tsx(113,50): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/app/auth/select-method/page.tsx(199,19): error TS2322: Type '"secondary"' is not assignable to type '"primary" | "default" | "ghost" | undefined'.
+src/app/auth/verify-otp/page.tsx(692,25): error TS2345: Argument of type 'User' is not assignable to parameter of type 'User'.
+  Types of property 'profile' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/app/auth/verify-otp/page.tsx(872,17): error TS2322: Type '(el: HTMLInputElement | null) => HTMLInputElement | null' is not assignable to type 'Ref<HTMLInputElement> | undefined'.
+  Type '(el: HTMLInputElement | null) => HTMLInputElement | null' is not assignable to type '(instance: HTMLInputElement | null) => void | (() => VoidOrUndefinedOnly)'.
+    Type 'HTMLInputElement | null' is not assignable to type 'void | (() => VoidOrUndefinedOnly)'.
+      Type 'null' is not assignable to type 'void | (() => VoidOrUndefinedOnly)'.
+src/app/auth/verify-otp/page.tsx(894,15): error TS2322: Type '"secondary"' is not assignable to type '"primary" | "default" | "ghost" | undefined'.
+src/app/user-management/customer-admin/page.tsx(262,22): error TS2322: Type '({ key: string; header: string; className: string; render: (_: CustomerAdmin, index: number) => Element; } | { key: string; header: string; render: (admin: CustomerAdmin) => Element; className?: undefined; })[]' is not assignable to type 'Column<CustomerAdmin>[]'.
+  Type '{ key: string; header: string; className: string; render: (_: CustomerAdmin, index: number) => Element; } | { key: string; header: string; render: (admin: CustomerAdmin) => Element; className?: undefined; }' is not assignable to type 'Column<CustomerAdmin>'.
+    Type '{ key: string; header: string; className: string; render: (_: CustomerAdmin, index: number) => JSX.Element; }' is not assignable to type 'Column<CustomerAdmin>'.
+      Types of property 'render' are incompatible.
+        Type '(_: CustomerAdmin, index: number) => JSX.Element' is not assignable to type '(item: CustomerAdmin) => ReactNode'.
+          Target signature provides too few arguments. Expected 2 or more, but got 1.
+src/app/user-management/support-admin/page.tsx(254,22): error TS2322: Type '({ key: string; header: string; className: string; render: (_: SupportAdmin, index: number) => Element; } | { key: string; header: string; render: (admin: SupportAdmin) => Element; className?: undefined; })[]' is not assignable to type 'Column<SupportAdmin>[]'.
+  Type '{ key: string; header: string; className: string; render: (_: SupportAdmin, index: number) => Element; } | { key: string; header: string; render: (admin: SupportAdmin) => Element; className?: undefined; }' is not assignable to type 'Column<SupportAdmin>'.
+    Type '{ key: string; header: string; className: string; render: (_: SupportAdmin, index: number) => JSX.Element; }' is not assignable to type 'Column<SupportAdmin>'.
+      Types of property 'render' are incompatible.
+        Type '(_: SupportAdmin, index: number) => JSX.Element' is not assignable to type '(item: SupportAdmin) => ReactNode'.
+          Target signature provides too few arguments. Expected 2 or more, but got 1.
+src/common/services/DeleteConfirmationModal.tsx(55,13): error TS2322: Type '"danger"' is not assignable to type '"primary" | "default" | "ghost" | undefined'.
+src/components/layout/header.tsx(445,3): error TS2322: Type '{ tab: Tab; isActive: boolean; openDropdown: string | null; setOpenDropdown: Dispatch<SetStateAction<string | null>>; }' is not assignable to type 'IntrinsicAttributes & { tab: any; isActive: boolean; }'.
+  Property 'openDropdown' does not exist on type 'IntrinsicAttributes & { tab: any; isActive: boolean; }'.
+src/contexts/theme-context.tsx(136,4): error TS2561: Object literal may only specify known properties, but 'orange2' does not exist in type 'Record<ThemeColor, ThemeColors>'. Did you mean to write 'orange'?
+src/hooks/useToast.ts(8,8): error TS2307: Cannot find module '@/providers/ToastProvider' or its corresponding type declarations.
+src/hooks/useToast.ts(156,22): error TS7006: Parameter 'open' implicitly has an 'any' type.

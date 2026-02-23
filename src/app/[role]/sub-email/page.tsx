@@ -35,7 +35,8 @@ import { getNavigationByRole } from "@/lib/getNavigationByRole";
 import { ApiDropdown, glassSelectStyles } from "@/common/DynamicDropdown";
 import { GlassSelect } from "@/components/glass/GlassSelect";
 
-interface EmailRecord {
+interface EmailRecord { remark_id?: number | null;
+  
   id: number;
   client_name: string | null;
   client_id?: number;
@@ -135,7 +136,7 @@ export default function EmailsPage() {
     { value: "one-time", label: "One-time" },
   ];
 
-  const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch email records
   const fetchEmailRecords = async () => {
@@ -260,7 +261,7 @@ export default function EmailsPage() {
         return;
       }
 
-      const payload: AddEditEmail = {
+      const payload: any = {
         record_type: 5,
         s_id: user?.id,
         product_id: newRecordData.product_id!,
@@ -334,7 +335,7 @@ export default function EmailsPage() {
         start_date: record.start_date || "",
         expiry_date: record.expiry_date || "",
         remarks: record.remarks || "",
-        remark_id: record.latest_remark?.id || null,
+        remark_id: (record.latest_remark?.id || null) as any,
       },
     });
   };
@@ -364,7 +365,7 @@ export default function EmailsPage() {
         return;
       }
 
-      const payload: AddEditEmail = {
+      const payload: any = {
         record_type: 5,
         id,
         s_id: user?.id,
@@ -416,14 +417,14 @@ export default function EmailsPage() {
     try {
       setExportLoading(true);
 
-      const payload: AddEditEmail = {
+      const payload: any = {
         record_type: 5,
         s_id: user?.id || 0,
       };
 
       const response = await apiService.exportRecord(payload, user, token);
 
-      if (response.success) {
+      if ((response as any).success) {
         toast({
           title: "Success",
           description: response.message || "Email exported successfully",
@@ -704,7 +705,7 @@ export default function EmailsPage() {
                   className="flex items-center gap-2"
                   disabled={exportLoading}
                 >
-                  {exportLoading ? ("Exporting...") : (" Export" )}
+                  {exportLoading ? ("Exporting...") : (" Export")}
                 </GlassButton>
               </div>
             </div>
@@ -793,9 +794,9 @@ export default function EmailsPage() {
                               value={
                                 newRecordData.domain_id
                                   ? {
-                                      value: newRecordData.domain_id,
-                                      label: newRecordData.domain_name,
-                                    }
+                                    value: newRecordData.domain_id,
+                                    label: newRecordData.domain_name,
+                                  }
                                   : null
                               }
                               onChange={(option) => {
@@ -818,9 +819,9 @@ export default function EmailsPage() {
                               value={
                                 newRecordData.client_id
                                   ? {
-                                      value: newRecordData.client_id,
-                                      label: newRecordData.client_name,
-                                    }
+                                    value: newRecordData.client_id,
+                                    label: newRecordData.client_name,
+                                  }
                                   : null
                               }
                               onChange={(option) => {
@@ -843,9 +844,9 @@ export default function EmailsPage() {
                               value={
                                 newRecordData.product_id
                                   ? {
-                                      value: newRecordData.product_id,
-                                      label: newRecordData.product_name,
-                                    }
+                                    value: newRecordData.product_id,
+                                    label: newRecordData.product_name,
+                                  }
                                   : null
                               }
                               onChange={(option) => {
@@ -868,9 +869,9 @@ export default function EmailsPage() {
                               value={
                                 newRecordData.vendor_id
                                   ? {
-                                      value: newRecordData.vendor_id,
-                                      label: newRecordData.vendor_name,
-                                    }
+                                    value: newRecordData.vendor_id,
+                                    label: newRecordData.vendor_name,
+                                  }
                                   : null
                               }
                               onChange={(option) => {
@@ -1055,9 +1056,8 @@ export default function EmailsPage() {
                         data.map((item, index) => (
                           <tr
                             key={item.id}
-                            className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors ${
-                              editingId === item.id ? "bg-blue-500/5" : ""
-                            }`}
+                            className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors ${editingId === item.id ? "bg-blue-500/5" : ""
+                              }`}
                           >
                             <td className="py-3 px-4">
                               <input
@@ -1081,12 +1081,12 @@ export default function EmailsPage() {
                                     value={
                                       editData[item.id]?.domain_id
                                         ? {
-                                            value:
-                                              editData[item.id]?.domain_id!,
-                                            label:
-                                              editData[item.id]?.domain_name ||
-                                              "",
-                                          }
+                                          value:
+                                            editData[item.id]?.domain_id!,
+                                          label:
+                                            editData[item.id]?.domain_name ||
+                                            "",
+                                        }
                                         : null
                                     }
                                     onChange={(option) => {
@@ -1111,12 +1111,12 @@ export default function EmailsPage() {
                                     value={
                                       editData[item.id]?.client_id
                                         ? {
-                                            value:
-                                              editData[item.id]?.client_id!,
-                                            label:
-                                              editData[item.id]?.client_name ||
-                                              "",
-                                          }
+                                          value:
+                                            editData[item.id]?.client_id!,
+                                          label:
+                                            editData[item.id]?.client_name ||
+                                            "",
+                                        }
                                         : null
                                     }
                                     onChange={(option) => {
@@ -1141,12 +1141,12 @@ export default function EmailsPage() {
                                     value={
                                       editData[item.id]?.product_id
                                         ? {
-                                            value:
-                                              editData[item.id]?.product_id!,
-                                            label:
-                                              editData[item.id]?.product_name ||
-                                              "",
-                                          }
+                                          value:
+                                            editData[item.id]?.product_id!,
+                                          label:
+                                            editData[item.id]?.product_name ||
+                                            "",
+                                        }
                                         : null
                                     }
                                     onChange={(option) => {
@@ -1171,12 +1171,12 @@ export default function EmailsPage() {
                                     value={
                                       editData[item.id]?.vendor_id
                                         ? {
-                                            value:
-                                              editData[item.id]?.vendor_id!,
-                                            label:
-                                              editData[item.id]?.vendor_name ||
-                                              "",
-                                          }
+                                          value:
+                                            editData[item.id]?.vendor_id!,
+                                          label:
+                                            editData[item.id]?.vendor_name ||
+                                            "",
+                                        }
                                         : null
                                     }
                                     onChange={(option) => {
@@ -1224,7 +1224,7 @@ export default function EmailsPage() {
                                             opt.value ===
                                             String(
                                               editData[item.id]?.bill_type ||
-                                                item.bill_type,
+                                              item.bill_type,
                                             ),
                                         ) || null
                                       }
@@ -1282,7 +1282,7 @@ export default function EmailsPage() {
                                     type="number"
                                     value={calculateDays(
                                       editData[item.id]?.expiry_date ||
-                                        item.expiry_date,
+                                      item.expiry_date,
                                     )}
                                     readOnly
                                     className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-sm cursor-not-allowed"
@@ -1305,7 +1305,7 @@ export default function EmailsPage() {
                                             opt.value ===
                                             String(
                                               editData[item.id]?.status ||
-                                                item.status,
+                                              item.status,
                                             ),
                                         ) || null
                                       }
@@ -1327,7 +1327,7 @@ export default function EmailsPage() {
                                     type="text"
                                     value={
                                       editData[item.id]?.remarks ||
-                                      item.latest_remark?.remark ||
+                                      (item.latest_remark?.remark as string) ||
                                       ""
                                     }
                                     onChange={(e) =>
@@ -1390,17 +1390,16 @@ export default function EmailsPage() {
                                 </td>
                                 <td className="py-3 px-4">
                                   <div
-                                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${getBillTypeColor(item.bill_type)} ${
-                                      item.bill_type.toLowerCase() === "yearly"
+                                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${getBillTypeColor(item.bill_type)} ${item.bill_type.toLowerCase() === "yearly"
                                         ? "bg-blue-500/20 border-blue-500/20"
                                         : item.bill_type.toLowerCase() ===
-                                            "monthly"
+                                          "monthly"
                                           ? "bg-purple-500/20 border-purple-500/20"
                                           : item.bill_type.toLowerCase() ===
-                                              "quarterly"
+                                            "quarterly"
                                             ? "bg-yellow-500/20 border-yellow-500/20"
                                             : "bg-gray-500/20 border-gray-500/20"
-                                    }`}
+                                      }`}
                                   >
                                     {/* <CreditCard className="w-3 h-3" /> */}
                                     {item.bill_type.charAt(0).toUpperCase() +
@@ -1421,25 +1420,23 @@ export default function EmailsPage() {
                                 </td>
                                 <td className="py-3 px-4">
                                   <div
-                                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${
-                                      calculateDays(item.expiry_date) < 0
+                                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${calculateDays(item.expiry_date) < 0
                                         ? "bg-red-500/20 text-red-400 border-red-500/20"
                                         : calculateDays(item.expiry_date) <= 30
                                           ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/20"
                                           : "bg-green-500/20 text-green-400 border-green-500/20"
-                                    }`}
+                                      }`}
                                   >
-                                  
+
                                     {calculateDays(item.expiry_date)} days
                                   </div>
                                 </td>
                                 <td className="py-3 px-4">
                                   <div
-                                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${getStatusColor(item.status)} ${
-                                      item.status === 1
+                                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${getStatusColor(item.status)} ${item.status === 1
                                         ? "bg-green-500/20 border-green-500/20"
                                         : "bg-red-500/20 border-red-500/20"
-                                    }`}
+                                      }`}
                                   >
                                     {getStatusIcon(item.status)}
                                     {getStatusText(item.status)}
@@ -1449,7 +1446,7 @@ export default function EmailsPage() {
                                   <div className="flex items-center gap-2">
                                     {/* <AlertCircle className="w-4 h-4 text-gray-400 flex-shrink-0" /> */}
                                     <span className="text-sm text-gray-300 truncate max-w-[180px]">
-                                      {item.latest_remark?.remark ||
+                                      {(item.latest_remark?.remark as string) ||
                                         "No remarks"}
                                     </span>
                                   </div>

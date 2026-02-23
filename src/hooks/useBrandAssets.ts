@@ -1,6 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import api from "@/lib/axios"
+
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL
 const API_URL = `${BASE_URL}/getLogo`
 const ASSETS_URL = process.env.NEXT_PUBLIC_ASSETS_URL
@@ -17,14 +19,12 @@ export function useBrandAssets(theme: "light" | "dark") {
   useEffect(() => {
     const fetchAssets = async () => {
       try {
-        const res = await fetch(API_URL)
-        const json = await res.json()
-
-        if (json?.success) {
-          setAssets(json.data)
+        const res = await api.get('/getLogo')
+        if (res.data?.success) {
+          setAssets(res.data.data)
 
           // 🔥 Set favicon dynamically
-          if (json.data.favicon) {
+          if (res.data.data.favicon) {
             let link: HTMLLinkElement | null =
               document.querySelector("link[rel~='icon']")
 
@@ -34,11 +34,12 @@ export function useBrandAssets(theme: "light" | "dark") {
               document.head.appendChild(link)
             }
 
-            link.href = `${ASSETS_URL}/${json.data.favicon}`
+            link.href = `${ASSETS_URL}/${res.data.data.favicon}`
           }
         }
       } catch (err) {
-        console.error("Failed to load brand assets", err)
+        // Silently handle error to avoid Next.js dev overlay crash
+        console.warn("Failed to load brand assets from backend.")
       }
     }
 

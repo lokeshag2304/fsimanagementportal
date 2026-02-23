@@ -17,7 +17,7 @@ import {
   Eye,
   EyeOff
 } from "lucide-react"
-import axios from "axios"
+import axios from "@/lib/axios"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/useToast"
 import { useRouter } from "next/navigation"
@@ -81,8 +81,8 @@ interface ApiResponse {
 }
 
 export default function ClientsPage() {
-   const {user, getToken} = useAuth()
-   const token = getToken();
+  const { user, getToken } = useAuth()
+  const token = getToken();
   const navigationTabs = getNavigationByRole(user?.role)
   const { toast } = useToast()
   const router = useRouter()
@@ -99,9 +99,9 @@ export default function ClientsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const searchTimeoutRef = useRef<NodeJS.Timeout>()
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isMountedRef = useRef(true)
-  
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -155,10 +155,10 @@ export default function ClientsPage() {
   // Fetch clients list
   const fetchClients = async () => {
     if (!isMountedRef.current) return;
-    
+
     try {
       setLoading(true)
-      
+
       if (!token) {
         toast({
           title: "Error",
@@ -199,7 +199,7 @@ export default function ClientsPage() {
       }
     } catch (error: any) {
       console.error("Error fetching clients:", error)
-      
+
       if (error.response?.status === 401) {
         toast({
           title: "Session Expired",
@@ -226,7 +226,7 @@ export default function ClientsPage() {
     isMountedRef.current = true
     fetchClients()
     fetchDomains()
-    
+
     return () => {
       isMountedRef.current = false
       if (searchTimeoutRef.current) {
@@ -238,11 +238,11 @@ export default function ClientsPage() {
   // Separate effect for pagination and search changes
   useEffect(() => {
     if (!isMountedRef.current) return;
-    
+
     const timeoutId = setTimeout(() => {
       fetchClients()
     }, 300)
-    
+
     return () => {
       clearTimeout(timeoutId)
     }
@@ -253,7 +253,7 @@ export default function ClientsPage() {
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current)
     }
-    
+
     searchTimeoutRef.current = setTimeout(() => {
       setSearchQuery(value)
       setPagination(prev => ({ ...prev, page: 0 }))
@@ -281,7 +281,7 @@ export default function ClientsPage() {
     })
     setEditingClient(null)
     setShowPassword(false)
-    
+
     // Refresh data after successful operation
     fetchClients()
   }
@@ -289,7 +289,7 @@ export default function ClientsPage() {
   // Handle error
   const handleError = (error: any, defaultMessage: string) => {
     console.error("Error:", error)
-    
+
     if (error.response?.status === 401) {
       toast({
         title: "Session Expired",
@@ -324,19 +324,19 @@ export default function ClientsPage() {
 
       if (response.data.status && response.data.data) {
         const client = response.data.data
-        
+
         setFormData({
           name: client.name,
           email: client.email,
           phone: client.phone || client.number || "",
           number: client.number || client.phone || "",
           address: client.address || "",
-          password: client.password || "", 
+          password: client.password || "",
           domain_ids: client.domain_ids?.map(id => parseInt(id)) || [],
           profile: null,
           type: 1
         })
-        
+
         setEditingClient(client)
         setIsModalOpen(true)
       }
@@ -397,10 +397,10 @@ export default function ClientsPage() {
       }
 
       const idsToDelete = itemToDelete ? [itemToDelete] : selectedItems
-      
+
       const response = await axios.post<ApiResponse>(
         `${BASE_URL}/secure/Usermanagement/get-clients-user-delete`,
-        { 
+        {
           ids: idsToDelete,
           s_id: user?.id || 6,
           type: 1 // Add type field for delete
@@ -427,7 +427,7 @@ export default function ClientsPage() {
       }
     } catch (error: any) {
       console.error("Error deleting client:", error)
-      
+
       if (error.response?.status === 401) {
         toast({
           title: "Session Expired",
@@ -459,7 +459,7 @@ export default function ClientsPage() {
       })
       return
     }
-    
+
     if (!formData.email.trim()) {
       toast({
         title: "Error",
@@ -468,7 +468,7 @@ export default function ClientsPage() {
       })
       return
     }
-    
+
     const phoneNumber = formData.phone.trim() || formData.number.trim()
     if (!phoneNumber) {
       toast({
@@ -489,7 +489,7 @@ export default function ClientsPage() {
       })
       return
     }
-    
+
     if (!editingClient && !formData.password.trim()) {
       toast({
         title: "Error",
@@ -525,15 +525,15 @@ export default function ClientsPage() {
       formDataToSend.append('email', formData.email.trim())
       formDataToSend.append('phone', phoneNumber)
       formDataToSend.append('address', formData.address.trim())
-      
+
       // Only add password if it's not empty (for edit) or for new client
       if (formData.password.trim()) {
         formDataToSend.append('password', formData.password.trim())
       }
-      
+
       formDataToSend.append('s_id', user?.id?.toString() || '6')
       formDataToSend.append('type', '1') // Client type
-      
+
       // Add domain_ids - make sure to include even if empty
       if (formData.domain_ids.length > 0) {
         formData.domain_ids.forEach(id => {
@@ -550,7 +550,7 @@ export default function ClientsPage() {
       }
 
       let endpoint = ''
-      
+
       if (editingClient) {
         // Update client
         endpoint = `${BASE_URL}/secure/Usermanagement/update-clients-user`
@@ -583,7 +583,7 @@ export default function ClientsPage() {
       }
     } catch (error: any) {
       console.error("Error saving client:", error)
-      
+
       if (error.response?.status === 401) {
         toast({
           title: "Session Expired",
@@ -652,7 +652,7 @@ export default function ClientsPage() {
   }
 
   const getSelectedDomainOptions = () => {
-    return domainOptions.filter(option => 
+    return domainOptions.filter(option =>
       formData.domain_ids.includes(option.value)
     )
   }
@@ -680,7 +680,7 @@ export default function ClientsPage() {
                 Manage client accounts and their domains
               </p>
             </div>
-            
+
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto">
               <div className="relative flex-1 sm:flex-initial">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -692,7 +692,7 @@ export default function ClientsPage() {
                   className="w-full sm:w-64 pl-10 pr-4 py-2 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-lg text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                 />
               </div>
-              
+
               <div className="flex gap-2">
                 {selectedItems.length > 0 && (
                   <GlassButton
@@ -705,7 +705,7 @@ export default function ClientsPage() {
                     Delete ({selectedItems.length})
                   </GlassButton>
                 )}
-                
+
                 <GlassButton
                   variant="primary"
                   onClick={handleAdd}
@@ -837,12 +837,12 @@ export default function ClientsPage() {
                             )}
                           </div>
                         </td>
-                        
+
                         {/* Name field */}
                         <td className="py-3 px-4">
-                          <span className="text-sm text-white font-medium hover:text-blue-400 cursor-pointer" onClick={()=> router.push(`/${user?.role}/client-details/${item.id}`)}>{item.name}</span>
+                          <span className="text-sm text-white font-medium hover:text-blue-400 cursor-pointer" onClick={() => router.push(`/${user?.role}/client-details/${item.id}`)}>{item.name}</span>
                         </td>
-                        
+
                         {/* Email field */}
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
@@ -850,7 +850,7 @@ export default function ClientsPage() {
                             <span className="text-sm text-gray-300 truncate">{item.email}</span>
                           </div>
                         </td>
-                        
+
                         {/* Phone field */}
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
@@ -860,7 +860,7 @@ export default function ClientsPage() {
                             </span>
                           </div>
                         </td>
-                        
+
                         {/* Address field */}
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
@@ -870,12 +870,12 @@ export default function ClientsPage() {
                             </span>
                           </div>
                         </td>
-                        
+
                         {/* Created At field */}
                         <td className="py-3 px-4 text-sm text-gray-300">
                           {formatDate(item.created_at)}
                         </td>
-                        
+
                         {/* Actions */}
                         <td className="py-3 px-4">
                           <div className="flex items-center justify-end gap-2">
@@ -919,7 +919,7 @@ export default function ClientsPage() {
               //     >
               //       Previous
               //     </button>
-                  
+
               //     <div className="flex items-center gap-1">
               //       {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
               //         let pageNum
@@ -932,9 +932,9 @@ export default function ClientsPage() {
               //         } else {
               //           pageNum = pagination.page - 2 + i
               //         }
-                      
+
               //         if (pageNum >= totalPages) return null
-                      
+
               //         return (
               //           <button
               //             key={pageNum}
@@ -950,7 +950,7 @@ export default function ClientsPage() {
               //         )
               //       })}
               //     </div>
-                  
+
               //     <button
               //       onClick={() => handlePageChange(pagination.page + 1)}
               //       disabled={pagination.page >= totalPages - 1}
@@ -962,7 +962,7 @@ export default function ClientsPage() {
               //   </div>
               // </div>
               <Pagination
-              page={pagination.page}
+                page={pagination.page}
                 rowsPerPage={pagination.rowsPerPage}
                 totalItems={totalClients}
                 onPageChange={handlePageChange}
@@ -1021,7 +1021,7 @@ export default function ClientsPage() {
               className="w-full px-3 py-2 bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.1)] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
-          
+
           <div>
             <label className="block text-gray-300 text-sm mb-2">
               Email <span className="text-red-400">*</span>
@@ -1034,7 +1034,7 @@ export default function ClientsPage() {
               className="w-full px-3 py-2 bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.1)] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
-          
+
           <div>
             <label className="block text-gray-300 text-sm mb-2">
               Phone Number <span className="text-red-400">*</span>
@@ -1045,8 +1045,8 @@ export default function ClientsPage() {
               value={formData.phone || formData.number}
               onChange={(e) => {
                 const value = e.target.value.replace(/\D/g, '').slice(0, 10)
-                setFormData({ 
-                  ...formData, 
+                setFormData({
+                  ...formData,
                   phone: value,
                   number: value
                 })
@@ -1055,7 +1055,7 @@ export default function ClientsPage() {
             />
             <p className="text-xs text-gray-400 mt-1">10 digits only</p>
           </div>
-          
+
           <div>
             <label className="block text-gray-300 text-sm mb-2">Address</label>
             <input
@@ -1066,7 +1066,7 @@ export default function ClientsPage() {
               className="w-full px-3 py-2 bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.1)] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
-          
+
           <div>
             <label className="block text-gray-300 text-sm mb-2">
               Password {!editingClient && <span className="text-red-400">*</span>}
@@ -1097,25 +1097,25 @@ export default function ClientsPage() {
               </p>
             )} */}
           </div>
-          
+
           {/* Domain Selection using react-select */}
           <div>
             <label className="block text-gray-300 text-sm mb-2">Select Domains</label>
             <GlassSelect
-  //label="Select Domains"
-  isMulti
-  options={domainOptions}
-  value={getSelectedDomainOptions()}
-  onChange={handleDomainSelect}
-  placeholder="Select domains..."
-  isSearchable
-  isClearable
-  noOptionsMessage={() => "No domains found"}
-  styles={glassSelectStyles}
-/>
+              //label="Select Domains"
+              isMulti
+              options={domainOptions}
+              value={getSelectedDomainOptions()}
+              onChange={handleDomainSelect}
+              placeholder="Select domains..."
+              isSearchable
+              isClearable
+              noOptionsMessage={() => "No domains found"}
+              styles={glassSelectStyles}
+            />
 
           </div>
-          
+
           <div className="flex gap-3 pt-4">
             <button
               className="flex-1 px-4 py-2 bg-[rgba(255,255,255,0.1)] text-white rounded-lg hover:bg-[rgba(255,255,255,0.2)] transition-colors disabled:opacity-50"
@@ -1158,7 +1158,7 @@ export default function ClientsPage() {
         itemCount={itemToDelete ? 1 : selectedItems.length}
         isLoading={isDeleting}
         title={itemToDelete ? "Delete Client" : "Delete Multiple Clients"}
-        message={itemToDelete 
+        message={itemToDelete
           ? "Are you sure you want to delete this client? This action cannot be undone."
           : "Are you sure you want to delete the selected clients? This action cannot be undone."
         }

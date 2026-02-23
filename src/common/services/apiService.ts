@@ -1,13 +1,13 @@
 // src/lib/apiService.ts
 import { useAuth } from '@/contexts/AuthContext'
-import axios from 'axios'
+import axios from '@/lib/axios'
 import { downloadBase64File } from '../DashboardLoader';
 import { toast } from '@/hooks/useToast';
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
 interface ApiResponse<T = any> {
-  success: boolean
+  success?: boolean
   message: string
   data?: T
   status?: boolean
@@ -43,22 +43,23 @@ interface SubscriptionRequest extends AddEditBaseRequest {
 type AddEditRequest = SubscriptionRequest
 
 class ApiService {
- 
 
-  private getHeaders(token) {
+
+  private getHeaders(token?: string | null) {
     return {
       'Content-Type': 'application/json',
-      'Authorization': token ? `Bearer ${token}` : ''
+      'Authorization': token ? `Bearer ${token}` : '',
+      'Bypass-Tunnel-Reminder': 'true'
     }
   }
 
-  async listRecords(params: Omit<ListRequest, 's_id'>,user: any,token: string): Promise<ApiResponse> {
+  async listRecords(params: Omit<ListRequest, 's_id'>, user: any, token: string | null): Promise<ApiResponse> {
     try {
       const requestData = {
         ...params,
-        s_id: user.id
+        s_id: user?.id || null
       }
-      
+
       const response = await axios.post<ApiResponse>(
         `${BASE_URL}/secure/Categories/list-categories`,
         requestData,
@@ -74,13 +75,13 @@ class ApiService {
     }
   }
 
-  async addRecord(data: Omit<AddEditRequest, 's_id'>,user: any,token: string): Promise<ApiResponse> {
+  async addRecord(data: any, user: any, token: string | null): Promise<ApiResponse> {
     try {
       const requestData = {
         ...data,
-        s_id: user.id
+        s_id: user?.id || null
       }
-      
+
       const response = await axios.post<ApiResponse>(
         `${BASE_URL}/secure/Categories/add-categories`,
         requestData,
@@ -95,13 +96,13 @@ class ApiService {
       }
     }
   }
-  async exportRecord(data: Omit<AddEditRequest, 's_id'>,user: any,token: string): Promise<ApiResponse> {
+  async exportRecord(data: any, user: any, token: string | null): Promise<ApiResponse> {
     try {
       const requestData = {
         ...data,
-        s_id: user.id
+        s_id: user?.id || null
       }
-      
+
       const response = await axios.post<any>(
         `${BASE_URL}/secure/Categories/export-categories`,
         requestData,
@@ -117,11 +118,11 @@ class ApiService {
     }
   }
 
-  async editRecord(data: Omit<AddEditRequest & { id: number }, 's_id'>,user: any,token: string): Promise<ApiResponse> {
+  async editRecord(data: any, user: any, token: string | null): Promise<ApiResponse> {
     try {
       const requestData = {
         ...data,
-        s_id: user.id
+        s_id: user?.id || null
       }
       console.log(requestData)
       const response = await axios.post<ApiResponse>(
@@ -139,14 +140,14 @@ class ApiService {
     }
   }
 
-    async getDropdownOptions(endpoint: string) {
+  async getDropdownOptions(endpoint: string) {
     try {
       const requestData = {}
       console.log(requestData)
       const response = await axios.post<ApiResponse>(
         `${BASE_URL}/secure/Dropdowns/${endpoint}`,
         requestData,
-        { headers: this.getHeaders() }
+        { headers: this.getHeaders('') }
       )
       return response.data
     } catch (error: any) {
@@ -159,14 +160,14 @@ class ApiService {
     }
   }
 
-  async deleteRecords(ids: number[], record_type: number,user: any,token: string): Promise<ApiResponse> {
+  async deleteRecords(ids: number[], record_type: number, user: any, token: string | null): Promise<ApiResponse> {
     try {
       const response = await axios.post<ApiResponse>(
         `${BASE_URL}/secure/Categories/delete-categories`,
         {
           ids,
           record_type,
-          s_id: user.id
+          s_id: user?.id || null
         },
         { headers: this.getHeaders(token) }
       )

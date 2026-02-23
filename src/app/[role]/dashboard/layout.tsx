@@ -6,6 +6,8 @@ import { ThemeScript } from "@/components/theme-script"
 import { HydrationFix } from "@/components/hydration-fix"
 import { AuthProvider } from "@/contexts/AuthContext"
 import { ToastProvider } from "@radix-ui/react-toast"
+import AuthGuard from "@/components/AuthGuard";
+
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -20,8 +22,10 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-          <main className="min-h-screen">
-            {children}
-          </main>
+    <main className="min-h-screen">
+      <AuthGuard>
+        {children}
+      </AuthGuard>
+    </main>
   )
 }

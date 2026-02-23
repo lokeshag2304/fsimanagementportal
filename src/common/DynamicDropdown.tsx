@@ -290,6 +290,8 @@ interface ApiDropdownProps {
   isClearable?: boolean
   isSearchable?: boolean
   disabled?: boolean
+  className?: string
+  styles?: any
 }
 
 /* ================================
@@ -313,8 +315,8 @@ export const glassSelectStyles = {
       borderColor: state.isFocused
         ? "#3b82f6"
         : dark
-        ? "rgba(255,255,255,0.15)"
-        : "#e5e7eb",
+          ? "rgba(255,255,255,0.15)"
+          : "#e5e7eb",
       color: dark ? "#ffffff" : "#111827",
       minHeight: "36px",
       borderRadius: "8px",
@@ -356,8 +358,8 @@ export const glassSelectStyles = {
       maxHeight: "200px",
       overflowY: "auto",
       scrollbarWidth: "thin",
-      scrollbarColor: dark 
-        ? "#4b5563 transparent" 
+      scrollbarColor: dark
+        ? "#4b5563 transparent"
         : "#d1d5db transparent",
       "&::-webkit-scrollbar": {
         width: "6px",
@@ -383,15 +385,15 @@ export const glassSelectStyles = {
       backgroundColor: state.isSelected
         ? "#3b82f6"
         : state.isFocused
-        ? dark
-          ? "rgba(255,255,255,0.1)"
-          : "#f3f4f6"
-        : "transparent",
+          ? dark
+            ? "rgba(255,255,255,0.1)"
+            : "#f3f4f6"
+          : "transparent",
       color: state.isSelected
         ? "#ffffff"
         : dark
-        ? "#ffffff"
-        : "#111827",
+          ? "#ffffff"
+          : "#111827",
       cursor: "pointer",
       fontSize: "12px",
     }
@@ -491,7 +493,7 @@ const AddItemModal = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!itemName.trim()) return
-    
+
     await onAdd(itemName.trim())
     setItemName("")
   }
@@ -499,7 +501,7 @@ const AddItemModal = ({
   if (!isOpen) return null
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-[999999] flex items-center justify-center bg-black/50"
       style={{ zIndex: 999999 }}
     >
@@ -507,7 +509,7 @@ const AddItemModal = ({
         <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
           Add New Item
         </h3>
-        
+
         <form onSubmit={handleSubmit}>
           <div className="mb-6">
             <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
@@ -522,7 +524,7 @@ const AddItemModal = ({
               autoFocus
             />
           </div>
-          
+
           <div className="flex justify-end space-x-3">
             <button
               type="button"
@@ -551,7 +553,7 @@ const AddItemModal = ({
 ================================ */
 const CustomMenuList = (props: any) => {
   const { showAddButton, onAddClick, children, ...rest } = props
-  
+
   return (
     <>
       <div {...rest}>
@@ -634,9 +636,9 @@ export function ApiDropdown({
           value: item.id,
           label: item.name,
         }))
-            if (formatted.length > 0 && set) {
-        onChange(formatted[0])
-      }
+        if (formatted.length > 0 && set) {
+          onChange(formatted[0])
+        }
         setOptions(formatted)
       } else {
         setError(data.message || "Failed to load dropdown")
@@ -671,11 +673,11 @@ export function ApiDropdown({
 
       if (data.success) {
         set = true
-         fetchOptions()
+        fetchOptions()
 
         // Close modal
         setShowModal(false)
-        
+
         toast({
           title: "Success",
           description: data.message || "Item added successfully",

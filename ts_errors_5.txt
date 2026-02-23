@@ -1,0 +1,8 @@
+src/app/[role]/counter/page.tsx(349,9): error TS1136: Property assignment expected.
+src/app/[role]/counter/page.tsx(352,5): error TS1135: Argument expression expected.
+src/app/[role]/counter/page.tsx(352,6): error TS1005: ',' expected.
+src/app/[role]/counter/page.tsx(1469,1): error TS1128: Declaration or statement expected.
+src/app/[role]/sub-email/page.tsx(337,9): error TS1136: Property assignment expected.
+src/app/[role]/sub-email/page.tsx(339,5): error TS1135: Argument expression expected.
+src/app/[role]/sub-email/page.tsx(339,6): error TS1005: ',' expected.
+src/app/[role]/sub-email/page.tsx(1587,1): error TS1128: Declaration or statement expected.

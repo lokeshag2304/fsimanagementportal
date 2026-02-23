@@ -6,7 +6,7 @@ import { ReactNode } from "react"
 interface Column<T> {
   key: string
   header: string
-  render?: (item: T) => ReactNode
+  render?: (item: T, index: number) => ReactNode
   className?: string
 }
 
@@ -46,7 +46,7 @@ export function DataTable<T extends { id: number | string }>({
             </tr>
           </thead>
           <tbody>
-            {data.map((item) => (
+            {data.map((item, rowIndex) => (
               <tr
                 key={item.id}
                 onClick={() => onRowClick?.(item)}
@@ -65,7 +65,7 @@ export function DataTable<T extends { id: number | string }>({
                     )}
                   >
                     {column.render
-                      ? column.render(item)
+                      ? column.render(item, rowIndex)
                       : (item as Record<string, unknown>)[column.key] as ReactNode}
                   </td>
                 ))}

@@ -19,9 +19,21 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'i.pravatar.cc',
       },
+      {
+        protocol: 'http',
+        hostname: '127.0.0.1',
+        port: '8000',
+        pathname: '/**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '8000',
+        pathname: '/**',
+      },
     ],
   },
-   typescript: {
+  typescript: {
     // ⚠️ Production build me TypeScript errors ignore karega
     ignoreBuildErrors: true,
   },

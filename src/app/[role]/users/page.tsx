@@ -19,7 +19,7 @@ import {
   Eye,
   EyeOff
 } from "lucide-react"
-import axios from "axios"
+import axios from "@/lib/axios"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/useToast"
 import { useRouter } from "next/navigation"
@@ -74,13 +74,13 @@ export default function UsersPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [profilePreview, setProfilePreview] = useState<string | null>(null)
-  
+
   // Password visibility state
   const [showPassword, setShowPassword] = useState(false)
-  
-  const searchTimeoutRef = useRef<NodeJS.Timeout>()
+
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isMountedRef = useRef(true)
-  
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -102,10 +102,10 @@ export default function UsersPage() {
   // Fetch users list
   const fetchUsers = async () => {
     if (!isMountedRef.current) return;
-    
+
     try {
       setLoading(true)
-      
+
       if (!token) {
         toast({
           title: "Error",
@@ -140,7 +140,7 @@ export default function UsersPage() {
       }
     } catch (error: any) {
       console.error("Error fetching users:", error)
-      
+
       if (error.response?.status === 401) {
         toast({
           title: "Session Expired",
@@ -166,7 +166,7 @@ export default function UsersPage() {
   useEffect(() => {
     isMountedRef.current = true
     fetchUsers()
-    
+
     return () => {
       isMountedRef.current = false
       if (searchTimeoutRef.current) {
@@ -178,11 +178,11 @@ export default function UsersPage() {
   // Separate effect for pagination and search changes
   useEffect(() => {
     if (!isMountedRef.current) return;
-    
+
     const timeoutId = setTimeout(() => {
       fetchUsers()
     }, 300)
-    
+
     return () => {
       clearTimeout(timeoutId)
     }
@@ -193,7 +193,7 @@ export default function UsersPage() {
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current)
     }
-    
+
     searchTimeoutRef.current = setTimeout(() => {
       setSearchQuery(value)
       setPagination(prev => ({ ...prev, page: 0 }))
@@ -220,7 +220,7 @@ export default function UsersPage() {
     setEditingUser(null)
     setProfilePreview(null)
     setShowPassword(false) // Reset password visibility
-    
+
     // Refresh data after successful operation
     fetchUsers()
   }
@@ -228,7 +228,7 @@ export default function UsersPage() {
   // Handle error
   const handleError = (error: any, defaultMessage: string) => {
     console.error("Error:", error)
-    
+
     if (error.response?.status === 401) {
       toast({
         title: "Session Expired",
@@ -265,7 +265,7 @@ export default function UsersPage() {
         const user = response.data.data
 
         console.log("API से आया password:", user.password)
-        
+
         // Note: For security, we don't show the actual password from API
         // Instead we'll use a placeholder or empty string
         setFormData({
@@ -277,14 +277,14 @@ export default function UsersPage() {
           profile: null,
           type: 2
         })
-        
+
         // Set profile preview if exists
         if (user.profile) {
           setProfilePreview(`${ASSETS_URL}/${user.profile}`)
         } else {
           setProfilePreview(null)
         }
-        
+
         setEditingUser(user)
         setIsModalOpen(true)
       }
@@ -344,10 +344,10 @@ export default function UsersPage() {
       }
 
       const idsToDelete = itemToDelete ? [itemToDelete] : selectedItems
-      
+
       const response = await axios.post<ApiResponse>(
         `${BASE_URL}/secure/Usermanagement/get-clients-user-delete`,
-        { 
+        {
           ids: idsToDelete,
           s_id: authUser?.id || 6,
           type: 2 // Add type field for delete (2 for users)
@@ -360,7 +360,7 @@ export default function UsersPage() {
         }
       )
 
-      if (response.data.success) {
+      if ((response.data as any).success || response.data.status) {
         handleSuccess(response.data.message || "User(s) deleted successfully")
         if (!itemToDelete) {
           setSelectedItems([])
@@ -374,7 +374,7 @@ export default function UsersPage() {
       }
     } catch (error: any) {
       console.error("Error deleting user:", error)
-      
+
       if (error.response?.status === 401) {
         toast({
           title: "Session Expired",
@@ -406,7 +406,7 @@ export default function UsersPage() {
       })
       return
     }
-    
+
     if (!formData.email.trim()) {
       toast({
         title: "Error",
@@ -415,7 +415,7 @@ export default function UsersPage() {
       })
       return
     }
-    
+
     const phoneNumber = formData.phone.trim()
     if (!phoneNumber) {
       toast({
@@ -436,7 +436,7 @@ export default function UsersPage() {
       })
       return
     }
-    
+
     if (!editingUser && !formData.password.trim()) {
       toast({
         title: "Error",
@@ -472,22 +472,22 @@ export default function UsersPage() {
       formDataToSend.append('email', formData.email.trim())
       formDataToSend.append('phone', phoneNumber)
       formDataToSend.append('address', formData.address.trim())
-      
+
       // Only add password if it's not empty (for edit) or for new user
       if (formData.password.trim()) {
         formDataToSend.append('password', formData.password.trim())
       }
-      
+
       formDataToSend.append('s_id', authUser?.id?.toString() || '6')
       formDataToSend.append('type', '2') // User type
-      
+
       // Add profile if exists
       if (formData.profile) {
         formDataToSend.append('profile', formData.profile)
       }
 
       let endpoint = ''
-      
+
       if (editingUser) {
         // Update user
         endpoint = `${BASE_URL}/secure/Usermanagement/update-clients-user`
@@ -520,7 +520,7 @@ export default function UsersPage() {
       }
     } catch (error: any) {
       console.error("Error saving user:", error)
-      
+
       if (error.response?.status === 401) {
         toast({
           title: "Session Expired",
@@ -603,7 +603,7 @@ export default function UsersPage() {
                 Manage user accounts
               </p>
             </div>
-            
+
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto">
               <div className="relative flex-1 sm:flex-initial">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-400" />
@@ -615,20 +615,20 @@ export default function UsersPage() {
                   className="w-full sm:w-64 pl-10 pr-4 py-2 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-lg text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                 />
               </div>
-              
+
               <div className="flex gap-2">
                 {selectedItems.length > 0 && (
                   <GlassButton
-                    variant="danger"
+                    variant="default"
                     onClick={handleBulkDelete}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 bg-red-500/20 hover:bg-red-500/30 text-red-500 border border-red-500/50"
                     disabled={isSubmitting || isDeleting}
                   >
                     <Trash2 className="w-4 h-4" />
                     Delete ({selectedItems.length})
                   </GlassButton>
                 )}
-                
+
                 <GlassButton
                   variant="primary"
                   onClick={handleAdd}
@@ -760,12 +760,12 @@ export default function UsersPage() {
                             )}
                           </div>
                         </td>
-                        
+
                         {/* Name field */}
                         <td className="py-3 px-4">
                           <span className="text-sm text-white font-medium">{item.name}</span>
                         </td>
-                        
+
                         {/* Email field */}
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
@@ -773,7 +773,7 @@ export default function UsersPage() {
                             <span className="text-sm text-gray-300 truncate">{item.email}</span>
                           </div>
                         </td>
-                        
+
                         {/* Phone field */}
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
@@ -783,7 +783,7 @@ export default function UsersPage() {
                             </span>
                           </div>
                         </td>
-                        
+
                         {/* Address field */}
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
@@ -793,12 +793,12 @@ export default function UsersPage() {
                             </span>
                           </div>
                         </td>
-                        
+
                         {/* Created At field */}
                         <td className="py-3 px-4 text-sm text-gray-300">
                           {item.created_at}
                         </td>
-                        
+
                         {/* Actions */}
                         <td className="py-3 px-4">
                           <div className="flex items-center justify-end gap-2">
@@ -890,7 +890,7 @@ export default function UsersPage() {
               className="w-full px-3 py-2 bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.1)] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
-          
+
           <div>
             <label className="block text-gray-300 text-sm mb-2">
               Email <span className="text-red-400">*</span>
@@ -903,7 +903,7 @@ export default function UsersPage() {
               className="w-full px-3 py-2 bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.1)] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
-          
+
           <div>
             <label className="block text-gray-300 text-sm mb-2">
               Phone Number <span className="text-red-400">*</span>
@@ -914,8 +914,8 @@ export default function UsersPage() {
               value={formData.phone}
               onChange={(e) => {
                 const value = e.target.value.replace(/\D/g, '').slice(0, 10)
-                setFormData({ 
-                  ...formData, 
+                setFormData({
+                  ...formData,
                   phone: value
                 })
               }}
@@ -923,7 +923,7 @@ export default function UsersPage() {
             />
             <p className="text-xs text-gray-400 mt-1">10 digits only</p>
           </div>
-          
+
           <div>
             <label className="block text-gray-300 text-sm mb-2">Address</label>
             <input
@@ -934,7 +934,7 @@ export default function UsersPage() {
               className="w-full px-3 py-2 bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.1)] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
-          
+
           <div>
             <label className="block text-gray-300 text-sm mb-2">
               Password {!editingUser && <span className="text-red-400">*</span>}
@@ -970,7 +970,7 @@ export default function UsersPage() {
               </p>
             )}
           </div>
-          
+
           <div>
             <label className="block text-gray-300 text-sm mb-2">Profile Picture</label>
             <div className="flex items-center gap-4">
@@ -1029,7 +1029,7 @@ export default function UsersPage() {
               </div>
             </div>
           </div>
-          
+
           <div className="flex gap-3 pt-4">
             <button
               className="flex-1 px-4 py-2 bg-[rgba(255,255,255,0.1)] text-white rounded-lg hover:bg-[rgba(255,255,255,0.2)] transition-colors disabled:opacity-50"
@@ -1074,7 +1074,7 @@ export default function UsersPage() {
         itemCount={itemToDelete ? 1 : selectedItems.length}
         isLoading={isDeleting}
         title={itemToDelete ? "Delete User" : "Delete Multiple Users"}
-        message={itemToDelete 
+        message={itemToDelete
           ? "Are you sure you want to delete this user? This action cannot be undone."
           : "Are you sure you want to delete the selected users? This action cannot be undone."
         }

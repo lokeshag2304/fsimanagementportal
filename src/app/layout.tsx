@@ -7,6 +7,8 @@ import { HydrationFix } from "@/components/hydration-fix"
 import { AuthProvider } from "@/contexts/AuthContext"
 import { ToastProvider } from "@/components/shared/ToastProvider"
 import { Toaster } from "@/components/ui/toaster"
+import AuthGuard from "@/components/AuthGuard";
+
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -28,13 +30,15 @@ export default function RootLayout({
       <body className={inter.className} suppressHydrationWarning>
         <HydrationFix />
         <ThemeProvider>
-           <AuthProvider>
-             <ToastProvider>
-          <main className="min-h-screen">
-            {children}
-          </main>
-          <Toaster />
-          </ToastProvider>
+          <AuthProvider>
+            <ToastProvider>
+              <AuthGuard>
+                <main className="min-h-screen">
+                  {children}
+                </main>
+                <Toaster />
+              </AuthGuard>
+            </ToastProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

@@ -4,17 +4,21 @@ import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 
 export default function Dashboard() {
-  const {user, getToken} = useAuth()
-   const router = useRouter()
- 
+  const { user, getToken } = useAuth()
+  const router = useRouter()
+
   useEffect(() => {
-    if(getToken() === null) {
-      router.push('/auth/login')
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const role = typeof window !== 'undefined' ? localStorage.getItem('role') : null;
+
+    if (!token) {
+      router.push('/auth/login');
+      return;
     }
-    if(user) {
-      router.push(`/${user?.role}/dashboard`)
+    if (role && role !== 'undefined' && role !== 'null') {
+      router.push(`/${role}/dashboard`);
     }
-  }, [user])
+  }, []);
 
 
   return (

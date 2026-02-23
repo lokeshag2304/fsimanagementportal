@@ -34,6 +34,7 @@ import { ApiDropdown, glassSelectStyles } from "@/common/DynamicDropdown";
 import { GlassSelect } from "@/components/glass/GlassSelect";
 
 interface Subscription {
+  remark_id?: number | null;
   id: number;
   client_name: string | null;
   client_id: number;
@@ -78,8 +79,8 @@ interface ProductOption {
 }
 
 export default function SubscriptionsPage() {
-  const {user, getToken } = useAuth()
-    const token = getToken();
+  const { user, getToken } = useAuth()
+  const token = getToken();
   const navigationTabs = getNavigationByRole(user?.role);
   const { toast } = useToast();
   const router = useRouter();
@@ -122,29 +123,29 @@ export default function SubscriptionsPage() {
   const [totalItems, setTotalItems] = useState(0);
   const [products, setProducts] = useState<ProductOption[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
-  
 
-  const searchTimeoutRef = useRef<NodeJS.Timeout>();
+
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const statusOptions = [
-  { value: "1", label: "Active" },
-  { value: "0", label: "Inactive" },
-];
+    { value: "1", label: "Active" },
+    { value: "0", label: "Inactive" },
+  ];
 
-const getSelectedStatusOption = () => {
-  return (
-    statusOptions.find(
-      (option) => option.value === newRecordData.status
-    ) || null
-  );
-};
+  const getSelectedStatusOption = () => {
+    return (
+      statusOptions.find(
+        (option) => option.value === newRecordData.status
+      ) || null
+    );
+  };
 
-const handleStatusSelect = (selected: any) => {
-  handleNewRecordChange(
-    "status",
-    selected?.value as "1" | "0"
-  );
-};
+  const handleStatusSelect = (selected: any) => {
+    handleNewRecordChange(
+      "status",
+      selected?.value as "1" | "0"
+    );
+  };
 
   // Fetch subscriptions
   const fetchSubscriptions = async () => {
@@ -160,8 +161,8 @@ const handleStatusSelect = (selected: any) => {
         orderDir: pagination.orderDir,
       },
         user,
-      token
-    );
+        token
+      );
 
       if (response.status) {
         setData(response.data || []);
@@ -253,7 +254,7 @@ const handleStatusSelect = (selected: any) => {
 
       const productName = getProductNameById(newRecordData.product_id);
 
-      const payload: AddEditSubscription = {
+      const payload: any = {
         record_type: 1,
         s_id: user?.id || 0,
         product_id: Number(newRecordData.product_id),
@@ -268,7 +269,7 @@ const handleStatusSelect = (selected: any) => {
         remark_id: editData[0]?.remark_id || null,
       };
 
-      const response = await apiService.addRecord(payload,user,token);
+      const response = await apiService.addRecord(payload, user, token);
 
       if (response.status) {
         toast({
@@ -312,14 +313,14 @@ const handleStatusSelect = (selected: any) => {
     try {
       setExportLoading(true);
 
-      const payload: AddEditSubscription = {
+      const payload: any = {
         record_type: 1,
         s_id: user?.id || 0,
       };
 
-      const response = await apiService.exportRecord(payload,user,token);
+      const response = await apiService.exportRecord(payload, user, token);
 
-      if (response.success) {
+      if ((response as any).success) {
         toast({
           title: "Success",
           description: response.message || "Subscription exported successfully",
@@ -377,7 +378,7 @@ const handleStatusSelect = (selected: any) => {
       const productName =
         updatedData.product_name || getProductNameById(productId);
 
-      const payload: AddEditSubscription = {
+      const payload: any = {
         record_type: 1,
         id,
         s_id: user?.id || 6,
@@ -393,7 +394,7 @@ const handleStatusSelect = (selected: any) => {
         remark_id: updatedData.remark_id || null,
       };
 
-      const response = await apiService.editRecord(payload,user,token);
+      const response = await apiService.editRecord(payload, user, token);
 
       if (response.status) {
         toast({
@@ -480,7 +481,7 @@ const handleStatusSelect = (selected: any) => {
 
       const idsToDelete = itemToDelete ? [itemToDelete] : selectedItems;
 
-      const response = await apiService.deleteRecords(idsToDelete, 1,user,token);
+      const response = await apiService.deleteRecords(idsToDelete, 1, user, token);
 
       if (response.status) {
         toast({
@@ -562,13 +563,15 @@ const handleStatusSelect = (selected: any) => {
 
   const calculateDays = (expiryDate: string) => {
     try {
+      if (!expiryDate) return "";
       const today = new Date();
       const expiry = new Date(expiryDate);
+      if (isNaN(expiry.getTime())) return "";
       const diffTime = expiry.getTime() - today.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return diffDays;
+      return isNaN(diffDays) ? "" : diffDays;
     } catch {
-      return 0;
+      return "";
     }
   };
 
@@ -588,7 +591,7 @@ const handleStatusSelect = (selected: any) => {
       });
       return;
     }
-    
+
     // Redirect to details page with recordType and recordId
     router.push(`/${user?.role}/categaries-details/${item.id}?recordType=1`);
   };
@@ -653,13 +656,13 @@ const handleStatusSelect = (selected: any) => {
                   </GlassButton>
                 )}
                 <GlassButton
-                    variant="primary"
-                    onClick={handleExport}
-                    className="flex items-center gap-2"
-                    disabled={exportLoading}
-                  >
-                    {exportLoading ? ("Exporting...") : (" Export" )}
-                  </GlassButton>
+                  variant="primary"
+                  onClick={handleExport}
+                  className="flex items-center gap-2"
+                  disabled={exportLoading}
+                >
+                  {exportLoading ? ("Exporting...") : (" Export")}
+                </GlassButton>
               </div>
             </div>
           </div>
@@ -741,9 +744,9 @@ const handleStatusSelect = (selected: any) => {
                                 value={
                                   newRecordData.product_id
                                     ? {
-                                        value: newRecordData.product_id,
-                                        label: newRecordData.product_name,
-                                      }
+                                      value: newRecordData.product_id,
+                                      label: newRecordData.product_name,
+                                    }
                                     : null
                                 }
                                 onChange={(option) => {
@@ -761,29 +764,29 @@ const handleStatusSelect = (selected: any) => {
                             )}
                           </td>
                           <td className="py-3 px-4">
-                              <ApiDropdown
-                                label=""
-                                endpoint="get-clients"
-                                value={
-                                  newRecordData.client_id
-                                    ? {
-                                        value: newRecordData.client_id,
-                                        label: newRecordData.client_name,
-                                      }
-                                    : null
-                                }
-                                onChange={(option) => {
-                                  handleNewRecordChange(
-                                    "client_id",
-                                    option?.value ?? null
-                                  );
-                                  handleNewRecordChange(
-                                    "client_name",
-                                    option?.label ?? ""
-                                  );
-                                }}
-                                placeholder="Client"
-                              />                          
+                            <ApiDropdown
+                              label=""
+                              endpoint="get-clients"
+                              value={
+                                newRecordData.client_id
+                                  ? {
+                                    value: newRecordData.client_id,
+                                    label: newRecordData.client_name,
+                                  }
+                                  : null
+                              }
+                              onChange={(option) => {
+                                handleNewRecordChange(
+                                  "client_id",
+                                  option?.value ?? null
+                                );
+                                handleNewRecordChange(
+                                  "client_name",
+                                  option?.label ?? ""
+                                );
+                              }}
+                              placeholder="Client"
+                            />
                           </td>
                           <td className="py-3 px-4">
                             <input
@@ -814,7 +817,7 @@ const handleStatusSelect = (selected: any) => {
                             />
                           </td>
                           <td className="py-3 px-4 text-sm text-gray-300">
-                           <input
+                            <input
                               type="number"
                               value={calculateDays(newRecordData.expiry_date)}
                               readOnly
@@ -823,16 +826,16 @@ const handleStatusSelect = (selected: any) => {
                             />
                           </td>
                           <td className="py-3 px-4">
-                         <div className="w-40">
-  <GlassSelect
-    options={statusOptions}
-    value={getSelectedStatusOption()}
-    onChange={handleStatusSelect}
-    isSearchable={false}
-    isClearable
-    styles={glassSelectStyles}
-  />
-</div>
+                            <div className="w-40">
+                              <GlassSelect
+                                options={statusOptions}
+                                value={getSelectedStatusOption()}
+                                onChange={handleStatusSelect}
+                                isSearchable={false}
+                                isClearable
+                                styles={glassSelectStyles}
+                              />
+                            </div>
 
                           </td>
                           <td className="py-3 px-4">
@@ -901,9 +904,8 @@ const handleStatusSelect = (selected: any) => {
                         data.map((item, index) => (
                           <tr
                             key={item.id}
-                            className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors ${
-                              editingId === item.id ? "bg-blue-500/5" : ""
-                            }`}
+                            className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors ${editingId === item.id ? "bg-blue-500/5" : ""
+                              }`}
                           >
                             <td className="py-3 px-4">
                               <input
@@ -932,17 +934,17 @@ const handleStatusSelect = (selected: any) => {
                                       value={
                                         editData[item.id]?.product_id
                                           ? {
-                                              value:
-                                                editData[item.id]?.product_id ||
-                                                0,
-                                              label:
+                                            value:
+                                              editData[item.id]?.product_id ||
+                                              0,
+                                            label:
+                                              editData[item.id]
+                                                ?.product_name ||
+                                              getProductNameById(
                                                 editData[item.id]
-                                                  ?.product_name ||
-                                                getProductNameById(
-                                                  editData[item.id]
-                                                    ?.product_id || 0
-                                                ),
-                                            }
+                                                  ?.product_id || 0
+                                              ),
+                                          }
                                           : null
                                       }
                                       onChange={(option) => {
@@ -963,37 +965,37 @@ const handleStatusSelect = (selected: any) => {
                                 </td>
                                 <td className="py-3 px-4">
                                   <ApiDropdown
-                                      endpoint="get-clients"
-                                      value={
-                                        editData[item.id]?.client_id
-                                          ? {
-                                              value:
-                                                editData[item.id]?.client_id ||
-                                                0,
-                                              label:
-                                                editData[item.id]
-                                                  ?.client_name ||
-                                                getProductNameById(
-                                                  editData[item.id]
-                                                    ?.client_id || 0
-                                                ),
-                                            }
-                                          : null
-                                      }
-                                      onChange={(option) => {
-                                        handleEditChange(
-                                          item.id,
-                                          "client_id",
-                                          option?.value ?? null
-                                        );
-                                        handleEditChange(
-                                          item.id,
-                                          "client_name",
-                                          option?.label ?? ""
-                                        );
-                                      }}
-                                      placeholder="Client"
-                                    />
+                                    endpoint="get-clients"
+                                    value={
+                                      editData[item.id]?.client_id
+                                        ? {
+                                          value:
+                                            editData[item.id]?.client_id ||
+                                            0,
+                                          label:
+                                            editData[item.id]
+                                              ?.client_name ||
+                                            getProductNameById(
+                                              editData[item.id]
+                                                ?.client_id || 0
+                                            ),
+                                        }
+                                        : null
+                                    }
+                                    onChange={(option) => {
+                                      handleEditChange(
+                                        item.id,
+                                        "client_id",
+                                        option?.value ?? null
+                                      );
+                                      handleEditChange(
+                                        item.id,
+                                        "client_name",
+                                        option?.label ?? ""
+                                      );
+                                    }}
+                                    placeholder="Client"
+                                  />
                                 </td>
                                 <td className="py-3 px-4">
                                   <input
@@ -1035,14 +1037,14 @@ const handleStatusSelect = (selected: any) => {
                                   />
                                 </td>
                                 <td className="py-3 px-4 text-sm text-gray-300">
-                           <input
-                              type="number"
-                              value={calculateDays(editData[item.id]?.expiry_date || item.expiry_date)}
-                              readOnly
-                              className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-xs cursor-not-allowed"
-                              style={{ minHeight: '32px' }}
-                            />
-                          </td>
+                                  <input
+                                    type="number"
+                                    value={calculateDays(editData[item.id]?.expiry_date || item.expiry_date)}
+                                    readOnly
+                                    className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-xs cursor-not-allowed"
+                                    style={{ minHeight: '32px' }}
+                                  />
+                                </td>
                               </>
                             ) : (
                               <>
@@ -1055,7 +1057,7 @@ const handleStatusSelect = (selected: any) => {
                                   </div>
                                 </td>
                                 <td className="py-3 px-4 text-sm text-gray-300">
-                                    {item.client_name}
+                                  {item.client_name}
                                 </td>
                                 <td className="py-3 px-4 text-sm text-gray-300">
                                   <div className="flex items-center gap-2">
@@ -1066,43 +1068,47 @@ const handleStatusSelect = (selected: any) => {
                                   {formatDate(item.expiry_date)}
                                 </td>
                                 <td className="py-3 px-4">
-                              <div
-                                className={`inline-flex items-center whitespace-nowrap gap-1 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm ${
-                                  calculateDays(item.expiry_date) < 0
-                                    ? "bg-red-500/20 text-red-400 border border-red-500/20"
-                                    : calculateDays(item.expiry_date) <= 7
-                                    ? "bg-orange-500/20 text-orange-400 border border-orange-500/20"
-                                    : "bg-green-500/20 text-green-400 border border-green-500/20"
-                                }`}
-                              >
-                                {calculateDays(item.expiry_date)} days
-                              </div>
-                            </td>
+                                  {calculateDays(item.expiry_date) === "" ? (
+                                    <div className="inline-flex items-center whitespace-nowrap gap-1 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm bg-gray-500/20 text-gray-400 border border-gray-500/20">
+                                      N/A
+                                    </div>
+                                  ) : (
+                                    <div
+                                      className={`inline-flex items-center whitespace-nowrap gap-1 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm ${(calculateDays(item.expiry_date) as number) < 0
+                                        ? "bg-red-500/20 text-red-400 border border-red-500/20"
+                                        : (calculateDays(item.expiry_date) as number) <= 7
+                                          ? "bg-orange-500/20 text-orange-400 border border-orange-500/20"
+                                          : "bg-green-500/20 text-green-400 border border-green-500/20"
+                                        }`}
+                                    >
+                                      {calculateDays(item.expiry_date)} days
+                                    </div>
+                                  )}
+                                </td>
                               </>
                             )}
 
-                            
+
                             {editingId === item.id ? (
                               <td className="py-3 px-4">
                                 <div className="w-40">
-  <GlassSelect
-    options={statusOptions}
-    value={getSelectedStatusOption()}
-    onChange={handleStatusSelect}
-    isSearchable={false}
-    isClearable
-    styles={glassSelectStyles}
-  />
-</div>
+                                  <GlassSelect
+                                    options={statusOptions}
+                                    value={getSelectedStatusOption()}
+                                    onChange={handleStatusSelect}
+                                    isSearchable={false}
+                                    isClearable
+                                    styles={glassSelectStyles}
+                                  />
+                                </div>
                               </td>
                             ) : (
                               <td className="py-3 px-4">
                                 <div
-                                  className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${
-                                    item.status === 1
-                                      ? "bg-green-500/20 text-green-400 border-green-500/20"
-                                      : "bg-red-500/20 text-red-400 border-red-500/20"
-                                  }`}
+                                  className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${item.status === 1
+                                    ? "bg-green-500/20 text-green-400 border-green-500/20"
+                                    : "bg-red-500/20 text-red-400 border-red-500/20"
+                                    }`}
                                 >
                                   {getStatusIcon(item.status)}
                                   {getStatusText(item.status)}
@@ -1134,7 +1140,7 @@ const handleStatusSelect = (selected: any) => {
                                 <div className="flex items-center gap-2">
                                   <MessageSquare className="w-4 h-4 text-gray-400 flex-shrink-0" />
                                   <span className="text-sm text-gray-300 truncate max-w-[180px]">
-                                    {item?.latest_remark?.remark}
+                                    {(item?.latest_remark?.remark as string) || ''}
                                   </span>
                                 </div>
                               </td>

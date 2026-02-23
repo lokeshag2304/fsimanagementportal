@@ -36,7 +36,8 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import axios from "axios";
+import axios from "@/lib/axios";
+
 import { useAuth } from "@/contexts/AuthContext";
 import Pagination from "@/common/Pagination";
 import { getNavigationByRole } from "@/lib/getNavigationByRole";
@@ -400,9 +401,9 @@ export default function Dashboard() {
             </div>
           </GlassCard>
         )}
-{/* <GlassCard> */}
-  <SearchResultsPage />
-{/* </GlassCard> */}
+        {/* <GlassCard> */}
+        <SearchResultsPage />
+        {/* </GlassCard> */}
         {/* Recent Categories Table */}
         {/* <GlassCard variant="liquid" noPadding className="overflow-hidden">
           <div className="p-4 sm:p-5">

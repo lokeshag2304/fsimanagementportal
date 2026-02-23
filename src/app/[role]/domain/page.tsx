@@ -15,13 +15,13 @@ import {
   ChevronLeft,
   ChevronRight
 } from "lucide-react"
-import axios from "axios"
+import axios from "@/lib/axios"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/useToast"
 import { useRouter } from "next/navigation"
 import Pagination from "@/common/Pagination"
 import DashboardLoader from "@/common/DashboardLoader"
-import {DeleteConfirmationModal} from "@/common/services/DeleteConfirmationModal"
+import { DeleteConfirmationModal } from "@/common/services/DeleteConfirmationModal"
 import { getNavigationByRole } from "@/lib/getNavigationByRole"
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
@@ -44,9 +44,9 @@ interface ApiResponse {
 }
 
 export default function DomainPage() {
-  const {user, getToken} = useAuth();
+  const { user, getToken } = useAuth();
   const token = getToken();
- const navigationTabs = getNavigationByRole(user?.role)
+  const navigationTabs = getNavigationByRole(user?.role)
   const { toast } = useToast()
   const router = useRouter()
   const [data, setData] = useState<Domain[]>([])
@@ -67,16 +67,16 @@ export default function DomainPage() {
   const [totalDomains, setTotalDomains] = useState(0)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<number | null>(null)
-  const searchTimeoutRef = useRef<NodeJS.Timeout>()
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isMountedRef = useRef(true)
 
   // Fetch domains function
   const fetchDomains = async () => {
     if (!isMountedRef.current) return;
-    
+
     try {
       setLoading(true)
-      
+
       if (!token) {
         toast({
           title: "Error",
@@ -110,7 +110,7 @@ export default function DomainPage() {
       }
     } catch (error: any) {
       console.error("Error fetching domains:", error)
-      
+
       if (error.response?.status === 401) {
         toast({
           title: "Session Expired",
@@ -125,7 +125,7 @@ export default function DomainPage() {
           variant: "destructive"
         })
       }
-      
+
       if (isMountedRef.current) {
         setData([])
       }
@@ -140,7 +140,7 @@ export default function DomainPage() {
   useEffect(() => {
     isMountedRef.current = true
     fetchDomains()
-    
+
     return () => {
       isMountedRef.current = false
       if (searchTimeoutRef.current) {
@@ -152,11 +152,11 @@ export default function DomainPage() {
   // Separate effect for pagination and search changes
   useEffect(() => {
     if (!isMountedRef.current) return;
-    
+
     const timeoutId = setTimeout(() => {
       fetchDomains()
     }, 300)
-    
+
     return () => {
       clearTimeout(timeoutId)
     }
@@ -167,7 +167,7 @@ export default function DomainPage() {
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current)
     }
-    
+
     searchTimeoutRef.current = setTimeout(() => {
       setSearchQuery(value)
       setPagination(prev => ({ ...prev, page: 0 }))
@@ -183,7 +183,7 @@ export default function DomainPage() {
     })
     setEditingId(null)
     setEditValue("")
-    
+
     // Refresh data after successful operation
     fetchDomains()
   }
@@ -191,7 +191,7 @@ export default function DomainPage() {
   // Handle error
   const handleError = (error: any, defaultMessage: string) => {
     console.error("Error:", error)
-    
+
     if (error.response?.status === 401) {
       toast({
         title: "Session Expired",
@@ -221,7 +221,7 @@ export default function DomainPage() {
 
     try {
       setIsAdding(true)
-      
+
       if (!token) {
         toast({
           title: "Error",
@@ -275,7 +275,7 @@ export default function DomainPage() {
 
     try {
       setIsSaving(true)
-      
+
       if (!token) {
         toast({
           title: "Error",
@@ -345,10 +345,10 @@ export default function DomainPage() {
   // Confirm delete action
   const confirmDelete = async () => {
     const idsToDelete = itemToDelete ? [itemToDelete] : selectedItems
-    
+
     try {
       setIsDeleting(true)
-      
+
       if (!token) {
         toast({
           title: "Error",
@@ -469,7 +469,7 @@ export default function DomainPage() {
                 Manage your domains and subdomains
               </p>
             </div>
-            
+
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto">
               <div className="relative flex-1 sm:flex-initial">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -478,16 +478,16 @@ export default function DomainPage() {
                   placeholder="Search domains..."
                   defaultValue={searchQuery}
                   onChange={(e) => handleSearchInput(e.target.value)}
-                   className="w-full sm:w-64 pl-10 pr-4 py-2 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-lg text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  className="w-full sm:w-64 pl-10 pr-4 py-2 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-lg text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                 />
               </div>
-              
+
               <div className="flex gap-2">
                 {selectedItems.length > 0 && (
                   <GlassButton
-                    variant="danger"
+                    variant="default"
                     onClick={handleBulkDeleteClick}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 bg-red-500/20 hover:bg-red-500/30 text-red-500 border border-red-500/50"
                     disabled={isDeleting}
                   >
                     {isDeleting ? (
@@ -498,7 +498,7 @@ export default function DomainPage() {
                     Delete ({selectedItems.length})
                   </GlassButton>
                 )}
-                
+
                 <GlassButton
                   variant="primary"
                   onClick={() => {
@@ -598,7 +598,7 @@ export default function DomainPage() {
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[80px]">
                       S.NO
                     </th>
-                    <th 
+                    <th
                       className="py-3 px-4 text-left text-sm font-medium text-gray-300 cursor-pointer hover:text-white transition-colors min-w-[200px]"
                       onClick={() => handleSort("name")}
                     >
@@ -654,9 +654,8 @@ export default function DomainPage() {
                     data.map((item, index) => (
                       <tr
                         key={item.id}
-                        className={`border-b border-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.02)] transition-colors ${
-                          editingId === item.id ? 'bg-[rgba(59,130,246,0.05)]' : ''
-                        }`}
+                        className={`border-b border-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.02)] transition-colors ${editingId === item.id ? 'bg-[rgba(59,130,246,0.05)]' : ''
+                          }`}
                       >
                         <td className="py-3 px-4">
                           <input
@@ -800,7 +799,7 @@ export default function DomainPage() {
         itemCount={itemToDelete ? 1 : selectedItems.length}
         isLoading={isDeleting}
         title={itemToDelete ? "Delete Domain" : "Delete Multiple Domains"}
-        message={itemToDelete 
+        message={itemToDelete
           ? "Are you sure you want to delete this domain? This action cannot be undone."
           : "Are you sure you want to delete the selected domains? This action cannot be undone."
         }

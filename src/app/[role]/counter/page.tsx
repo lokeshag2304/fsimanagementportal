@@ -35,7 +35,8 @@ import { getNavigationByRole } from "@/lib/getNavigationByRole";
 import { ApiDropdown, glassSelectStyles } from "@/common/DynamicDropdown";
 import { GlassSelect } from "@/components/glass/GlassSelect";
 
-interface CounterRecord {
+interface CounterRecord { remark_id?: number | null;
+  
   id: number;
   client_name: string | null;
   client_id?: number;
@@ -116,7 +117,7 @@ export default function CounterPage() {
 
   const [totalItems, setTotalItems] = useState(0);
 
-  const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
 
   // Handle row click to open details modal
@@ -279,7 +280,7 @@ export default function CounterPage() {
         return;
       }
 
-      const payload: AddEditCounter = {
+      const payload: any = {
         record_type: 6,
         s_id: user?.id,
         product_id: newRecordData.product_id!,
@@ -290,7 +291,7 @@ export default function CounterPage() {
         status: parseInt(newRecordData.status) as 0 | 1,
         remarks: newRecordData.remarks,
       };
-      (user, token);
+      // (user, token);
 
       const response = await apiService.addRecord(payload as any, user, token);
 
@@ -346,7 +347,7 @@ export default function CounterPage() {
         counter_count: record.counter_count || 0,
         valid_till: record.valid_till || "",
         remarks: record.remarks || "",
-        remark_id: record.latest_remark?.id || null,
+        remark_id: (record.latest_remark?.id || null) as any,
         status: record.status?.toString() || "1",
       },
     });
@@ -375,7 +376,7 @@ export default function CounterPage() {
         return;
       }
 
-      const payload: AddEditCounter = {
+      const payload: any = {
         record_type: 6,
         id,
         s_id: user?.id || 6,
@@ -391,7 +392,7 @@ export default function CounterPage() {
 
       const response = await apiService.editRecord(payload as any, user, token);
 
-      if (response.success || response.status) {
+      if ((response as any).success || response.status) {
         toast({
           title: "Success",
           description:
@@ -421,42 +422,42 @@ export default function CounterPage() {
     }
   };
 
-      const handleExport = async () => {
-        try {
-          setExportLoading(true);
-    
-          const payload: AddEditCounter = {
-            record_type: 6,
-            s_id: user?.id || 0,
-          };
-    
-          const response = await apiService.exportRecord(payload,user,token);
-    
-          if (response.success) {
-            toast({
-              title: "Success",
-              description: response.message || "Counter exported successfully",
-              variant: "default",
-            });
-            downloadBase64File(response.data.base64, response.data.filename);
-          } else {
-            toast({
-              title: "Error",
-              description: response.message || "Failed to export counter",
-              variant: "destructive",
-            });
-          }
-        } catch (error) {
-          console.error("Error exporting counter:", error);
-          toast({
-            title: "Error",
-            description: "Failed to export counter",
-            variant: "destructive",
-          });
-        } finally {
-          setExportLoading(false);
-        }
+  const handleExport = async () => {
+    try {
+      setExportLoading(true);
+
+      const payload: any = {
+        record_type: 6,
+        s_id: user?.id || 0,
       };
+
+      const response = await apiService.exportRecord(payload, user, token);
+
+      if ((response as any).success) {
+        toast({
+          title: "Success",
+          description: response.message || "Counter exported successfully",
+          variant: "default",
+        });
+        downloadBase64File(response.data.base64, response.data.filename);
+      } else {
+        toast({
+          title: "Error",
+          description: response.message || "Failed to export counter",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error exporting counter:", error);
+      toast({
+        title: "Error",
+        description: "Failed to export counter",
+        variant: "destructive",
+      });
+    } finally {
+      setExportLoading(false);
+    }
+  };
 
   // Cancel Edit
   const handleCancelEdit = () => {
@@ -522,7 +523,7 @@ export default function CounterPage() {
         token,
       );
 
-      if (response.success || response.status) {
+      if ((response as any).success || response.status) {
         const successMessage =
           response.message ||
           (idsToDelete.length === 1
@@ -704,14 +705,14 @@ export default function CounterPage() {
                     Add Counter
                   </GlassButton>
                 )}
-                 <GlassButton
-                    variant="primary"
-                    onClick={handleExport}
-                    className="flex items-center gap-2"
-                    disabled={exportLoading}
-                  >
-                     {exportLoading ? ("Exporting...") : (" Export" )}
-                  </GlassButton>
+                <GlassButton
+                  variant="primary"
+                  onClick={handleExport}
+                  className="flex items-center gap-2"
+                  disabled={exportLoading}
+                >
+                  {exportLoading ? ("Exporting...") : (" Export")}
+                </GlassButton>
               </div>
             </div>
           </div>
@@ -793,9 +794,9 @@ export default function CounterPage() {
                               value={
                                 newRecordData.client_id
                                   ? {
-                                      value: newRecordData.client_id,
-                                      label: newRecordData.client_name,
-                                    }
+                                    value: newRecordData.client_id,
+                                    label: newRecordData.client_name,
+                                  }
                                   : null
                               }
                               onChange={(option) => {
@@ -818,9 +819,9 @@ export default function CounterPage() {
                               value={
                                 newRecordData.product_id
                                   ? {
-                                      value: newRecordData.product_id,
-                                      label: newRecordData.product_name,
-                                    }
+                                    value: newRecordData.product_id,
+                                    label: newRecordData.product_name,
+                                  }
                                   : null
                               }
                               onChange={(option) => {
@@ -843,9 +844,9 @@ export default function CounterPage() {
                               value={
                                 newRecordData.vendor_id
                                   ? {
-                                      value: newRecordData.vendor_id,
-                                      label: newRecordData.vendor_name,
-                                    }
+                                    value: newRecordData.vendor_id,
+                                    label: newRecordData.vendor_name,
+                                  }
                                   : null
                               }
                               onChange={(option) => {
@@ -1003,9 +1004,8 @@ export default function CounterPage() {
                         data.map((item, index) => (
                           <tr
                             key={item.id}
-                            className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors cursor-pointer group ${
-                              editingId === item.id ? "bg-blue-500/5" : ""
-                            }`}
+                            className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors cursor-pointer group ${editingId === item.id ? "bg-blue-500/5" : ""
+                              }`}
                             onClick={(e) => handleRowClick(e, item)}
                           >
                             <td
@@ -1033,12 +1033,12 @@ export default function CounterPage() {
                                     value={
                                       editData[item.id]?.client_id
                                         ? {
-                                            value:
-                                              editData[item.id]?.client_id!,
-                                            label:
-                                              editData[item.id]?.client_name ||
-                                              "",
-                                          }
+                                          value:
+                                            editData[item.id]?.client_id!,
+                                          label:
+                                            editData[item.id]?.client_name ||
+                                            "",
+                                        }
                                         : null
                                     }
                                     onChange={(option) => {
@@ -1063,12 +1063,12 @@ export default function CounterPage() {
                                     value={
                                       editData[item.id]?.product_id
                                         ? {
-                                            value:
-                                              editData[item.id]?.product_id!,
-                                            label:
-                                              editData[item.id]?.product_name ||
-                                              "",
-                                          }
+                                          value:
+                                            editData[item.id]?.product_id!,
+                                          label:
+                                            editData[item.id]?.product_name ||
+                                            "",
+                                        }
                                         : null
                                     }
                                     onChange={(option) => {
@@ -1093,12 +1093,12 @@ export default function CounterPage() {
                                     value={
                                       editData[item.id]?.vendor_id
                                         ? {
-                                            value:
-                                              editData[item.id]?.vendor_id!,
-                                            label:
-                                              editData[item.id]?.vendor_name ||
-                                              "",
-                                          }
+                                          value:
+                                            editData[item.id]?.vendor_id!,
+                                          label:
+                                            editData[item.id]?.vendor_name ||
+                                            "",
+                                        }
                                         : null
                                     }
                                     onChange={(option) => {
@@ -1159,7 +1159,7 @@ export default function CounterPage() {
                                     type="number"
                                     value={calculateDays(
                                       editData[item.id]?.valid_till ||
-                                        item.valid_till,
+                                      item.valid_till,
                                     )}
                                     readOnly
                                     className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-xs cursor-not-allowed"
@@ -1274,13 +1274,12 @@ export default function CounterPage() {
                                 </td>
                                 <td className="py-3 px-4">
                                   <div
-                                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${
-                                      calculateDays(item.valid_till) < 0
+                                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${calculateDays(item.valid_till) < 0
                                         ? "bg-red-500/20 text-red-400 border-red-500/20"
                                         : calculateDays(item.valid_till) <= 30
                                           ? "bg-orange-500/20 text-orange-400 border-orange-500/20"
                                           : "bg-green-500/20 text-green-400 border-green-500/20"
-                                    }`}
+                                      }`}
                                   >
                                     {calculateDays(item.valid_till)} days
                                   </div>
@@ -1290,11 +1289,10 @@ export default function CounterPage() {
                                 </td>
                                 <td className="py-3 px-4">
                                   <div
-                                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${getStatusColor(item.status)} ${
-                                      item.status === 1
+                                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${getStatusColor(item.status)} ${item.status === 1
                                         ? "bg-green-500/20 border-green-500/20"
                                         : "bg-red-500/20 border-red-500/20"
-                                    }`}
+                                      }`}
                                   >
                                     {getStatusIcon(item.status)}
                                     {getStatusText(item.status)}

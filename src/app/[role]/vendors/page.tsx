@@ -15,7 +15,7 @@ import {
   ChevronRight,
   ProjectorIcon
 } from "lucide-react"
-import axios from "axios"
+import axios from "@/lib/axios"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/useToast"
 import DashboardLoader from "@/common/DashboardLoader"
@@ -64,17 +64,17 @@ export default function VendersPage() {
   const [totalProducts, setTotalProducts] = useState(0)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<number | null>(null)
-  const searchTimeoutRef = useRef<NodeJS.Timeout>()
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isMountedRef = useRef(true)
 
   // Fetch products function
   const fetchProducts = async () => {
     if (!isMountedRef.current) return;
-    
+
     try {
       setLoading(true)
       const token = getToken() || user?.token
-      
+
       if (!token) {
         toast({
           title: "Error",
@@ -107,7 +107,7 @@ export default function VendersPage() {
       }
     } catch (error: any) {
       console.error("Error fetching vendors:", error)
-      
+
       if (error.response?.status === 401) {
         toast({
           title: "Session Expired",
@@ -121,7 +121,7 @@ export default function VendersPage() {
           variant: "destructive"
         })
       }
-      
+
       if (isMountedRef.current) {
         setData([])
       }
@@ -136,7 +136,7 @@ export default function VendersPage() {
   useEffect(() => {
     isMountedRef.current = true
     fetchProducts()
-    
+
     return () => {
       isMountedRef.current = false
       if (searchTimeoutRef.current) {
@@ -148,11 +148,11 @@ export default function VendersPage() {
   // Separate effect for pagination and search changes
   useEffect(() => {
     if (!isMountedRef.current) return;
-    
+
     const timeoutId = setTimeout(() => {
       fetchProducts()
     }, 300)
-    
+
     return () => {
       clearTimeout(timeoutId)
     }
@@ -163,7 +163,7 @@ export default function VendersPage() {
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current)
     }
-    
+
     searchTimeoutRef.current = setTimeout(() => {
       setSearchQuery(value)
       setPagination(prev => ({ ...prev, page: 0 }))
@@ -179,7 +179,7 @@ export default function VendersPage() {
     })
     setEditingId(null)
     setEditValue("")
-    
+
     // Refresh data after successful operation
     fetchProducts()
   }
@@ -187,7 +187,7 @@ export default function VendersPage() {
   // Handle error
   const handleError = (error: any, defaultMessage: string) => {
     console.error("Error:", error)
-    
+
     if (error.response?.status === 401) {
       toast({
         title: "Session Expired",
@@ -216,7 +216,7 @@ export default function VendersPage() {
     try {
       setIsAdding(true)
       const token = getToken() || user?.token
-      
+
       if (!token) {
         toast({
           title: "Error",
@@ -269,7 +269,7 @@ export default function VendersPage() {
     try {
       setIsSaving(true)
       const token = getToken() || user?.token
-      
+
       if (!token) {
         toast({
           title: "Error",
@@ -339,7 +339,7 @@ export default function VendersPage() {
   // Actual delete function that gets called after confirmation
   const confirmDelete = async () => {
     const idToDelete = itemToDelete || (selectedItems.length > 0 ? selectedItems : null)
-    
+
     if (!idToDelete) {
       setShowDeleteModal(false)
       setItemToDelete(null)
@@ -349,7 +349,7 @@ export default function VendersPage() {
     try {
       setIsDeleting(true)
       const token = getToken() || user?.token
-      
+
       if (!token) {
         toast({
           title: "Error",
@@ -360,7 +360,7 @@ export default function VendersPage() {
       }
 
       const idsToDelete = Array.isArray(idToDelete) ? idToDelete : [idToDelete]
-      
+
       const response = await axios.post<ApiResponse>(
         `${BASE_URL}/secure/Venders/delete-venders`,
         {
@@ -376,12 +376,12 @@ export default function VendersPage() {
       )
 
       if (response.data.success) {
-        const successMessage = idsToDelete.length === 1 
+        const successMessage = idsToDelete.length === 1
           ? "Vendor deleted successfully"
           : `${idsToDelete.length} vendor(s) deleted successfully`
-        
+
         handleSuccess(successMessage)
-        
+
         // Remove from selected items
         if (Array.isArray(idToDelete)) {
           setSelectedItems([])
@@ -473,7 +473,7 @@ export default function VendersPage() {
         itemCount={itemToDelete ? 1 : selectedItems.length}
         isLoading={isDeleting}
         title={itemToDelete ? "Delete Vendor" : "Delete Multiple Vendors"}
-        message={itemToDelete 
+        message={itemToDelete
           ? "Are you sure you want to delete this vendor? This action cannot be undone."
           : "Are you sure you want to delete the selected vendors? This action cannot be undone."
         }
@@ -500,15 +500,15 @@ export default function VendersPage() {
                   placeholder="Search vendor..."
                   defaultValue={searchQuery}
                   onChange={(e) => handleSearchInput(e.target.value)}
- className="w-full sm:w-64 pl-10 pr-4 py-2 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-lg text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  className="w-full sm:w-64 pl-10 pr-4 py-2 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-lg text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                 />
               </div>
               <div className="flex gap-2">
                 {selectedItems.length > 0 && (
                   <GlassButton
-                    variant="danger"
+                    variant="default"
                     onClick={handleBulkDelete}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 bg-red-500/20 hover:bg-red-500/30 text-red-500 border border-red-500/50"
                     disabled={isDeleting || editingId !== null}
                   >
                     {isDeleting ? (
@@ -618,7 +618,7 @@ export default function VendersPage() {
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[80px]">
                       S.NO
                     </th>
-                    <th 
+                    <th
                       className="py-3 px-4 text-left text-sm font-medium text-gray-300 cursor-pointer hover:text-white transition-colors min-w-[200px]"
                       onClick={() => handleSort("name")}
                     >
@@ -673,9 +673,8 @@ export default function VendersPage() {
                     data.map((item, index) => (
                       <tr
                         key={item.id}
-                        className={`border-b border-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.02)] transition-colors ${
-                          editingId === item.id ? 'bg-[rgba(59,130,246,0.05)]' : ''
-                        }`}
+                        className={`border-b border-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.02)] transition-colors ${editingId === item.id ? 'bg-[rgba(59,130,246,0.05)]' : ''
+                          }`}
                       >
                         <td className="py-3 px-4">
                           <input

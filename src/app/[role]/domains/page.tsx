@@ -34,7 +34,10 @@ import { getNavigationByRole } from "@/lib/getNavigationByRole"
 import { ApiDropdown, glassSelectStyles } from "@/common/DynamicDropdown"
 import { GlassSelect } from "@/components/glass/GlassSelect"
 
-interface DomainRecord {
+interface DomainRecord { remark_id?: number | null; deleted_at?: string;
+  deleted_at?: string;
+  
+  
   id: number
   client_name: string | null
   client_id?: number
@@ -127,7 +130,7 @@ export default function DomainsPage() {
     { value: "0", label: "No" }
   ]
 
-  const searchTimeoutRef = useRef<NodeJS.Timeout>()
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Fetch domain records
   const fetchDomainRecords = async () => {
@@ -259,14 +262,14 @@ export default function DomainsPage() {
         return
       }
 
-      const payload: AddEditDomain = {
+      const payload: any = {
         record_type: 4,
         s_id: user?.id || 6,
         product_id: newRecordData.product_id!,
         vendor_id: newRecordData.vendor_id!,
         domain_id: newRecordData.domain_id!,
         client_id: newRecordData.client_id!,
-        domain_protected: parseInt(newRecordData.domain_protected) as 0 | 1,
+        domain_protected: parseInt(newRecordData.domain_protected as string) as 0 | 1,
         expiry_date: newRecordData.expiry_date,
         renewal_date: newRecordData.renewal_date,
         status: parseInt(newRecordData.status) as 0 | 1,
@@ -342,14 +345,14 @@ export default function DomainsPage() {
         try {
           setExportLoading(true);
     
-          const payload: AddEditDomain = {
+          const payload: any = {
             record_type: 4,
             s_id: user?.id || 0,
           };
     
           const response = await apiService.exportRecord(payload,user,token);
     
-          if (response.success) {
+          if ((response as any).success) {
             toast({
               title: "Success",
               description: response.message || "Domains exported successfully",
@@ -394,7 +397,7 @@ export default function DomainsPage() {
         return
       }
 
-      const payload: AddEditDomain = {
+      const payload: any = {
         record_type: 4,
         id,
         s_id: user?.id || 6,
@@ -1203,7 +1206,7 @@ export default function DomainsPage() {
                                 <td className="py-3 px-4">
                                   <input
                                     type="text"
-                                    value={editData[item.id]?.remarks || item?.latest_remark?.remark}
+                                    value={editData[item.id]?.remarks || (item?.latest_remark?.remark as string) || ''}
                                     onChange={(e) =>
                                       handleEditChange(
                                         item.id,
@@ -1305,7 +1308,7 @@ export default function DomainsPage() {
                                   <div className="flex items-center gap-2">
                                     {/* <AlertCircle className="w-4 h-4 text-gray-400 flex-shrink-0" /> */}
                                     <span className="text-sm text-gray-300 truncate max-w-[180px]">
-                                      {item?.latest_remark?.remark}
+                                      {(item?.latest_remark?.remark as string) || ''}
                                     </span>
                                   </div>
                                 </td>

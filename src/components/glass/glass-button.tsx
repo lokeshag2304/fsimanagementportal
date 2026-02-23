@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils"
 import { ButtonHTMLAttributes, forwardRef } from "react"
 
 interface GlassButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "default" | "primary" | "ghost"
+  variant?: "default" | "primary" | "ghost" | "danger" | "secondary"
   size?: "sm" | "md" | "lg"
 }
 

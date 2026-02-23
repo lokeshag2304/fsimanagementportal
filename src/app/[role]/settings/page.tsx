@@ -5,7 +5,7 @@ import { Header } from "@/components/layout";
 import { GlassCard, GlassButton, GlassInput } from "@/components/glass";
 import { useTheme } from "@/contexts/theme-context";
 import { Slider } from "@/components/ui/slider";
-import axios from "axios";
+import axios from "@/lib/axios";
 import {
   User,
   Bell,
@@ -74,11 +74,11 @@ export default function SettingsPage() {
   });
 
   // Fetch profile data on component mount
-useEffect(() => {
-  if (user?.id) {
-    fetchProfileData();
-  }
-}, [user?.id]);
+  useEffect(() => {
+    if (user?.id) {
+      fetchProfileData();
+    }
+  }, [user?.id]);
 
 
   const fetchProfileData = async () => {
@@ -153,15 +153,15 @@ useEffect(() => {
       }
 
       if (profileData.newPassword) {
-          if (profileData.newPassword.length < 6) {
-        toast({
-          title: "Error",
-          description: "New password must be at least 6 characters",
-          variant: "destructive",
-        });
-        return;
+        if (profileData.newPassword.length < 6) {
+          toast({
+            title: "Error",
+            description: "New password must be at least 6 characters",
+            variant: "destructive",
+          });
+          return;
+        }
       }
-    }
     }
 
     setLoading(true);
@@ -169,23 +169,23 @@ useEffect(() => {
       const token = getToken();
       if (!token) return;
 
-     const formData = new FormData();
+      const formData = new FormData();
 
-formData.append("s_id", String(user?.id));
-formData.append("name", profileData.name);
-formData.append("email", profileData.email);
+      formData.append("s_id", String(user?.id));
+      formData.append("name", profileData.name);
+      formData.append("email", profileData.email);
 
-// Password change ho raha ho tab hi bhejo
-if (profileData.newPassword) {
-  formData.append("password", profileData.newPassword);
-}else{
-  formData.append("password", profileData.currentPassword);
-}
+      // Password change ho raha ho tab hi bhejo
+      if (profileData.newPassword) {
+        formData.append("password", profileData.newPassword);
+      } else {
+        formData.append("password", profileData.currentPassword);
+      }
 
-// IMAGE FILE bhejo (binary)
-if (profileFile) {
-  formData.append("profile", profileFile);
-}
+      // IMAGE FILE bhejo (binary)
+      if (profileFile) {
+        formData.append("profile", profileFile);
+      }
 
 
       const response = await axios.post(
@@ -254,23 +254,23 @@ if (profileFile) {
     { id: "appearance", name: "Appearance", icon: Palette },
   ];
 
-const handleProfileUpload = async (
-  e: React.ChangeEvent<HTMLInputElement>,
-) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
+  const handleProfileUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  // Preview immediately (UI ke liye)
-  const previewUrl = URL.createObjectURL(file);
+    // Preview immediately (UI ke liye)
+    const previewUrl = URL.createObjectURL(file);
 
-  setProfileData((prev) => ({
-    ...prev,
-    profile: previewUrl,
-  }));
+    setProfileData((prev) => ({
+      ...prev,
+      profile: previewUrl,
+    }));
 
-  // REAL FILE ko separate state me store karo (API ke liye)
-  setProfileFile(file);
-};
+    // REAL FILE ko separate state me store karo (API ke liye)
+    setProfileFile(file);
+  };
 
 
   return (
@@ -290,11 +290,10 @@ const handleProfileUpload = async (
                       key={tab.id}
                       variant="ghost"
                       onClick={() => setActiveTab(tab.id)}
-                      className={`w-full justify-start gap-2.5 h-9 px-3 text-sm font-normal glass ${
-                        activeTab === tab.id
+                      className={`w-full justify-start gap-2.5 h-9 px-3 text-sm font-normal glass ${activeTab === tab.id
                           ? "ring-1 ring-[rgba(var(--theme-primary-rgb),0.5)] text-theme"
                           : "text-[var(--text-tertiary)] hover:text-theme"
-                      }`}
+                        }`}
                     >
                       <Icon className="w-4 h-4" />
                       {tab.name}
@@ -502,8 +501,8 @@ const handleProfileUpload = async (
               </>
             )}
 
-             {/* Appearance Settings */}
-             {activeTab === "appearance" && (
+            {/* Appearance Settings */}
+            {activeTab === "appearance" && (
               <div className="space-y-6">
                 {/* Theme Mode Toggle */}
                 <GlassCard className="p-6">
@@ -524,22 +523,20 @@ const handleProfileUpload = async (
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => setThemeMode('light')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all glass ${
-                          themeMode === 'light'
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all glass ${themeMode === 'light'
                             ? "ring-1 ring-[rgba(var(--theme-primary-rgb),0.5)] text-theme"
                             : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
-                        }`}
+                          }`}
                       >
                         <Sun className="w-4 h-4" />
                         Light
                       </button>
                       <button
                         onClick={() => setThemeMode('dark')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all glass ${
-                          themeMode === 'dark'
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all glass ${themeMode === 'dark'
                             ? "ring-1 ring-[rgba(var(--theme-primary-rgb),0.5)] text-theme"
                             : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
-                        }`}
+                          }`}
                       >
                         <Moon className="w-4 h-4" />
                         Dark
@@ -564,11 +561,10 @@ const handleProfileUpload = async (
                         <button
                           key={key}
                           onClick={() => setThemeColor(key)}
-                          className={`w-6 h-6 rounded-full transition-all ${
-                            themeColor === key
+                          className={`w-6 h-6 rounded-full transition-all ${themeColor === key
                               ? "ring-2 ring-white ring-offset-1 ring-offset-black/50 scale-110"
                               : "hover:scale-110"
-                          }`}
+                            }`}
                           style={{ background: colors.gradientFrom }}
                           title={colors.name}
                         />
@@ -596,13 +592,12 @@ const handleProfileUpload = async (
                         key={preset}
                         onClick={() => preset !== "custom" && setGlassPreset(preset)}
                         disabled={preset === "custom"}
-                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all glass ${
-                          glassSettings.preset === preset
+                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all glass ${glassSettings.preset === preset
                             ? "ring-1 ring-[rgba(var(--theme-primary-rgb),0.5)] text-theme"
                             : preset === "custom"
                               ? "text-white/30 cursor-not-allowed"
                               : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
-                        }`}
+                          }`}
                       >
                         {preset.charAt(0).toUpperCase() + preset.slice(1)}
                       </button>
@@ -712,13 +707,11 @@ const handleProfileUpload = async (
                         <button
                           key={preset.color}
                           onClick={() => setBackgroundColor(preset.color)}
-                          className={`w-6 h-6 rounded-full transition-all border ${
-                            themeMode === 'dark' ? 'border-white/20' : 'border-black/20'
-                          } ${
-                            backgroundColor === preset.color
+                          className={`w-6 h-6 rounded-full transition-all border ${themeMode === 'dark' ? 'border-white/20' : 'border-black/20'
+                            } ${backgroundColor === preset.color
                               ? "ring-2 ring-[var(--theme-gradient-from)] ring-offset-1 ring-offset-[var(--theme-bg-color)] scale-110"
                               : "hover:scale-110"
-                          }`}
+                            }`}
                           style={{ backgroundColor: preset.color }}
                           title={preset.name}
                         />
@@ -744,9 +737,8 @@ const handleProfileUpload = async (
                       <button
                         key={key}
                         onClick={() => setThemeFont(key)}
-                        className={`w-full flex items-center justify-between p-4 rounded-xl glass transition-all ${
-                          themeFont === key ? "ring-1 ring-[rgba(var(--theme-primary-rgb),0.5)]" : ""
-                        }`}
+                        className={`w-full flex items-center justify-between p-4 rounded-xl glass transition-all ${themeFont === key ? "ring-1 ring-[rgba(var(--theme-primary-rgb),0.5)]" : ""
+                          }`}
                       >
                         <div className="flex items-center gap-4">
                           <span

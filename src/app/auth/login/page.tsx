@@ -19,26 +19,21 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
-  const { isAuthenticated, isLoading: authLoading, updateUser } = useAuth()
+  const { isAuthenticated, isLoading: authLoading, setAuthData } = useAuth()
   const { toast } = useToast()
   const { user } = useAuth()
 
   useEffect(() => {
-    if (user) {
-      router.push('/')
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const role = typeof window !== 'undefined' ? localStorage.getItem('role') : null;
+    if (token && role && role !== 'undefined' && role !== 'null') {
+      router.push(`/${role}/dashboard`);
     }
-  }, [user, router])
-
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (!authLoading && isAuthenticated) {
-      router.push('/')
-    }
-  }, [isAuthenticated, authLoading, router])
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     // Validation
     if (!email.trim() || !password.trim()) {
       toast({
@@ -48,7 +43,7 @@ export default function LoginPage() {
       })
       return
     }
-    
+
     if (!/\S+@\S+\.\S+/.test(email)) {
       toast({
         variant: "destructive",
@@ -57,13 +52,13 @@ export default function LoginPage() {
       })
       return
     }
-    
+
     setIsLoading(true)
-    
+
     try {
       // Call login API directly
       const response = await authApi.login(email, password)
-      
+
       if (response.status) {
         // Store user data temporarily for 2FA flow
         const userData = {
@@ -82,37 +77,37 @@ export default function LoginPage() {
           email_status: response.email_status,
           sms_status: response.sms_status
         }
-        
+
         localStorage.setItem('temp_user_data', JSON.stringify(userData))
-        
+
         // Check how many 2FA methods are active
         const activeMethods = [
           response.email_status === 1 ? 'email' : null,
           response.whatsapp_status === 1 ? 'whatsapp' : null,
           response.sms_status === 1 ? 'sms' : null
         ].filter(Boolean)
-        
+
         if (activeMethods.length === 1) {
           // Only one method active, send OTP directly
           try {
             const otpResponse = await authApi.sendOtp(
-              response.admin_id, 
+              response.admin_id,
               activeMethods[0] as 'email' | 'sms' | 'whatsapp',
               email
             )
-            
+
             if (otpResponse.status) {
               toast({
                 variant: "destructive",
                 title: "Success",
                 description: otpResponse.message || `OTP sent to your ${activeMethods[0]}`
               })
-              
+
               // Store data for verification page
               localStorage.setItem('otp_user_id', response.admin_id.toString())
               localStorage.setItem('otp_method', activeMethods[0])
               localStorage.setItem('user_email', email)
-              
+
               // Redirect to verify OTP page
               setTimeout(() => {
                 router.push('/auth/verify-otp')
@@ -138,31 +133,35 @@ export default function LoginPage() {
           router.push('/auth/select-method')
         } else {
           // No 2FA enabled, complete login immediately
-          updateUser(userData)
-          localStorage.setItem('authToken', response.token || '')
-          
+          setAuthData(userData as any, response.token || '')
+          localStorage.setItem('token', response.token || '')
+
+          // Redirect to correct role dashboard
+          const roleMap: Record<number, string> = { 1: 'SuperAdmin', 2: 'UserAdmin', 3: 'ClientAdmin' };
+          const roleName = roleMap[response.login_type] || '';
+          if (roleName) localStorage.setItem('role', roleName);
+
+          setTimeout(() => {
+            switch (response.login_type) {
+              case 1:
+                router.push('/SuperAdmin/dashboard');
+                break;
+              case 2:
+                router.push('/UserAdmin/dashboard');
+                break;
+              case 3:
+                router.push('/ClientAdmin/client-details');
+                break;
+              default:
+                router.push('/');
+            }
+          }, 1000);
+
           toast({
             variant: "destructive",
             title: "Success",
             description: "Login successful!"
           })
-          
-          // Redirect based on login type
-          setTimeout(() => {
-            switch (response.login_type) {
-              case 1:
-                router.push('/SuperAdmin/dashboard')
-                break
-              case 2:
-                router.push('/UserAdmin/dashboard')
-                break
-              case 3:
-                router.push('/ClientAdmin/client-details')
-                break
-              default:
-                router.push('/')
-            }
-          }, 1000)
         }
       } else {
         toast({

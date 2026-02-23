@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 "use client"
 import { useState, useEffect, useRef } from "react"
 import { Header } from "@/components/layout"
@@ -57,7 +58,7 @@ interface HostingRecord {
   };
   created_at: string;
   updated_at: string;
-  deleted_at: string;
+  
 }
 
 interface AddEditHosting {
@@ -120,7 +121,7 @@ export default function HostingPage() {
 
   const [totalItems, setTotalItems] = useState(0)
 
-  const searchTimeoutRef = useRef<NodeJS.Timeout>()
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Fetch hosting records
   const fetchHostingRecords = async () => {
@@ -232,7 +233,7 @@ export default function HostingPage() {
     
           const response = await apiService.exportRecord(payload,user,token);
     
-          if (response.success) {
+          if ((response as any).success) {
             toast({
               title: "Success",
               description: response.message || "Hosting exported successfully",
@@ -273,7 +274,7 @@ export default function HostingPage() {
         return
       }
 
-      const payload: AddEditHosting = {
+      const payload: any = {
         record_type: 3,
         s_id: user?.id || 6,
         product_id: newRecordData.product_id!,
@@ -368,7 +369,7 @@ export default function HostingPage() {
         return
       }
 
-      const payload: AddEditHosting = {
+      const payload: any = {
         record_type: 3,
         id,
         s_id: user?.id || 6,
@@ -1131,7 +1132,7 @@ export default function HostingPage() {
                                 <td className="py-3 px-4">
                                   <input
                                     type="text"
-                                    value={editData[item.id]?.remarks || item?.latest_remark?.remark}
+                                    value={editData[item.id]?.remarks || (item?.latest_remark?.remark as string) || ''}
                                     onChange={(e) =>
                                       handleEditChange(
                                         item.id,
@@ -1226,7 +1227,7 @@ export default function HostingPage() {
                                   <div className="flex items-center gap-2">
                                     {/* <AlertCircle className="w-4 h-4 text-gray-400 flex-shrink-0" /> */}
                                     <span className="text-sm text-gray-300 truncate max-w-[180px]">
-                                      {item?.latest_remark?.remark}
+                                      {(item?.latest_remark?.remark as string) || ''}
                                     </span>
                                   </div>
                                 </td>

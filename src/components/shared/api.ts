@@ -1,49 +1,9 @@
 // api/index.ts
-import axios from 'axios';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
-
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'accept': 'application/json, text/plain, */*',
-    'accept-language': 'en-IN,en-GB;q=0.9,en-US;q=0.8,en;q=0.7',
-    'content-type': 'application/json',
-  }
-});
-
-// Request interceptor
-api.interceptors.request.use(
-  (config) => {
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem("authToken");
-      if (token) {
-        config.headers['Authorization'] = `Bearer ${token}`;
-      }
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// Response interceptor
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response && error.response.status === 401) {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem("authToken");
-        localStorage.removeItem("user");
-        localStorage.removeItem("modules");
-        localStorage.removeItem("subadmin_id");
-        window.location.href = '/auth/login';
-      }
-    }
-    return Promise.reject(error);
-  }
-);
+// Use the global axios instance from @/lib/axios which already handles:
+// - baseURL from NEXT_PUBLIC_BASE_URL
+// - Authorization Bearer token from localStorage ("token")
+// - 401 response -> clear token + redirect to /auth/login
+import api from '@/lib/axios';
 
 // Auth APIs
 export const authApi = {
@@ -80,10 +40,10 @@ export const authApi = {
   // Verify OTP for forgot password
   verifyOtpForForget: async (otp: string, method: string, id: number) => {
     try {
-      const response = await api.post('/auth/verify-for-forget', { 
-        otp, 
-        method, 
-        id 
+      const response = await api.post('/auth/verify-for-forget', {
+        otp,
+        method,
+        id
       });
       return response.data;
     } catch (error: any) {
@@ -104,9 +64,9 @@ export const authApi = {
   // Send WhatsApp OTP for forgot password
   sendWhatsappOtp: async (number: string, whatsapp_code: string = '91') => {
     try {
-      const response = await api.post('/auth/send_whatsap_otp', { 
-        number, 
-        whatsapp_code 
+      const response = await api.post('/auth/send_whatsap_otp', {
+        number,
+        whatsapp_code
       });
       return response.data;
     } catch (error: any) {
@@ -117,9 +77,9 @@ export const authApi = {
   // Send SMS OTP for forgot password
   sendSmsOtp: async (number: string, sms_code: string = '91') => {
     try {
-      const response = await api.post('/auth/send_sms_otp', { 
-        number, 
-        sms_code 
+      const response = await api.post('/auth/send_sms_otp', {
+        number,
+        sms_code
       });
       return response.data;
     } catch (error: any) {

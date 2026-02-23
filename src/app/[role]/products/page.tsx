@@ -16,7 +16,7 @@ import {
   ChevronRight,
   ProjectorIcon
 } from "lucide-react"
-import axios from "axios"
+import axios from "@/lib/axios"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/useToast"
 import DashboardLoader from "@/common/DashboardLoader"
@@ -65,7 +65,7 @@ export default function ProductsPage() {
   const [totalProducts, setTotalProducts] = useState(0)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<number | null>(null)
-  const searchTimeoutRef = useRef<NodeJS.Timeout>()
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isMountedRef = useRef(true)
 
   // Fetch products function
@@ -507,9 +507,9 @@ export default function ProductsPage() {
               <div className="flex gap-2">
                 {selectedItems.length > 0 && (
                   <GlassButton
-                    variant="danger"
+                    variant="default"
                     onClick={handleBulkDelete}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 bg-red-500/20 hover:bg-red-500/30 text-red-500 border border-red-500/50"
                     disabled={isDeleting || editingId !== null}
                   >
                     {isDeleting ? (
@@ -881,7 +881,7 @@ export default function ProductsPage() {
 //     orderBy: "id"
 //   })
 //   const [totalProducts, setTotalProducts] = useState(0)
-//   const searchTimeoutRef = useRef<NodeJS.Timeout>()
+//   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 //   const isMountedRef = useRef(true)
 
 //   // Fetch products function - now without useCallback

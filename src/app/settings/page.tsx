@@ -24,7 +24,7 @@ import {
   Moon
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import axios from "axios"
+import axios from "@/lib/axios"
 import { useToast } from "@/hooks/useToast"
 import { useAuth } from "@/contexts/AuthContext"
 
@@ -34,7 +34,7 @@ export default function SettingsPage() {
   const { user, getToken } = useAuth()
   const token = getToken()
   const { toast } = useToast()
-  
+
   const {
     themeColor,
     setThemeColor,
@@ -51,7 +51,7 @@ export default function SettingsPage() {
     setGlassCustomValue,
     resetGlassToPreset
   } = useTheme()
-  
+
   const [glassAdvancedOpen, setGlassAdvancedOpen] = useState(false)
   const [activeTab, setActiveTab] = useState("profile")
   const [profileData, setProfileData] = useState({
@@ -74,7 +74,7 @@ export default function SettingsPage() {
 
   // Fetch profile data
   useEffect(() => {
-    if(user === null) return
+    if (user === null) return
     fetchProfileData()
   }, [user])
 
@@ -108,7 +108,7 @@ export default function SettingsPage() {
           country: data.country || "",
           profile: data.profile || ""
         })
-        
+
         // Set profile image if available
         if (data.profile) {
           setProfileImage(data.profile)
@@ -127,9 +127,11 @@ export default function SettingsPage() {
   }
 
   const handleSaveProfile = async () => {
+    if (!user) return
+
     try {
       setLoading(true)
-      
+
       // API call to update profile
       const response = await axios.post(
         `${BASE_URL}/Profile/Update-Profile`,
@@ -195,11 +197,11 @@ export default function SettingsPage() {
 
     try {
       setLoading(true)
-      
+
       const response = await axios.post(
         `${BASE_URL}/Profile/Change-Password`, // Update this endpoint as per your API
         {
-          s_id: user.id,
+          s_id: user?.id,
           current_password: passwordData.currentPassword,
           new_password: passwordData.newPassword
         },
@@ -246,7 +248,7 @@ export default function SettingsPage() {
       setLoading(true)
       const formData = new FormData()
       formData.append('profile_image', file)
-      formData.append('s_id', user.id.toString())
+      formData.append('s_id', user?.id?.toString() || '')
 
       const response = await axios.post(
         `${BASE_URL}/Profile/Update-Profile-Image`, // Update this endpoint as per your API
@@ -301,11 +303,10 @@ export default function SettingsPage() {
                       key={tab.id}
                       variant="ghost"
                       onClick={() => setActiveTab(tab.id)}
-                      className={`w-full justify-start gap-2.5 h-9 px-3 text-sm font-normal glass ${
-                        activeTab === tab.id
-                          ? "ring-1 ring-[rgba(var(--theme-primary-rgb),0.5)] text-theme"
-                          : "text-[var(--text-tertiary)] hover:text-theme"
-                      }`}
+                      className={`w-full justify-start gap-2.5 h-9 px-3 text-sm font-normal glass ${activeTab === tab.id
+                        ? "ring-1 ring-[rgba(var(--theme-primary-rgb),0.5)] text-theme"
+                        : "text-[var(--text-tertiary)] hover:text-theme"
+                        }`}
                     >
                       <Icon className="w-4 h-4" />
                       {tab.name}
@@ -436,7 +437,7 @@ export default function SettingsPage() {
                     </div>
 
                     <h4 className="text-lg font-medium text-white mt-8 mb-4">Change Password</h4>
-                    
+
                     <div>
                       <label className="block text-theme text-sm mb-2">Current Password</label>
                       <GlassInput
@@ -447,7 +448,7 @@ export default function SettingsPage() {
                         disabled={loading}
                       />
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                       <div>
                         <label className="block text-theme text-sm mb-2">New Password</label>
@@ -486,9 +487,10 @@ export default function SettingsPage() {
                           </>
                         )}
                       </GlassButton>
-                      
+
                       <GlassButton
-                        variant="secondary"
+                        variant="default"
+                        className="bg-gray-500/20 hover:bg-gray-500/30 text-gray-400 border border-gray-500/50"
                         onClick={handleChangePassword}
                         disabled={loading}
                       >

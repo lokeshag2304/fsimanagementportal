@@ -5,7 +5,7 @@ import * as React from "react"
 import {
   ToastActionElement,
   ToastProps,
-} from "@/providers/ToastProvider"
+} from "@/components/shared/ToastProvider"
 
 const TOAST_LIMIT = 3
 const TOAST_REMOVE_DELAY = 5000 // 5 seconds
@@ -37,21 +37,21 @@ type ActionType = typeof actionTypes
 
 type Action =
   | {
-      type: ActionType["ADD_TOAST"]
-      toast: ToasterToast
-    }
+    type: ActionType["ADD_TOAST"]
+    toast: ToasterToast
+  }
   | {
-      type: ActionType["UPDATE_TOAST"]
-      toast: Partial<ToasterToast>
-    }
+    type: ActionType["UPDATE_TOAST"]
+    toast: Partial<ToasterToast>
+  }
   | {
-      type: ActionType["DISMISS_TOAST"]
-      toastId?: string
-    }
+    type: ActionType["DISMISS_TOAST"]
+    toastId?: string
+  }
   | {
-      type: ActionType["REMOVE_TOAST"]
-      toastId?: string
-    }
+    type: ActionType["REMOVE_TOAST"]
+    toastId?: string
+  }
 
 interface State {
   toasts: ToasterToast[]
@@ -103,9 +103,9 @@ export const reducer = (state: State, action: Action): State => {
         toasts: state.toasts.map((t) =>
           t.id === toastId
             ? {
-                ...t,
-                open: false,
-              }
+              ...t,
+              open: false,
+            }
             : t
         ),
       }
@@ -153,7 +153,7 @@ function toast({ ...props }: Toast) {
       ...props,
       id,
       open: true,
-      onOpenChange: (open) => {
+      onOpenChange: (open: boolean) => {
         if (!open) dismiss()
       },
     },

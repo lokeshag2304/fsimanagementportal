@@ -151,21 +151,21 @@ export default function CustomerAdminPage() {
       key: "sno",
       header: "S.NO",
       className: "w-[60px]",
-      render: (_: CustomerAdmin, index: number) => (
+      render: (item: any) => (
         <span className="text-[var(--text-secondary)]">{String(index + 1)}</span>
       )
     },
     {
       key: "name",
       header: "Name",
-      render: (admin: CustomerAdmin) => (
+      render: (admin: any) => (
         <span className="text-white font-medium">{admin.name}</span>
       )
     },
     {
       key: "email",
       header: "Email",
-      render: (admin: CustomerAdmin) => (
+      render: (admin: any) => (
         <div className="flex items-center gap-2">
           <Mail className="w-4 h-4 text-[var(--text-muted)]" />
           <span className="text-[var(--text-secondary)]">{admin.email}</span>
@@ -175,7 +175,7 @@ export default function CustomerAdminPage() {
     {
       key: "profile",
       header: "Profile",
-      render: (admin: CustomerAdmin) => (
+      render: (admin: any) => (
         <div className="w-10 h-10 rounded-full overflow-hidden bg-[rgba(255,255,255,var(--ui-opacity-5))] border border-white/[0.04]">
           <Image
             src={admin.profile}
@@ -190,7 +190,7 @@ export default function CustomerAdminPage() {
     {
       key: "phone",
       header: "Phone",
-      render: (admin: CustomerAdmin) => (
+      render: (admin: any) => (
         <div className="flex items-center gap-2">
           <Phone className="w-4 h-4 text-[var(--text-muted)]" />
           <span className="text-[var(--text-secondary)]">{admin.phone}</span>
@@ -200,7 +200,7 @@ export default function CustomerAdminPage() {
     {
       key: "twoStepAuth",
       header: "Two Step Auth",
-      render: (admin: CustomerAdmin) => (
+      render: (admin: any) => (
         <div className="flex items-center gap-2">
           {admin.twoStepAuth ? (
             <ShieldCheck className="w-4 h-4 text-green-400" />
@@ -216,7 +216,7 @@ export default function CustomerAdminPage() {
     {
       key: "actions",
       header: "Actions",
-      render: (admin: CustomerAdmin) => (
+      render: (admin: any) => (
         <div className="flex items-center gap-2 justify-end">
           <button
             onClick={() => handleEdit(admin)}

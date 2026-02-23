@@ -12,6 +12,8 @@ interface GlassSelectProps {
   isSearchable?: boolean
   isClearable?: boolean
   noOptionsMessage?: () => string
+  styles?: any
+  className?: string
 }
 
 /* ================================
@@ -36,8 +38,8 @@ const glassSelectStyles = {
       borderColor: state.isFocused
         ? "rgba(59,130,246,0.6)"
         : dark
-        ? "rgba(255,255,255,0.15)"
-        : "rgba(0,0,0,0.15)",
+          ? "rgba(255,255,255,0.15)"
+          : "rgba(0,0,0,0.15)",
       color: dark ? "#ffffff" : "#111827",
       borderRadius: "0.75rem",
       minHeight: "30px",
@@ -85,10 +87,10 @@ const glassSelectStyles = {
       backgroundColor: state.isSelected
         ? "rgba(59,130,246,0.35)"
         : state.isFocused
-        ? dark
-          ? "rgba(255,255,255,0.08)"
-          : "rgba(0,0,0,0.05)"
-        : "transparent",
+          ? dark
+            ? "rgba(255,255,255,0.08)"
+            : "rgba(0,0,0,0.05)"
+          : "transparent",
       color: dark ? "#ffffff" : "#111827",
       cursor: "pointer",
       fontSize: "0.875rem",
@@ -126,7 +128,7 @@ const glassSelectStyles = {
 
   singleValue: (base: any) => ({
     ...base,
-    
+
     color: isDarkMode() ? "#ffffff" : "#111827",
     fontWeight: 500,
   }),
@@ -144,8 +146,8 @@ const glassSelectStyles = {
     color: state.isFocused
       ? "#3b82f6"
       : isDarkMode()
-      ? "rgba(255,255,255,0.45)"
-      : "rgba(0,0,0,0.45)",
+        ? "rgba(255,255,255,0.45)"
+        : "rgba(0,0,0,0.45)",
     transition: "color 0.2s ease",
     "&:hover": {
       color: "#3b82f6",
@@ -154,8 +156,8 @@ const glassSelectStyles = {
 
   clearIndicator: (base: any) => ({
     ...base,
-    padding: "5px", 
-     marginRight: "2px",
+    padding: "5px",
+    marginRight: "2px",
     color: isDarkMode()
       ? "rgba(255,255,255,0.45)"
       : "rgba(0,0,0,0.45)",

@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react"
 
-export type ThemeColor = "slate" | "orange" | "indigo" | "purple" | "emerald" | "rose" | "amber" | "blue"
+export type ThemeColor = "slate" | "orange" | "orange2" | "indigo" | "purple" | "emerald" | "rose" | "amber" | "blue"
 export type ThemeFont = "inter" | "poppins" | "roboto" | "montserrat" | "space-grotesk"
 export type GlassPreset = "off" | "subtle" | "normal" | "strong" | "custom"
 export type ThemeMode = "light" | "dark"
@@ -133,16 +133,16 @@ const themeColorMap: Record<ThemeColor, ThemeColors> = {
     name: "Slate",
     chartColors: { primary: "#94a2b4", secondary: "#b0a5c1", tertiary: "#a5b5b0" }
   },
-   orange2: {
+  orange2: {
     primary: "25 95% 55%", // Changed from "25 70% 63%"
     primaryRgb: "250, 119, 32", // Changed from "217, 152, 105"
     gradientFrom: "#fa7720", // Changed from "#d99869"
     gradientTo: "#e06610", // Changed from "#c78555"
     name: "Orange",
-    chartColors: { 
-      primary: "#fa7720", 
-      secondary: "#ff9c50", 
-      tertiary: "#ffb880" 
+    chartColors: {
+      primary: "#fa7720",
+      secondary: "#ff9c50",
+      tertiary: "#ffb880"
     }
   },
   orange: {
@@ -427,7 +427,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (!mounted) return
     const root = document.documentElement
     root.setAttribute('data-theme', themeMode)
-    
+
     if (themeMode === 'light') {
       root.style.setProperty('--text-primary', 'rgba(15, 23, 42, 1)')
       root.style.setProperty('--text-secondary', 'rgba(15, 23, 42, 0.80)')
@@ -439,7 +439,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       root.style.setProperty('--text-tertiary', `rgba(255, 255, 255, ${textColors.tertiary})`)
       root.style.setProperty('--text-muted', `rgba(255, 255, 255, ${textColors.muted})`)
     }
-    
+
     localStorage.setItem('theme-mode', themeMode)
   }, [themeMode, textColors, mounted])
 
