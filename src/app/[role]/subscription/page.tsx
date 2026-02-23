@@ -44,6 +44,8 @@ interface Subscription {
   renewal_date: string;
   amount: number | null;
   expiry_date: string;
+  deletion_date?: string | null;
+  days_to_delete?: number | null;
   days_to_expire_today: number;
   today_date: string;
   status: 0 | 1;
@@ -66,6 +68,8 @@ interface AddEditSubscription {
   renewal_date: string;
   amount: number;
   expiry_date: string;
+  deletion_date?: string;
+  days_to_delete?: number;
   status: 0 | 1;
   remarks: string;
   product_name: string;
@@ -105,6 +109,8 @@ export default function SubscriptionsPage() {
     renewal_date: "",
     amount: "",
     expiry_date: "",
+    deletion_date: "",
+    days_to_delete: "",
     status: "1" as "1" | "0",
     remarks: "",
   });
@@ -219,6 +225,8 @@ export default function SubscriptionsPage() {
       renewal_date: "",
       amount: "",
       expiry_date: "",
+      deletion_date: "",
+      days_to_delete: "",
       status: "1",
       remarks: "",
     });
@@ -264,6 +272,8 @@ export default function SubscriptionsPage() {
         renewal_date: newRecordData.renewal_date,
         amount: parseFloat(newRecordData.amount) || 0,
         expiry_date: newRecordData.expiry_date,
+        deletion_date: newRecordData.deletion_date || null,
+        days_to_delete: newRecordData.days_to_delete ? parseInt(newRecordData.days_to_delete) : null,
         status: parseInt(newRecordData.status) as 0 | 1,
         remarks: newRecordData.remarks,
         remark_id: editData[0]?.remark_id || null,
@@ -287,6 +297,8 @@ export default function SubscriptionsPage() {
           renewal_date: "",
           amount: "",
           expiry_date: "",
+          deletion_date: "",
+          days_to_delete: "",
           status: "1",
           remarks: "",
         });
@@ -389,6 +401,8 @@ export default function SubscriptionsPage() {
         renewal_date: updatedData.renewal_date || "",
         amount: updatedData.amount || 0,
         expiry_date: updatedData.expiry_date || "",
+        deletion_date: updatedData.deletion_date ?? null,
+        days_to_delete: updatedData.days_to_delete !== undefined && updatedData.days_to_delete !== "" ? Number(updatedData.days_to_delete) : null,
         status: updatedData.status ?? 1,
         remarks: updatedData.remarks || "",
         remark_id: updatedData.remark_id || null,
@@ -700,6 +714,12 @@ export default function SubscriptionsPage() {
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[100px]">
                       Days Left
                     </th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
+                      Deletion Date
+                    </th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[100px]">
+                      Days to Delete
+                    </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[100px]">
                       Status
                     </th>
@@ -717,7 +737,7 @@ export default function SubscriptionsPage() {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={11} className="py-8 text-center">
+                      <td colSpan={13} className="py-8 text-center">
                         <div className="flex flex-col items-center justify-center gap-2">
                           <DashboardLoader label="Fetch Subscriptions..." />
                         </div>
@@ -826,6 +846,32 @@ export default function SubscriptionsPage() {
                             />
                           </td>
                           <td className="py-3 px-4">
+                            <input
+                              type="date"
+                              value={newRecordData.deletion_date}
+                              onChange={(e) =>
+                                handleNewRecordChange(
+                                  "deletion_date",
+                                  e.target.value
+                                )
+                              }
+                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                              style={{ minHeight: "32px" }}
+                            />
+                          </td>
+                          <td className="py-3 px-4">
+                            <input
+                              type="number"
+                              value={newRecordData.days_to_delete}
+                              onChange={(e) =>
+                                handleNewRecordChange("days_to_delete", e.target.value)
+                              }
+                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                              style={{ minHeight: "32px" }}
+                              min="0"
+                            />
+                          </td>
+                          <td className="py-3 px-4">
                             <div className="w-40">
                               <GlassSelect
                                 options={statusOptions}
@@ -883,7 +929,7 @@ export default function SubscriptionsPage() {
                       {/* Existing Data Rows */}
                       {data.length === 0 ? (
                         <tr>
-                          <td colSpan={11} className="py-8 text-center">
+                          <td colSpan={13} className="py-8 text-center">
                             <div className="flex flex-col items-center justify-center gap-2">
                               <Package className="w-12 h-12 text-gray-400" />
                               <span className="text-gray-400">
@@ -1045,6 +1091,45 @@ export default function SubscriptionsPage() {
                                     style={{ minHeight: '32px' }}
                                   />
                                 </td>
+                                <td className="py-3 px-4">
+                                  <input
+                                    type="date"
+                                    value={
+                                      editData[item.id]?.deletion_date ??
+                                      item.deletion_date ??
+                                      ""
+                                    }
+                                    onChange={(e) =>
+                                      handleEditChange(
+                                        item.id,
+                                        "deletion_date",
+                                        e.target.value
+                                      )
+                                    }
+                                    className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                    style={{ minHeight: "32px" }}
+                                  />
+                                </td>
+                                <td className="py-3 px-4">
+                                  <input
+                                    type="number"
+                                    value={
+                                      editData[item.id]?.days_to_delete ??
+                                      item.days_to_delete ??
+                                      ""
+                                    }
+                                    onChange={(e) =>
+                                      handleEditChange(
+                                        item.id,
+                                        "days_to_delete",
+                                        e.target.value
+                                      )
+                                    }
+                                    className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                    style={{ minHeight: "32px" }}
+                                    min="0"
+                                  />
+                                </td>
                               </>
                             ) : (
                               <>
@@ -1084,6 +1169,12 @@ export default function SubscriptionsPage() {
                                       {calculateDays(item.expiry_date)} days
                                     </div>
                                   )}
+                                </td>
+                                <td className="py-3 px-4 text-sm text-gray-300">
+                                  {item.deletion_date ? formatDate(item.deletion_date) : "--"}
+                                </td>
+                                <td className="py-3 px-4 text-sm text-gray-300">
+                                  {item.days_to_delete !== null && item.days_to_delete !== undefined ? item.days_to_delete : "--"}
                                 </td>
                               </>
                             )}

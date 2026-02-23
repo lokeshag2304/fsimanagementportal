@@ -35,8 +35,9 @@ import { getNavigationByRole } from "@/lib/getNavigationByRole";
 import { ApiDropdown, glassSelectStyles } from "@/common/DynamicDropdown";
 import { GlassSelect } from "@/components/glass/GlassSelect";
 
-interface EmailRecord { remark_id?: number | null;
-  
+interface EmailRecord {
+  remark_id?: number | null;
+
   id: number;
   client_name: string | null;
   client_id?: number;
@@ -55,6 +56,8 @@ interface EmailRecord { remark_id?: number | null;
   today_date: string;
   status: 0 | 1;
   remarks: string;
+  deletion_date?: string | null;
+  days_to_delete?: number | null;
   created_at: string;
   updated_at: string;
   latest_remark?: {
@@ -79,6 +82,8 @@ interface AddEditEmail {
   status: 0 | 1;
   remarks: string;
   remarks_id?: number;
+  deletion_date?: string;
+  days_to_delete?: number;
 }
 
 export default function EmailsPage() {
@@ -106,6 +111,7 @@ export default function EmailsPage() {
     client_name: "",
     product_id: null as number | null,
     vendor_id: null as number | null,
+    vendor_name: "",
     product_name: "",
     quantity: "",
     bill_type: "yearly",
@@ -113,6 +119,8 @@ export default function EmailsPage() {
     expiry_date: "",
     status: "1" as "1" | "0",
     remarks: "",
+    deletion_date: "",
+    days_to_delete: "",
   });
 
   const [editData, setEditData] = useState<
@@ -210,6 +218,7 @@ export default function EmailsPage() {
       client_name: "",
       product_id: null,
       vendor_id: null,
+      vendor_name: "",
       product_name: "",
       quantity: "",
       bill_type: "yearly",
@@ -217,6 +226,8 @@ export default function EmailsPage() {
       expiry_date: "",
       status: "1",
       remarks: "",
+      deletion_date: "",
+      days_to_delete: "",
     });
   };
 
@@ -230,6 +241,7 @@ export default function EmailsPage() {
       client_name: "",
       product_id: null,
       vendor_id: null,
+      vendor_name: "",
       product_name: "",
       quantity: "",
       bill_type: "yearly",
@@ -237,6 +249,8 @@ export default function EmailsPage() {
       expiry_date: "",
       status: "1",
       remarks: "",
+      deletion_date: "",
+      days_to_delete: "",
     });
   };
 
@@ -273,6 +287,8 @@ export default function EmailsPage() {
         start_date: newRecordData.start_date,
         end_date: "", // Empty as per requirement
         expiry_date: newRecordData.expiry_date,
+        deletion_date: newRecordData.deletion_date || null,
+        days_to_delete: newRecordData.days_to_delete ? parseInt(newRecordData.days_to_delete) : null,
         status: parseInt(newRecordData.status) as 0 | 1,
         remarks: newRecordData.remarks,
       };
@@ -295,6 +311,7 @@ export default function EmailsPage() {
           client_name: "",
           product_id: null,
           vendor_id: null,
+          vendor_name: "",
           product_name: "",
           quantity: "",
           bill_type: "yearly",
@@ -302,6 +319,8 @@ export default function EmailsPage() {
           expiry_date: "",
           status: "1",
           remarks: "",
+          deletion_date: "",
+          days_to_delete: "",
         });
       } else {
         toast({
@@ -334,6 +353,8 @@ export default function EmailsPage() {
         vendor_id: record.vendor_id || undefined,
         start_date: record.start_date || "",
         expiry_date: record.expiry_date || "",
+        deletion_date: record.deletion_date || null,
+        days_to_delete: record.days_to_delete ?? null,
         remarks: record.remarks || "",
         remark_id: (record.latest_remark?.id || null) as any,
       },
@@ -378,6 +399,8 @@ export default function EmailsPage() {
         start_date: updatedData.start_date!,
         end_date: "", // Empty as per requirement
         expiry_date: updatedData.expiry_date!,
+        deletion_date: updatedData.deletion_date || null,
+        days_to_delete: updatedData.days_to_delete !== undefined && updatedData.days_to_delete !== "" ? Number(updatedData.days_to_delete) : null,
         status: updatedData.status ?? 1,
         remarks: updatedData.remarks || "",
         remark_id: updatedData.remark_id,
@@ -626,7 +649,7 @@ export default function EmailsPage() {
 
   const startItem = pagination.page * pagination.rowsPerPage + 1;
 
-  const handleViewDetails = (item: Subscription) => {
+  const handleViewDetails = (item: any) => {
     if (!item.id) {
       toast({
         title: "Error",
@@ -756,6 +779,12 @@ export default function EmailsPage() {
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
                       Days to Expire
                     </th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
+                      Deletion Date
+                    </th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
+                      Days to Delete
+                    </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
                       Status
                     </th>
@@ -773,7 +802,7 @@ export default function EmailsPage() {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={13} className="text-center">
+                      <td colSpan={15} className="text-center">
                         <div className="flex flex-col items-center justify-center">
                           <DashboardLoader label="Loading email records..." />
                         </div>
@@ -957,10 +986,29 @@ export default function EmailsPage() {
                           <td className="py-3 px-4">
                             <input
                               type="number"
-                              value={calculateDays(newRecordData.expiry_date)}
+                              value={String(calculateDays(newRecordData.expiry_date)) === "NaN" ? "" : calculateDays(newRecordData.expiry_date)}
                               readOnly
                               className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-xs cursor-not-allowed"
                               style={{ minHeight: "32px" }}
+                            />
+                          </td>
+                          <td className="py-3 px-4">
+                            <input
+                              type="date"
+                              value={newRecordData.deletion_date}
+                              onChange={(e) => handleNewRecordChange("deletion_date", e.target.value)}
+                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                              style={{ minHeight: "32px" }}
+                            />
+                          </td>
+                          <td className="py-3 px-4">
+                            <input
+                              type="number"
+                              value={newRecordData.days_to_delete}
+                              onChange={(e) => handleNewRecordChange("days_to_delete", e.target.value)}
+                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                              style={{ minHeight: "32px" }}
+                              min="0"
                             />
                           </td>
                           <td className="py-1 px-2">
@@ -1035,7 +1083,7 @@ export default function EmailsPage() {
                       {/* Existing Data Rows */}
                       {data.length === 0 ? (
                         <tr>
-                          <td colSpan={13} className="py-8 text-center">
+                          <td colSpan={15} className="py-8 text-center">
                             <div className="flex flex-col items-center justify-center gap-2">
                               <Mail className="w-12 h-12 text-gray-400" />
                               <span className="text-gray-400">
@@ -1280,13 +1328,29 @@ export default function EmailsPage() {
                                 <td className="py-3 px-4">
                                   <input
                                     type="number"
-                                    value={calculateDays(
-                                      editData[item.id]?.expiry_date ||
-                                      item.expiry_date,
-                                    )}
+                                    value={String(calculateDays(editData[item.id]?.expiry_date || item.expiry_date)) === "NaN" ? "" : calculateDays(editData[item.id]?.expiry_date || item.expiry_date)}
                                     readOnly
                                     className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-sm cursor-not-allowed"
                                     style={{ minHeight: "32px" }}
+                                  />
+                                </td>
+                                <td className="py-3 px-4">
+                                  <input
+                                    type="date"
+                                    value={editData[item.id]?.deletion_date ?? item.deletion_date ?? ""}
+                                    onChange={(e) => handleEditChange(item.id, "deletion_date", e.target.value)}
+                                    className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                    style={{ minHeight: "32px" }}
+                                  />
+                                </td>
+                                <td className="py-3 px-4">
+                                  <input
+                                    type="number"
+                                    value={editData[item.id]?.days_to_delete ?? item.days_to_delete ?? ""}
+                                    onChange={(e) => handleEditChange(item.id, "days_to_delete", e.target.value)}
+                                    className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                    style={{ minHeight: "32px" }}
+                                    min="0"
                                   />
                                 </td>
                                 <td className="py-1 px-2">
@@ -1391,14 +1455,14 @@ export default function EmailsPage() {
                                 <td className="py-3 px-4">
                                   <div
                                     className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${getBillTypeColor(item.bill_type)} ${item.bill_type.toLowerCase() === "yearly"
-                                        ? "bg-blue-500/20 border-blue-500/20"
+                                      ? "bg-blue-500/20 border-blue-500/20"
+                                      : item.bill_type.toLowerCase() ===
+                                        "monthly"
+                                        ? "bg-purple-500/20 border-purple-500/20"
                                         : item.bill_type.toLowerCase() ===
-                                          "monthly"
-                                          ? "bg-purple-500/20 border-purple-500/20"
-                                          : item.bill_type.toLowerCase() ===
-                                            "quarterly"
-                                            ? "bg-yellow-500/20 border-yellow-500/20"
-                                            : "bg-gray-500/20 border-gray-500/20"
+                                          "quarterly"
+                                          ? "bg-yellow-500/20 border-yellow-500/20"
+                                          : "bg-gray-500/20 border-gray-500/20"
                                       }`}
                                   >
                                     {/* <CreditCard className="w-3 h-3" /> */}
@@ -1421,10 +1485,10 @@ export default function EmailsPage() {
                                 <td className="py-3 px-4">
                                   <div
                                     className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${calculateDays(item.expiry_date) < 0
-                                        ? "bg-red-500/20 text-red-400 border-red-500/20"
-                                        : calculateDays(item.expiry_date) <= 30
-                                          ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/20"
-                                          : "bg-green-500/20 text-green-400 border-green-500/20"
+                                      ? "bg-red-500/20 text-red-400 border-red-500/20"
+                                      : calculateDays(item.expiry_date) <= 30
+                                        ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/20"
+                                        : "bg-green-500/20 text-green-400 border-green-500/20"
                                       }`}
                                   >
 
@@ -1434,8 +1498,8 @@ export default function EmailsPage() {
                                 <td className="py-3 px-4">
                                   <div
                                     className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${getStatusColor(item.status)} ${item.status === 1
-                                        ? "bg-green-500/20 border-green-500/20"
-                                        : "bg-red-500/20 border-red-500/20"
+                                      ? "bg-green-500/20 border-green-500/20"
+                                      : "bg-red-500/20 border-red-500/20"
                                       }`}
                                   >
                                     {getStatusIcon(item.status)}

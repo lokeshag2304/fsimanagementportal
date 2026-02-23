@@ -34,10 +34,10 @@ import { getNavigationByRole } from "@/lib/getNavigationByRole"
 import { ApiDropdown, glassSelectStyles } from "@/common/DynamicDropdown"
 import { GlassSelect } from "@/components/glass/GlassSelect"
 
-interface DomainRecord { remark_id?: number | null; deleted_at?: string;
+interface DomainRecord {
   deleted_at?: string;
-  
-  
+  deletion_date?: string | null;
+  days_to_delete?: number | null;
   id: number
   client_name: string | null
   client_id?: number
@@ -105,9 +105,12 @@ export default function DomainsPage() {
     client_name: "",
     product_id: null as number | null,
     vendor_id: null as number | null,
+    vendor_name: "",
     product_name: "",
     expiry_date: "",
     renewal_date: "",
+    deletion_date: "",
+    days_to_delete: "",
     domain_protected: "1" as "1" | "0",
     status: "1" as "1" | "0",
     remarks: "",
@@ -203,9 +206,12 @@ export default function DomainsPage() {
       client_name: "",
       product_id: null,
       vendor_id: null,
+      vendor_name: "",
       product_name: "",
       expiry_date: "",
       renewal_date: today,
+      deletion_date: "",
+      days_to_delete: "",
       domain_protected: "1",
       status: "1",
       remarks: "",
@@ -223,9 +229,12 @@ export default function DomainsPage() {
       client_name: "",
       product_id: null,
       vendor_id: null,
+      vendor_name: "",
       product_name: "",
       expiry_date: "",
       renewal_date: "",
+      deletion_date: "",
+      days_to_delete: "",
       domain_protected: "1",
       status: "1",
       remarks: "",
@@ -272,6 +281,8 @@ export default function DomainsPage() {
         domain_protected: parseInt(newRecordData.domain_protected as string) as 0 | 1,
         expiry_date: newRecordData.expiry_date,
         renewal_date: newRecordData.renewal_date,
+        deletion_date: newRecordData.deletion_date || null,
+        days_to_delete: newRecordData.days_to_delete ? parseInt(newRecordData.days_to_delete) : null,
         status: parseInt(newRecordData.status) as 0 | 1,
         remarks: newRecordData.remarks,
         deleted_at: newRecordData.deleted_at
@@ -295,9 +306,12 @@ export default function DomainsPage() {
           client_name: "",
           product_id: null,
           vendor_id: null,
+          vendor_name: "",
           product_name: "",
           expiry_date: "",
           renewal_date: new Date().toISOString().split('T')[0],
+          deletion_date: "",
+          days_to_delete: "",
           domain_protected: "1",
           status: "1",
           remarks: "",
@@ -336,7 +350,9 @@ export default function DomainsPage() {
         remarks: record.remarks || "",
         remark_id: record?.latest_remark?.id || null,
         domain_protected: record.domain_protected?.toString() as "0" | "1",
-        deleted_at: record.deleted_at || ""
+        deleted_at: record.deleted_at || "",
+        deletion_date: record.deletion_date || null,
+        days_to_delete: record.days_to_delete ?? null
       }
     })
   }
@@ -410,6 +426,8 @@ export default function DomainsPage() {
   ) as 0 | 1,
         expiry_date: updatedData.expiry_date!,
         renewal_date: updatedData.renewal_date!,
+        deletion_date: updatedData.deletion_date || null,
+        days_to_delete: updatedData.days_to_delete !== undefined && updatedData.days_to_delete !== "" ? Number(updatedData.days_to_delete) : null,
         status: updatedData.status ?? 1,
         remarks: updatedData.remarks || "",
         remark_id: updatedData.remark_id || null,
@@ -734,7 +752,7 @@ export default function DomainsPage() {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={11} className="py-8 text-center">
+                      <td colSpan={13} className="py-8 text-center">
                         <div className="flex flex-col items-center justify-center gap-2">
                          <DashboardLoader label="Loading domain records..." />
                         </div>
@@ -870,7 +888,7 @@ export default function DomainsPage() {
                           <td className="py-3 px-4">
                             <input
                               type="number"
-                              value={calculateDays(newRecordData.expiry_date)}
+                              value={String(calculateDays(newRecordData.expiry_date)) === "NaN" ? "" : calculateDays(newRecordData.expiry_date)}
                               readOnly
                               className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-sm cursor-not-allowed"
                               style={{ minHeight: '32px' }}
@@ -1145,10 +1163,29 @@ export default function DomainsPage() {
                                 <td className="py-3 px-4">
                                   <input
                                     type="number"
-                                    value={calculateDays(editData[item.id]?.expiry_date || item.expiry_date)}
+                                    value={String(calculateDays(editData[item.id]?.expiry_date || item.expiry_date)) === "NaN" ? "" : calculateDays(editData[item.id]?.expiry_date || item.expiry_date)}
                                     readOnly
                                     className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-sm cursor-not-allowed"
                                     style={{ minHeight: '32px' }}
+                                  />
+                                </td>
+                                <td className="py-3 px-4">
+                                  <input
+                                    type="date"
+                                    value={editData[item.id]?.deletion_date ?? item.deletion_date ?? ""}
+                                    onChange={(e) => handleEditChange(item.id, "deletion_date", e.target.value)}
+                                    className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                    style={{ minHeight: "32px" }}
+                                  />
+                                </td>
+                                <td className="py-3 px-4">
+                                  <input
+                                    type="number"
+                                    value={editData[item.id]?.days_to_delete ?? item.days_to_delete ?? ""}
+                                    onChange={(e) => handleEditChange(item.id, "days_to_delete", e.target.value)}
+                                    className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                    style={{ minHeight: "32px" }}
+                                    min="0"
                                   />
                                 </td>
                                 <td className="py-3 px-4">
@@ -1287,6 +1324,12 @@ export default function DomainsPage() {
                                     {/* <Clock className="w-3 h-3" /> */}
                                     {calculateDays(item.expiry_date)} days
                                   </div>
+                                </td>
+                                <td className="py-3 px-4 text-sm text-gray-300">
+                                  {item.deletion_date ? formatDate(item.deletion_date) : "--"}
+                                </td>
+                                <td className="py-3 px-4 text-sm text-gray-300">
+                                  {item.days_to_delete !== null && item.days_to_delete !== undefined ? item.days_to_delete : "--"}
                                 </td>
                                 <td className="py-3 px-4">
                                   <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${getDomainProtectColor(item.domain_protected)} ${

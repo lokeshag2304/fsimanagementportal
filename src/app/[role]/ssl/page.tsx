@@ -1,5 +1,5 @@
-// src/app/[role]/ssl/page.tsx
 "use client";
+// src/app/[role]/ssl/page.tsx
 
 import { useState, useEffect, useRef } from "react";
 import { Header } from "@/components/layout";
@@ -40,6 +40,8 @@ interface SSLRecord {
   s_id: number;
   expiry_date: string;
   days_to_expire_today: number;
+  deletion_date?: string | null;
+  days_to_delete?: number | null;
   today_date: string;
   status: 0 | 1;
   updated_at_custom: string;
@@ -74,6 +76,8 @@ interface AddEditSSL {
   amount: number;
   renewal_date: string;
   expiry_date: string;
+  deletion_date?: string;
+  days_to_delete?: number;
   status: 0 | 1;
   updated_at_custom: string;
   remarks: string;
@@ -120,10 +124,13 @@ export default function SSLPage() {
     client_name: "",
     product_id: null as number | null,
     vendor_id: null as number | null,
+    vendor_name: "",
     product_name: "",
     amount: "",
     renewal_date: "",
     expiry_date: "",
+    deletion_date: "",
+    days_to_delete: "",
     status: "1" as "1" | "0",
     remarks: "",
     updated_at_custom: new Date().toISOString().split("T")[0],
@@ -204,10 +211,13 @@ export default function SSLPage() {
       client_name: "",
       product_id: null,
       vendor_id: null,
+      vendor_name: "",
       product_name: "",
       amount: "",
       renewal_date: "",
       expiry_date: "",
+      deletion_date: "",
+      days_to_delete: "",
       status: "1",
       remarks: "",
       updated_at_custom: new Date().toISOString().split("T")[0],
@@ -250,6 +260,8 @@ export default function SSLPage() {
         amount: parseFloat(newRecordData.amount) || 0,
         renewal_date: newRecordData.renewal_date,
         expiry_date: newRecordData.expiry_date,
+        deletion_date: newRecordData.deletion_date || null,
+        days_to_delete: newRecordData.days_to_delete ? parseInt(newRecordData.days_to_delete) : null,
         status: parseInt(newRecordData.status) as 0 | 1,
         remarks: newRecordData.remarks,
         updated_at_custom: newRecordData.updated_at_custom,
@@ -273,10 +285,13 @@ export default function SSLPage() {
           client_name: "",
           product_id: null,
           vendor_id: null,
+          vendor_name: "",
           product_name: "",
           amount: "",
           renewal_date: "",
           expiry_date: "",
+          deletion_date: "",
+          days_to_delete: "",
           status: "1",
           remarks: "",
           updated_at_custom: new Date().toISOString().split("T")[0],
@@ -308,6 +323,8 @@ export default function SSLPage() {
         ...record,
         renewal_date: record.renewal_date || "",
         amount: record.amount || 0,
+        deletion_date: record.deletion_date || null,
+        days_to_delete: record.days_to_delete ?? null,
         remark_id: record?.latest_remark?.id || null,
       },
     });
@@ -348,6 +365,8 @@ export default function SSLPage() {
         amount: updatedData.amount || 0,
         renewal_date: updatedData.renewal_date!,
         expiry_date: updatedData.expiry_date!,
+        deletion_date: updatedData.deletion_date || null,
+        days_to_delete: updatedData.days_to_delete !== undefined && updatedData.days_to_delete !== "" ? Number(updatedData.days_to_delete) : null,
         status: updatedData.status ?? 1,
         remarks: updatedData.remarks || "",
         remark_id: updatedData.remark_id || null,
@@ -384,42 +403,42 @@ export default function SSLPage() {
     }
   };
 
-    const handleExport = async () => {
-      try {
-        setExportLoading(true);
-  
-        const payload: any = {
-          record_type: 2,
-          s_id: user?.id || 0,
-        };
-  
-        const response = await apiService.exportRecord(payload,user,token);
-  
-        if ((response as any).success) {
-          toast({
-            title: "Success",
-            description: response.message || "SSL exported successfully",
-            variant: "default",
-          });
-          downloadBase64File(response.data.base64, response.data.filename);
-        } else {
-          toast({
-            title: "Error",
-            description: response.message || "Failed to export ssl",
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
-        console.error("Error exporting ssl:", error);
+  const handleExport = async () => {
+    try {
+      setExportLoading(true);
+
+      const payload: any = {
+        record_type: 2,
+        s_id: user?.id || 0,
+      };
+
+      const response = await apiService.exportRecord(payload, user, token);
+
+      if ((response as any).success) {
+        toast({
+          title: "Success",
+          description: response.message || "SSL exported successfully",
+          variant: "default",
+        });
+        downloadBase64File(response.data.base64, response.data.filename);
+      } else {
         toast({
           title: "Error",
-          description: "Failed to export ssl",
+          description: response.message || "Failed to export ssl",
           variant: "destructive",
         });
-      } finally {
-        setExportLoading(false);
       }
-    };
+    } catch (error) {
+      console.error("Error exporting ssl:", error);
+      toast({
+        title: "Error",
+        description: "Failed to export ssl",
+        variant: "destructive",
+      });
+    } finally {
+      setExportLoading(false);
+    }
+  };
 
   // Cancel Edit
   const handleCancelEdit = () => {
@@ -688,14 +707,14 @@ export default function SSLPage() {
                     Add SSL Certificate
                   </GlassButton>
                 )}
-                 <GlassButton
-                    variant="primary"
-                    onClick={handleExport}
-                    className="flex items-center gap-2"
-                    disabled={exportLoading}
-                  >
-                     {exportLoading ? ("Exporting...") : (" Export" )}
-                  </GlassButton>
+                <GlassButton
+                  variant="primary"
+                  onClick={handleExport}
+                  className="flex items-center gap-2"
+                  disabled={exportLoading}
+                >
+                  {exportLoading ? ("Exporting...") : (" Export")}
+                </GlassButton>
               </div>
             </div>
           </div>
@@ -742,6 +761,12 @@ export default function SSLPage() {
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
                       Days to Expire
                     </th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
+                      Deletion Date
+                    </th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
+                      Days to Delete
+                    </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
                       Status
                     </th>
@@ -759,7 +784,7 @@ export default function SSLPage() {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={13} className="py-8 text-center">
+                      <td colSpan={15} className="py-8 text-center">
                         <div className="flex flex-col items-center justify-center gap-2">
                           <DashboardLoader label="Fetching SSL Certificates..." />
                         </div>
@@ -780,9 +805,9 @@ export default function SSLPage() {
                               value={
                                 newRecordData.domain_id
                                   ? {
-                                      value: newRecordData.domain_id,
-                                      label: newRecordData.domain_name,
-                                    }
+                                    value: newRecordData.domain_id,
+                                    label: newRecordData.domain_name,
+                                  }
                                   : null
                               }
                               onChange={(option) => {
@@ -805,9 +830,9 @@ export default function SSLPage() {
                               value={
                                 newRecordData.client_id
                                   ? {
-                                      value: newRecordData.client_id,
-                                      label: newRecordData.client_name,
-                                    }
+                                    value: newRecordData.client_id,
+                                    label: newRecordData.client_name,
+                                  }
                                   : null
                               }
                               onChange={(option) => {
@@ -830,9 +855,9 @@ export default function SSLPage() {
                               value={
                                 newRecordData.product_id
                                   ? {
-                                      value: newRecordData.product_id,
-                                      label: newRecordData.product_name,
-                                    }
+                                    value: newRecordData.product_id,
+                                    label: newRecordData.product_name,
+                                  }
                                   : null
                               }
                               onChange={(option) => {
@@ -855,9 +880,9 @@ export default function SSLPage() {
                               value={
                                 newRecordData.vendor_id
                                   ? {
-                                      value: newRecordData.vendor_id,
-                                      label: newRecordData.vendor_name,
-                                    }
+                                    value: newRecordData.vendor_id,
+                                    label: newRecordData.vendor_name,
+                                  }
                                   : null
                               }
                               onChange={(option) => {
@@ -919,10 +944,36 @@ export default function SSLPage() {
                           <td className="py-3 px-4 text-sm text-gray-300">
                             <input
                               type="number"
-                              value={calculateDays(newRecordData.expiry_date)}
+                              value={String(calculateDays(newRecordData.expiry_date)) === "NaN" ? "" : calculateDays(newRecordData.expiry_date)}
                               readOnly
                               className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-xs cursor-not-allowed"
                               style={{ minHeight: "32px" }}
+                            />
+                          </td>
+                          <td className="py-3 px-4">
+                            <input
+                              type="date"
+                              value={newRecordData.deletion_date}
+                              onChange={(e) =>
+                                handleNewRecordChange(
+                                  "deletion_date",
+                                  e.target.value,
+                                )
+                              }
+                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                              style={{ minHeight: "32px" }}
+                            />
+                          </td>
+                          <td className="py-3 px-4">
+                            <input
+                              type="number"
+                              value={newRecordData.days_to_delete}
+                              onChange={(e) =>
+                                handleNewRecordChange("days_to_delete", e.target.value)
+                              }
+                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                              style={{ minHeight: "32px" }}
+                              min="0"
                             />
                           </td>
                           <td className="py-3 px-4">
@@ -951,8 +1002,8 @@ export default function SSLPage() {
                             />
                           </td>
                           <td className="py-3 px-4 text-sm text-gray-300">
-                            {newRecordData?.updated_at
-                              ? newRecordData?.updated_at
+                            {newRecordData?.updated_at_custom
+                              ? newRecordData?.updated_at_custom
                               : "--"}
                           </td>
                           <td className="py-3 px-4">
@@ -985,7 +1036,7 @@ export default function SSLPage() {
                       {/* Existing Data Rows */}
                       {data.length === 0 ? (
                         <tr>
-                          <td colSpan={13} className="py-8 text-center">
+                          <td colSpan={15} className="py-8 text-center">
                             <div className="flex flex-col items-center justify-center gap-2">
                               <Shield className="w-12 h-12 text-gray-400" />
                               <span className="text-gray-400">
@@ -1006,9 +1057,8 @@ export default function SSLPage() {
                         data.map((item, index) => (
                           <tr
                             key={item.id}
-                            className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors ${
-                              editingId === item.id ? "bg-blue-500/5" : ""
-                            }`}
+                            className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors ${editingId === item.id ? "bg-blue-500/5" : ""
+                              }`}
                           >
                             <td className="py-3 px-4">
                               <input
@@ -1034,12 +1084,12 @@ export default function SSLPage() {
                                     value={
                                       editData[item.id]?.domain_id
                                         ? {
-                                            value:
-                                              editData[item.id]?.domain_id!,
-                                            label:
-                                              editData[item.id]?.domain_name ||
-                                              "",
-                                          }
+                                          value:
+                                            editData[item.id]?.domain_id!,
+                                          label:
+                                            editData[item.id]?.domain_name ||
+                                            "",
+                                        }
                                         : null
                                     }
                                     onChange={(option) => {
@@ -1066,12 +1116,12 @@ export default function SSLPage() {
                                     value={
                                       editData[item.id]?.client_id
                                         ? {
-                                            value:
-                                              editData[item.id]?.client_id!,
-                                            label:
-                                              editData[item.id]?.client_name ||
-                                              "",
-                                          }
+                                          value:
+                                            editData[item.id]?.client_id!,
+                                          label:
+                                            editData[item.id]?.client_name ||
+                                            "",
+                                        }
                                         : null
                                     }
                                     onChange={(option) => {
@@ -1098,12 +1148,12 @@ export default function SSLPage() {
                                     value={
                                       editData[item.id]?.product_id
                                         ? {
-                                            value:
-                                              editData[item.id]?.product_id!,
-                                            label:
-                                              editData[item.id]?.product_name ||
-                                              "",
-                                          }
+                                          value:
+                                            editData[item.id]?.product_id!,
+                                          label:
+                                            editData[item.id]?.product_name ||
+                                            "",
+                                        }
                                         : null
                                     }
                                     onChange={(option) => {
@@ -1128,12 +1178,12 @@ export default function SSLPage() {
                                     value={
                                       editData[item.id]?.vendor_id
                                         ? {
-                                            value:
-                                              editData[item.id]?.vendor_id!,
-                                            label:
-                                              editData[item.id]?.vendor_name ||
-                                              "",
-                                          }
+                                          value:
+                                            editData[item.id]?.vendor_id!,
+                                          label:
+                                            editData[item.id]?.vendor_name ||
+                                            "",
+                                        }
                                         : null
                                     }
                                     onChange={(option) => {
@@ -1216,23 +1266,22 @@ export default function SSLPage() {
                                 {/* Days to Expire (Read-only in edit mode) */}
                                 <td className="py-3 px-4 text-xs text-gray-300">
                                   <div
-                                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${
-                                      calculateDays(
+                                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${calculateDays(
+                                      editData[item.id]?.expiry_date ||
+                                      item.expiry_date,
+                                    ) < 0
+                                      ? "bg-red-500/20 text-red-400 border-red-500/20"
+                                      : calculateDays(
                                         editData[item.id]?.expiry_date ||
-                                          item.expiry_date,
-                                      ) < 0
-                                        ? "bg-red-500/20 text-red-400 border-red-500/20"
-                                        : calculateDays(
-                                              editData[item.id]?.expiry_date ||
-                                                item.expiry_date,
-                                            ) <= 30
-                                          ? "bg-orange-500/20 text-orange-400 border-orange-500/20"
-                                          : "bg-green-500/20 text-green-400 border-green-500/20"
-                                    }`}
+                                        item.expiry_date,
+                                      ) <= 30
+                                        ? "bg-orange-500/20 text-orange-400 border-orange-500/20"
+                                        : "bg-green-500/20 text-green-400 border-green-500/20"
+                                      }`}
                                   >
                                     {calculateDays(
                                       editData[item.id]?.expiry_date ||
-                                        item.expiry_date,
+                                      item.expiry_date,
                                     )}{" "}
                                     days
                                   </div>
@@ -1352,13 +1401,12 @@ export default function SSLPage() {
                                 {/* Days to Expire */}
                                 <td className="py-3 px-4">
                                   <div
-                                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${
-                                      calculateDays(item.expiry_date) < 0
-                                        ? "bg-red-500/20 text-red-400 border-red-500/20"
-                                        : calculateDays(item.expiry_date) <= 30
-                                          ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/20"
-                                          : "bg-green-500/20 text-green-400 border-green-500/20"
-                                    }`}
+                                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${calculateDays(item.expiry_date) < 0
+                                      ? "bg-red-500/20 text-red-400 border-red-500/20"
+                                      : calculateDays(item.expiry_date) <= 30
+                                        ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/20"
+                                        : "bg-green-500/20 text-green-400 border-green-500/20"
+                                      }`}
                                   >
                                     {/* <Clock className="w-3 h-3" /> */}
                                     {calculateDays(item.expiry_date)} days
@@ -1368,11 +1416,10 @@ export default function SSLPage() {
                                 {/* Status */}
                                 <td className="py-3 px-4">
                                   <div
-                                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${
-                                      item.status === 1
-                                        ? "bg-green-500/20 text-green-400 border-green-500/20"
-                                        : "bg-red-500/20 text-red-400 border-red-500/20"
-                                    }`}
+                                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${item.status === 1
+                                      ? "bg-green-500/20 text-green-400 border-green-500/20"
+                                      : "bg-red-500/20 text-red-400 border-red-500/20"
+                                      }`}
                                   >
                                     {getStatusIcon(item.status)}
                                     {getStatusText(item.status)}

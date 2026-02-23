@@ -1,5 +1,5 @@
-import { ReactNode } from 'react';
 "use client"
+import { ReactNode } from 'react';
 import { useState, useEffect, useRef } from "react"
 import { Header } from "@/components/layout"
 import { GlassCard, GlassButton } from "@/components/glass"
@@ -35,7 +35,7 @@ import { ApiDropdown, glassSelectStyles } from "@/common/DynamicDropdown"
 import { GlassSelect } from "@/components/glass/GlassSelect"
 
 interface HostingRecord {
-  deleted_at: ReactNode
+  deleted_at?: string;
   id: number
   client_name: string | null
   client_id?: number
@@ -48,6 +48,8 @@ interface HostingRecord {
   expiry_date: string
   amount: number | null
   days_to_expire_today: number
+  deletion_date?: string | null;
+  days_to_delete?: number | null;
   today_date: string
   status: 0 | 1
   remarks: string;
@@ -58,7 +60,7 @@ interface HostingRecord {
   };
   created_at: string;
   updated_at: string;
-  
+
 }
 
 interface AddEditHosting {
@@ -74,12 +76,14 @@ interface AddEditHosting {
   status: 0 | 1
   remarks: string
   remark_id: number;
-  deleted_at: string
+  deleted_at: string;
+  deletion_date?: string;
+  days_to_delete?: number;
 }
 
 export default function HostingPage() {
-   const {user, getToken } = useAuth()
-    const token = getToken();
+  const { user, getToken } = useAuth()
+  const token = getToken();
   const navigationTabs = getNavigationByRole(user?.role)
   const { toast } = useToast()
   const router = useRouter()
@@ -102,12 +106,15 @@ export default function HostingPage() {
     client_name: "",
     product_id: null as number | null,
     vendor_id: null as number | null,
+    vendor_name: "",
     product_name: "",
     expiry_date: "",
     amount: "",
     status: "1" as "1" | "0",
     remarks: "",
-    deleted_at: ""
+    deleted_at: "",
+    deletion_date: "",
+    days_to_delete: ""
   })
 
   const [editData, setEditData] = useState<Record<number, Partial<HostingRecord>>>({})
@@ -137,8 +144,8 @@ export default function HostingPage() {
         orderDir: pagination.orderDir
       },
         user,
-      token
-    )
+        token
+      )
 
       if (response.status) {
         setData(response.data || [])
@@ -194,12 +201,15 @@ export default function HostingPage() {
       client_name: "",
       product_id: null,
       vendor_id: null,
+      vendor_name: "",
       product_name: "",
       expiry_date: "",
       amount: "",
       status: "1",
       remarks: "",
-      deleted_at: ""
+      deleted_at: "",
+      deletion_date: "",
+      days_to_delete: ""
     })
   }
 
@@ -213,51 +223,54 @@ export default function HostingPage() {
       client_name: "",
       product_id: null,
       vendor_id: null,
+      vendor_name: "",
       product_name: "",
       expiry_date: "",
       amount: "",
       status: "1",
       remarks: "",
-      deleted_at: ""
+      deleted_at: "",
+      deletion_date: "",
+      days_to_delete: ""
     })
   }
 
-      const handleExport = async () => {
-        try {
-          setExportLoading(true);
-    
-          const payload: Record<string, any> = {
-            record_type: 3,
-            s_id: user?.id || 0,
-          };
-    
-          const response = await apiService.exportRecord(payload,user,token);
-    
-          if ((response as any).success) {
-            toast({
-              title: "Success",
-              description: response.message || "Hosting exported successfully",
-              variant: "default",
-            });
-            downloadBase64File(response.data.base64, response.data.filename);
-          } else {
-            toast({
-              title: "Error",
-              description: response.message || "Failed to export hosting",
-              variant: "destructive",
-            });
-          }
-        } catch (error) {
-          console.error("Error exporting hosting:", error);
-          toast({
-            title: "Error",
-            description: "Failed to export hosting",
-            variant: "destructive",
-          });
-        } finally {
-          setExportLoading(false);
-        }
+  const handleExport = async () => {
+    try {
+      setExportLoading(true);
+
+      const payload: Record<string, any> = {
+        record_type: 3,
+        s_id: user?.id || 0,
       };
+
+      const response = await apiService.exportRecord(payload, user, token);
+
+      if ((response as any).success) {
+        toast({
+          title: "Success",
+          description: response.message || "Hosting exported successfully",
+          variant: "default",
+        });
+        downloadBase64File(response.data.base64, response.data.filename);
+      } else {
+        toast({
+          title: "Error",
+          description: response.message || "Failed to export hosting",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error exporting hosting:", error);
+      toast({
+        title: "Error",
+        description: "Failed to export hosting",
+        variant: "destructive",
+      });
+    } finally {
+      setExportLoading(false);
+    }
+  };
 
   // Save New Record
   const handleSaveNew = async () => {
@@ -265,7 +278,7 @@ export default function HostingPage() {
       setIsSaving(true)
 
       if (!newRecordData.domain_id || !newRecordData.client_id ||
-          !newRecordData.product_id || !newRecordData.vendor_id || !newRecordData.expiry_date ){
+        !newRecordData.product_id || !newRecordData.vendor_id || !newRecordData.expiry_date) {
         toast({
           title: "Error",
           description: "Please fill all required fields",
@@ -283,12 +296,14 @@ export default function HostingPage() {
         client_id: newRecordData.client_id!,
         expiry_date: newRecordData.expiry_date,
         amount: parseFloat(newRecordData.amount) || 0,
+        deletion_date: newRecordData.deletion_date || null,
+        days_to_delete: newRecordData.days_to_delete ? parseInt(newRecordData.days_to_delete) : null,
         status: parseInt(newRecordData.status) as 0 | 1,
         remarks: newRecordData.remarks,
         deleted_at: newRecordData.deleted_at
       }
 
-      const response = await apiService.addRecord(payload as any,user,token)
+      const response = await apiService.addRecord(payload as any, user, token)
 
       if (response.status) {
         toast({
@@ -306,12 +321,15 @@ export default function HostingPage() {
           client_name: "",
           product_id: null,
           vendor_id: null,
+          vendor_name: "",
           product_name: "",
           expiry_date: "",
           amount: "",
           status: "1",
           remarks: "",
-          deleted_at: ""
+          deleted_at: "",
+          deletion_date: "",
+          days_to_delete: ""
         })
       } else {
         toast({
@@ -345,6 +363,8 @@ export default function HostingPage() {
         amount: record.amount || 0,
         remarks: record.remarks || "",
         deleted_at: record.deleted_at || "",
+        deletion_date: record.deletion_date || null,
+        days_to_delete: record.days_to_delete ?? null,
         remark_id: record?.latest_remark?.id || null
       }
     })
@@ -359,8 +379,8 @@ export default function HostingPage() {
       if (!updatedData) return
 
       if (!updatedData.domain_id || !updatedData.client_id ||
-          !updatedData.product_id || !updatedData.vendor_id || !updatedData.expiry_date ||
-           updatedData.amount === undefined) {
+        !updatedData.product_id || !updatedData.vendor_id || !updatedData.expiry_date ||
+        updatedData.amount === undefined) {
         toast({
           title: "Error",
           description: "Please fill all required fields",
@@ -382,10 +402,12 @@ export default function HostingPage() {
         status: updatedData.status ?? 1,
         remarks: updatedData.remarks || "",
         remark_id: updatedData.remark_id || null,
-        deleted_at: updatedData.deleted_at
+        deleted_at: updatedData.deleted_at,
+        deletion_date: updatedData.deletion_date || null,
+        days_to_delete: updatedData.days_to_delete !== undefined && updatedData.days_to_delete !== "" ? Number(updatedData.days_to_delete) : null
       }
 
-      const response = await apiService.editRecord(payload as any,user,token)
+      const response = await apiService.editRecord(payload as any, user, token)
 
       if (response.status) {
         toast({
@@ -459,7 +481,7 @@ export default function HostingPage() {
     setShowDeleteModal(true)
   }
 
-      const handleViewDetails = (item: HostingRecord) => {
+  const handleViewDetails = (item: HostingRecord) => {
     if (!item.id) {
       toast({
         title: "Error",
@@ -468,7 +490,7 @@ export default function HostingPage() {
       });
       return;
     }
-    
+
     // Redirect to details page with recordType and recordId
     router.push(`/${user?.role}/categaries-details/${item.id}?recordType=3`);
   };
@@ -479,7 +501,7 @@ export default function HostingPage() {
 
       const idsToDelete = itemToDelete ? [itemToDelete] : selectedItems
 
-      const response = await apiService.deleteRecords(idsToDelete, 3,user,token)
+      const response = await apiService.deleteRecords(idsToDelete, 3, user, token)
 
       if (response.status) {
         toast({
@@ -631,14 +653,14 @@ export default function HostingPage() {
                     Add Hosting
                   </GlassButton>
                 )}
-                 <GlassButton
-                    variant="primary"
-                    onClick={handleExport}
-                    className="flex items-center gap-2"
-                    disabled={exportLoading}
-                  >
-                    {exportLoading ? ("Exporting...") : (" Export" )}
-                  </GlassButton>
+                <GlassButton
+                  variant="primary"
+                  onClick={handleExport}
+                  className="flex items-center gap-2"
+                  disabled={exportLoading}
+                >
+                  {exportLoading ? ("Exporting...") : (" Export")}
+                </GlassButton>
               </div>
             </div>
           </div>
@@ -668,10 +690,10 @@ export default function HostingPage() {
                       Client
                     </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[180px]">
-                       Product
+                      Product
                     </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[180px]">
-                       Vendor
+                      Vendor
                     </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
                       Renewal Date
@@ -681,6 +703,12 @@ export default function HostingPage() {
                     </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
                       Days to Expire
+                    </th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
+                      Deletion Date
+                    </th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
+                      Days to Delete
                     </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
                       Status
@@ -702,7 +730,7 @@ export default function HostingPage() {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={11} className="py-8 text-center">
+                      <td colSpan={13} className="py-8 text-center">
                         <div className="flex flex-col items-center justify-center gap-2">
                           <DashboardLoader label="Fetching Hosting....." />
                         </div>
@@ -723,9 +751,9 @@ export default function HostingPage() {
                               value={
                                 newRecordData.domain_id
                                   ? {
-                                      value: newRecordData.domain_id,
-                                      label: newRecordData.domain_name,
-                                    }
+                                    value: newRecordData.domain_id,
+                                    label: newRecordData.domain_name,
+                                  }
                                   : null
                               }
                               onChange={(option) => {
@@ -748,9 +776,9 @@ export default function HostingPage() {
                               value={
                                 newRecordData.client_id
                                   ? {
-                                      value: newRecordData.client_id,
-                                      label: newRecordData.client_name,
-                                    }
+                                    value: newRecordData.client_id,
+                                    label: newRecordData.client_name,
+                                  }
                                   : null
                               }
                               onChange={(option) => {
@@ -773,9 +801,9 @@ export default function HostingPage() {
                               value={
                                 newRecordData.product_id
                                   ? {
-                                      value: newRecordData.product_id,
-                                      label: newRecordData.product_name,
-                                    }
+                                    value: newRecordData.product_id,
+                                    label: newRecordData.product_name,
+                                  }
                                   : null
                               }
                               onChange={(option) => {
@@ -798,9 +826,9 @@ export default function HostingPage() {
                               value={
                                 newRecordData.vendor_id
                                   ? {
-                                      value: newRecordData.vendor_id,
-                                      label: newRecordData.vendor_name,
-                                    }
+                                    value: newRecordData.vendor_id,
+                                    label: newRecordData.vendor_name,
+                                  }
                                   : null
                               }
                               onChange={(option) => {
@@ -841,37 +869,56 @@ export default function HostingPage() {
                           <td className="py-3 px-4">
                             <input
                               type="number"
-                              value={calculateDays(newRecordData.expiry_date)}
+                              value={String(calculateDays(newRecordData.expiry_date)) === "NaN" ? "" : calculateDays(newRecordData.expiry_date)}
                               readOnly
                               className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-sm cursor-not-allowed"
                               style={{ minHeight: '32px' }}
                             />
                           </td>
+                          <td className="py-3 px-4">
+                            <input
+                              type="date"
+                              value={newRecordData.deletion_date}
+                              onChange={(e) => handleNewRecordChange("deletion_date", e.target.value)}
+                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                              style={{ minHeight: "32px" }}
+                            />
+                          </td>
+                          <td className="py-3 px-4">
+                            <input
+                              type="number"
+                              value={newRecordData.days_to_delete}
+                              onChange={(e) => handleNewRecordChange("days_to_delete", e.target.value)}
+                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                              style={{ minHeight: "32px" }}
+                              min="0"
+                            />
+                          </td>
                           <td className="py-1 px-2">
-                           <div className="w-40">
-  <GlassSelect
-    options={[
-      { value: "1", label: "Active" },
-      { value: "0", label: "Inactive" },
-    ]}
-    value={
-      [
-        { value: "1", label: "Active" },
-        { value: "0", label: "Inactive" },
-      ].find(opt => opt.value === newRecordData.status) || null
-    }
-    onChange={(selected: any) =>
-      handleNewRecordChange(
-        "status",
-        selected?.value as "1" | "0"
-      )
-    }
-    placeholder="Status"
-    isSearchable={false}
-    isClearable
-    styles={glassSelectStyles}
-  />
-</div>
+                            <div className="w-40">
+                              <GlassSelect
+                                options={[
+                                  { value: "1", label: "Active" },
+                                  { value: "0", label: "Inactive" },
+                                ]}
+                                value={
+                                  [
+                                    { value: "1", label: "Active" },
+                                    { value: "0", label: "Inactive" },
+                                  ].find(opt => opt.value === newRecordData.status) || null
+                                }
+                                onChange={(selected: any) =>
+                                  handleNewRecordChange(
+                                    "status",
+                                    selected?.value as "1" | "0"
+                                  )
+                                }
+                                placeholder="Status"
+                                isSearchable={false}
+                                isClearable
+                                styles={glassSelectStyles}
+                              />
+                            </div>
 
                           </td>
                           <td className="py-3 px-4">
@@ -886,18 +933,18 @@ export default function HostingPage() {
                               placeholder="Remarks"
                             />
                           </td>
-                           <td className="py-3 px-4 text-sm text-gray-300">
-                                 <input
+                          <td className="py-3 px-4 text-sm text-gray-300">
+                            <input
                               type="date"
                               value={newRecordData.deleted_at}
                               onChange={(e) => handleNewRecordChange('deleted_at', e.target.value)}
                               className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
                               style={{ minHeight: '32px' }}
                             />
-                                </td>
-                           <td className="py-3 px-4 text-sm text-gray-300">
-                                  {"- -"}
-                                </td>
+                          </td>
+                          <td className="py-3 px-4 text-sm text-gray-300">
+                            {"- -"}
+                          </td>
                           <td className="py-3 px-4">
                             <div className="flex items-center justify-end gap-2">
                               <GlassButton
@@ -928,7 +975,7 @@ export default function HostingPage() {
                       {/* Existing Data Rows */}
                       {data.length === 0 ? (
                         <tr>
-                          <td colSpan={11} className="py-8 text-center">
+                          <td colSpan={13} className="py-8 text-center">
                             <div className="flex flex-col items-center justify-center gap-2">
                               <Server className="w-12 h-12 text-gray-400" />
                               <span className="text-gray-400">No hosting records found</span>
@@ -947,9 +994,8 @@ export default function HostingPage() {
                         data.map((item, index) => (
                           <tr
                             key={item.id}
-                            className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors ${
-                              editingId === item.id ? 'bg-blue-500/5' : ''
-                            }`}
+                            className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors ${editingId === item.id ? 'bg-blue-500/5' : ''
+                              }`}
                           >
                             <td className="py-3 px-4">
                               <input
@@ -971,9 +1017,9 @@ export default function HostingPage() {
                                     value={
                                       editData[item.id]?.domain_id
                                         ? {
-                                            value: editData[item.id]?.domain_id!,
-                                            label: editData[item.id]?.domain_name || "",
-                                          }
+                                          value: editData[item.id]?.domain_id!,
+                                          label: editData[item.id]?.domain_name || "",
+                                        }
                                         : null
                                     }
                                     onChange={(option) => {
@@ -998,9 +1044,9 @@ export default function HostingPage() {
                                     value={
                                       editData[item.id]?.client_id
                                         ? {
-                                            value: editData[item.id]?.client_id!,
-                                            label: editData[item.id]?.client_name || "",
-                                          }
+                                          value: editData[item.id]?.client_id!,
+                                          label: editData[item.id]?.client_name || "",
+                                        }
                                         : null
                                     }
                                     onChange={(option) => {
@@ -1025,9 +1071,9 @@ export default function HostingPage() {
                                     value={
                                       editData[item.id]?.product_id
                                         ? {
-                                            value: editData[item.id]?.product_id!,
-                                            label: editData[item.id]?.product_name || "",
-                                          }
+                                          value: editData[item.id]?.product_id!,
+                                          label: editData[item.id]?.product_name || "",
+                                        }
                                         : null
                                     }
                                     onChange={(option) => {
@@ -1052,9 +1098,9 @@ export default function HostingPage() {
                                     value={
                                       editData[item.id]?.vendor_id
                                         ? {
-                                            value: editData[item.id]?.vendor_id!,
-                                            label: editData[item.id]?.vendor_name || "",
-                                          }
+                                          value: editData[item.id]?.vendor_id!,
+                                          label: editData[item.id]?.vendor_name || "",
+                                        }
                                         : null
                                     }
                                     onChange={(option) => {
@@ -1096,39 +1142,39 @@ export default function HostingPage() {
                                 <td className="py-3 px-4">
                                   <input
                                     type="number"
-                                    value={calculateDays(editData[item.id]?.expiry_date || item.expiry_date)}
+                                    value={String(calculateDays(editData[item.id]?.expiry_date || item.expiry_date)) === "NaN" ? "" : calculateDays(editData[item.id]?.expiry_date || item.expiry_date)}
                                     readOnly
                                     className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-sm cursor-not-allowed"
                                     style={{ minHeight: '32px' }}
                                   />
                                 </td>
-                               <td className="py-1 px-2">
-                           <div className="w-40">
-  <GlassSelect
-    options={[
-      { value: "1", label: "Active" },
-      { value: "0", label: "Inactive" },
-    ]}
-    value={
-      [
-        { value: "1", label: "Active" },
-        { value: "0", label: "Inactive" },
-      ].find(opt => opt.value === newRecordData.status) || null
-    }
-    onChange={(selected: any) =>
-      handleNewRecordChange(
-        "status",
-        selected?.value as "1" | "0"
-      )
-    }
-    placeholder="Status"
-    isSearchable={false}
-    isClearable
-    styles={glassSelectStyles}
-  />
-</div>
+                                <td className="py-1 px-2">
+                                  <div className="w-40">
+                                    <GlassSelect
+                                      options={[
+                                        { value: "1", label: "Active" },
+                                        { value: "0", label: "Inactive" },
+                                      ]}
+                                      value={
+                                        [
+                                          { value: "1", label: "Active" },
+                                          { value: "0", label: "Inactive" },
+                                        ].find(opt => opt.value === newRecordData.status) || null
+                                      }
+                                      onChange={(selected: any) =>
+                                        handleNewRecordChange(
+                                          "status",
+                                          selected?.value as "1" | "0"
+                                        )
+                                      }
+                                      placeholder="Status"
+                                      isSearchable={false}
+                                      isClearable
+                                      styles={glassSelectStyles}
+                                    />
+                                  </div>
 
-                          </td> 
+                                </td>
                                 <td className="py-3 px-4">
                                   <input
                                     type="text"
@@ -1144,7 +1190,7 @@ export default function HostingPage() {
                                     style={{ minHeight: "32px" }}
                                   />
                                 </td>
-                                 <td className="py-3 px-4 text-sm text-gray-300">
+                                <td className="py-3 px-4 text-sm text-gray-300">
                                   <input
                                     type="date"
                                     value={editData[item.id]?.deleted_at || item.deleted_at}
@@ -1153,7 +1199,7 @@ export default function HostingPage() {
                                     style={{ minHeight: '32px' }}
                                   />
                                 </td>
-                                 <td className="py-3 px-4 text-sm text-gray-300 whitespace-nowrap">
+                                <td className="py-3 px-4 text-sm text-gray-300 whitespace-nowrap">
                                   {(item.updated_at)}
                                 </td>
                               </>
@@ -1204,26 +1250,24 @@ export default function HostingPage() {
                                   </div>
                                 </td>
                                 <td className="py-3 px-4">
-                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${
-                                    calculateDays(item.expiry_date) < 0
-                                      ? 'bg-red-500/20 text-red-400 border-red-500/20'
-                                      : calculateDays(item.expiry_date) <= 30
-                                        ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/20'
-                                        : 'bg-green-500/20 text-green-400 border-green-500/20'
-                                  }`}>
+                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${calculateDays(item.expiry_date) < 0
+                                    ? 'bg-red-500/20 text-red-400 border-red-500/20'
+                                    : calculateDays(item.expiry_date) <= 30
+                                      ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/20'
+                                      : 'bg-green-500/20 text-green-400 border-green-500/20'
+                                    }`}>
                                     {/* <Clock className="w-3 h-3" /> */}
                                     {calculateDays(item.expiry_date)} days
                                   </div>
                                 </td>
                                 <td className="py-3 px-4">
-                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${getStatusColor(item.status)} ${
-                                    item.status === 1 ? 'bg-green-500/20 border-green-500/20' : 'bg-red-500/20 border-red-500/20'
-                                  }`}>
+                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${getStatusColor(item.status)} ${item.status === 1 ? 'bg-green-500/20 border-green-500/20' : 'bg-red-500/20 border-red-500/20'
+                                    }`}>
                                     {getStatusIcon(item.status)}
                                     {getStatusText(item.status)}
                                   </div>
                                 </td>
-                                 <td className="py-3 px-4">
+                                <td className="py-3 px-4">
                                   <div className="flex items-center gap-2">
                                     {/* <AlertCircle className="w-4 h-4 text-gray-400 flex-shrink-0" /> */}
                                     <span className="text-sm text-gray-300 truncate max-w-[180px]">
@@ -1234,7 +1278,7 @@ export default function HostingPage() {
                                 <td className="py-3 px-4 text-sm text-gray-300">
                                   {(item.deleted_at)}
                                 </td>
-                                 <td className="py-3 px-4 text-sm text-gray-300 whitespace-nowrap">
+                                <td className="py-3 px-4 text-sm text-gray-300 whitespace-nowrap">
                                   {(item.updated_at)}
                                 </td>
                               </>
@@ -1267,13 +1311,13 @@ export default function HostingPage() {
                                   </>
                                 ) : (
                                   <>
-                                   <GlassButton
-                                                                        onClick={() => handleViewDetails(item)}
-                                                                        className="p-1.5 min-w-0 hover:bg-blue-500/20"
-                                                                        title="View Details"
-                                                                      >
-                                                                        <Eye className="w-4 h-4 text-gray-300 hover:text-blue-400 transition-colors" />
-                                                                      </GlassButton>
+                                    <GlassButton
+                                      onClick={() => handleViewDetails(item)}
+                                      className="p-1.5 min-w-0 hover:bg-blue-500/20"
+                                      title="View Details"
+                                    >
+                                      <Eye className="w-4 h-4 text-gray-300 hover:text-blue-400 transition-colors" />
+                                    </GlassButton>
                                     <GlassButton
                                       onClick={() => handleEdit(item)}
                                       className="p-1.5 min-w-0 hover:bg-white/10"
