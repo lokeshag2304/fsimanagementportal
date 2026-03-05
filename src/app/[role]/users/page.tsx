@@ -19,7 +19,7 @@ import {
   Eye,
   EyeOff
 } from "lucide-react"
-import axios from "@/lib/axios"
+import api from "@/lib/api"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/useToast"
 import { useRouter } from "next/navigation"
@@ -27,7 +27,6 @@ import { getNavigationByRole } from "@/lib/getNavigationByRole"
 import Pagination from "@/common/Pagination"
 import DashboardLoader from "@/common/DashboardLoader"
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 const ASSETS_URL = process.env.NEXT_PUBLIC_ASSETS_URL || BASE_URL
 
 interface UserType {
@@ -116,23 +115,16 @@ export default function UsersPage() {
         return
       }
 
-      const response = await axios.post<UsersResponse>(
-        `${BASE_URL}/secure/Usermanagement/get-clients-user-list`,
-        {
-          type: 2, // 2 for users
-          page: pagination.page,
-          rowsPerPage: pagination.rowsPerPage,
-          order: pagination.order,
-          orderBy: pagination.orderBy,
-          search: searchQuery
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      )
+      const response = await api.post('/secure/Usermanagement/get-clients-user-list', {
+        type: 2,
+        page: pagination.page,
+        rowsPerPage: pagination.rowsPerPage,
+        order: pagination.order,
+        orderBy: pagination.orderBy,
+        search: searchQuery
+      }, {
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+      })
 
       if (isMountedRef.current) {
         setData(response.data.rows)
@@ -165,7 +157,7 @@ export default function UsersPage() {
   // Initial fetch only
   useEffect(() => {
     isMountedRef.current = true
-    fetchUsers()
+    fetchUsers().catch(err => console.error("Load failed", err));
 
     return () => {
       isMountedRef.current = false
@@ -180,7 +172,7 @@ export default function UsersPage() {
     if (!isMountedRef.current) return;
 
     const timeoutId = setTimeout(() => {
-      fetchUsers()
+      fetchUsers().catch(err => console.error("Load failed", err));
     }, 300)
 
     return () => {
@@ -219,16 +211,14 @@ export default function UsersPage() {
     })
     setEditingUser(null)
     setProfilePreview(null)
-    setShowPassword(false) // Reset password visibility
-
+    setShowPassword(false)
     // Refresh data after successful operation
-    fetchUsers()
+    fetchUsers().catch(err => console.error("Load failed", err));
   }
 
   // Handle error
   const handleError = (error: any, defaultMessage: string) => {
     console.error("Error:", error)
-
     if (error.response?.status === 401) {
       toast({
         title: "Session Expired",
@@ -250,16 +240,12 @@ export default function UsersPage() {
     try {
       if (!token) return
 
-      const response = await axios.post<UserDetailsResponse>(
-        `${BASE_URL}/secure/Usermanagement/get-clients-user-details`,
-        { id },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
+      const response = await api.post('/secure/Usermanagement/get-clients-user-details', { id }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         }
-      )
+      })
 
       if (response.data.status && response.data.data) {
         const user = response.data.data
@@ -345,12 +331,12 @@ export default function UsersPage() {
 
       const idsToDelete = itemToDelete ? [itemToDelete] : selectedItems
 
-      const response = await axios.post<ApiResponse>(
-        `${BASE_URL}/secure/Usermanagement/get-clients-user-delete`,
+      const response = await api.post(
+        `/secure/Usermanagement/get-clients-user-delete`,
         {
           ids: idsToDelete,
           s_id: authUser?.id || 6,
-          type: 2 // Add type field for delete (2 for users)
+          type: 2
         },
         {
           headers: {
@@ -360,7 +346,7 @@ export default function UsersPage() {
         }
       )
 
-      if ((response.data as any).success || response.data.status) {
+      if (response.data.success || response.data.status) {
         handleSuccess(response.data.message || "User(s) deleted successfully")
         if (!itemToDelete) {
           setSelectedItems([])
@@ -489,16 +475,14 @@ export default function UsersPage() {
       let endpoint = ''
 
       if (editingUser) {
-        // Update user
-        endpoint = `${BASE_URL}/secure/Usermanagement/update-clients-user`
-        formDataToSend.append('id', editingUser.id.toString())
-        formDataToSend.append('type', '2') // Add type field for update
+        endpoint = `/secure/Usermanagement/update-clients-user`;
+        formDataToSend.append('id', editingUser.id.toString());
+        formDataToSend.append('type', '2');
       } else {
-        // Add new user
-        endpoint = `${BASE_URL}/secure/Usermanagement/add-clients-user`
+        endpoint = `/secure/Usermanagement/add-clients-user`;
       }
 
-      const response = await axios.post<ApiResponse>(
+      const response = await api.post(
         endpoint,
         formDataToSend,
         {

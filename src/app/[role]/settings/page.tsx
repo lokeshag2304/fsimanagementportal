@@ -5,7 +5,7 @@ import { Header } from "@/components/layout";
 import { GlassCard, GlassButton, GlassInput } from "@/components/glass";
 import { useTheme } from "@/contexts/theme-context";
 import { Slider } from "@/components/ui/slider";
-import axios from "@/lib/axios";
+import api from "@/lib/api";
 import {
   User,
   Bell,
@@ -31,7 +31,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/useToast";
 import { getNavigationByRole } from "@/lib/getNavigationByRole";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 const ASSETS_URL = process.env.NEXT_PUBLIC_ASSETS_URL;
 
 export default function SettingsPage() {
@@ -76,7 +75,7 @@ export default function SettingsPage() {
   // Fetch profile data on component mount
   useEffect(() => {
     if (user?.id) {
-      fetchProfileData();
+      fetchProfileData().catch(err => console.error("Load failed", err));
     }
   }, [user?.id]);
 
@@ -86,8 +85,8 @@ export default function SettingsPage() {
       const token = getToken();
       if (!token || !user?.id) return;
 
-      const response = await axios.post(
-        `${BASE_URL}/secure/Profile/Get-Profile`,
+      const response = await api.post(
+        `/secure/Profile/Get-Profile`,
         { s_id: user.id },
         {
           headers: {
@@ -188,8 +187,8 @@ export default function SettingsPage() {
       }
 
 
-      const response = await axios.post(
-        `${BASE_URL}/secure/Profile/Update-Profile`,
+      const response = await api.post(
+        `/secure/Profile/Update-Profile`,
         formData,
         {
           headers: {
@@ -214,7 +213,7 @@ export default function SettingsPage() {
           variant: "default",
         });
 
-        fetchProfileData();
+        fetchProfileData().catch(err => console.error("Load failed", err));
       } else {
         throw new Error(response.data.message || "Update failed");
       }

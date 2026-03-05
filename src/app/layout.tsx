@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+
 import "./globals.css"
 import { ThemeProvider } from "@/contexts/theme-context"
 import { ThemeScript } from "@/components/theme-script"
@@ -10,11 +10,14 @@ import { Toaster } from "@/components/ui/toaster"
 import AuthGuard from "@/components/AuthGuard";
 
 
-const inter = Inter({ subsets: ["latin"] })
+
 
 export const metadata: Metadata = {
   title: "Fsi Management Portal ⭐",
   description: "Sbcription management system",
+  icons: {
+    icon: "/tab-logo.png",
+  },
 }
 
 export default function RootLayout({
@@ -27,7 +30,7 @@ export default function RootLayout({
       <head>
         <ThemeScript />
       </head>
-      <body className={inter.className} suppressHydrationWarning>
+      <body className="font-sans" suppressHydrationWarning>
         <HydrationFix />
         <ThemeProvider>
           <AuthProvider>

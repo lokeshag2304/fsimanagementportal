@@ -4,14 +4,14 @@ import { useState, useEffect } from "react";
 import { GlassCard } from "@/components/glass";
 import { useToast } from "@/hooks/useToast";
 import DashboardLoader from "@/common/DashboardLoader";
-import { 
-  X, 
-  MessageSquare, 
-  Activity, 
-  Calendar, 
-  User, 
-  Package, 
-  Globe, 
+import {
+  X,
+  MessageSquare,
+  Activity,
+  Calendar,
+  User,
+  Package,
+  Globe,
   UserCircle,
   Clock,
   CheckCircle,
@@ -21,8 +21,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Header } from "@/components/layout";
 import { getNavigationByRole } from "@/lib/getNavigationByRole";
-
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
+import { formatLastUpdated } from "@/utils/dateFormatter";
+import api from "@/lib/api";
 
 interface Remark {
   id: number;
@@ -39,9 +39,9 @@ interface Activity {
 }
 
 interface Category {
-  valid_till(valid_till: any): import("react").ReactNode;
   id: number;
   record_type: string;
+  valid_till: string;
   client_name: string | null;
   domain_name: string | null;
   product_name: string;
@@ -60,13 +60,20 @@ interface CategoryDetailsData {
   activities: Activity[];
 }
 
-export default function DynamicDetailsPage() {
+interface DynamicDetailsPageProps {
+  recordType?: string | number;
+  recordId?: string | number;
+  onClose?: () => void;
+}
+
+export default function DynamicDetailsPage({ recordType: propRecordType, recordId: propRecordId, onClose }: DynamicDetailsPageProps = {}) {
   const { user, getToken } = useAuth();
   const params = useParams();
   const navigationTabs = getNavigationByRole(user?.role);
   const searchParams = useSearchParams();
-  const id = params.id as string;
-  const recordType = searchParams.get('recordType');
+
+  const id = (propRecordId || params.id) as string;
+  const recordType = (propRecordType || searchParams.get('recordType')) as string;
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
@@ -75,18 +82,18 @@ export default function DynamicDetailsPage() {
 
   useEffect(() => {
     if (id && recordType) {
-      fetchCategoryDetails();
+      fetchCategoryDetails().catch(err => console.error("Load failed", err));
     }
   }, [id, recordType]);
 
   const fetchCategoryDetails = async () => {
     try {
       setLoading(true);
-      
+
       console.log("Fetching details for recordId:", id, "recordType:", recordType);
-      
+
       const token = getToken();
-      
+
       if (!token) {
         toast({
           title: "Authentication Error",
@@ -96,37 +103,24 @@ export default function DynamicDetailsPage() {
         setLoading(false);
         return;
       }
-      
+
       // API endpoint based on recordType
-      let endpoint = '';
-      let payload = {};
-      
-      if (recordType === '1') {
-        // Subscriptions
-        endpoint = `${BASE_URL}/secure/Categories/get-categories-details`;
-        payload = { cat_id: id };
-      } else {
-        // Add other record types as needed
-        endpoint = BASE_URL + '/secure/Categories/get-categories-details';
-        payload = { cat_id: id };
-      }
-      
-      const response = await fetch(
+      let endpoint = '/secure/Categories/get-categories-details';
+      let payload = { cat_id: id };
+
+      const response = await api.post(
         endpoint,
+        payload,
         {
-          method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-            'accept': 'application/json, text/plain, */*',
-          },
-          body: JSON.stringify(payload),
+            'Authorization': `Bearer ${token}`
+          }
         }
       );
 
-      const result = await response.json();
+      const result = response.data;
       console.log("API Response:", result);
-      
+
       if (result.status) {
         setData(result);
       } else {
@@ -150,23 +144,7 @@ export default function DynamicDetailsPage() {
 
   // Format date function
   const formatDate = (dateString: string) => {
-    try {
-      // If date is already in readable format, return as is
-      if (dateString.includes(", ")) {
-        return dateString;
-      }
-      
-      const date = new Date(dateString);
-      return date.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } catch {
-      return dateString;
-    }
+    return formatLastUpdated(dateString);
   };
 
   // Format simple date (without time)
@@ -226,9 +204,9 @@ export default function DynamicDetailsPage() {
   const { category } = data;
 
   return (
-        <div className="min-h-screen pb-8">
-          <Header title="Subscription Management" tabs={navigationTabs} />
-          <div className="px-4 sm:px-6 mt-6">
+    <div className="min-h-screen pb-8">
+      <Header title="Subscription Management" tabs={navigationTabs} />
+      <div className="px-4 sm:px-6 mt-6">
         <GlassCard className="p-0 overflow-hidden backdrop-blur-xl bg-gradient-to-br from-gray-900/90 via-black/90 to-gray-900/90 border border-white/10 shadow-2xl">
           {/* Header */}
           <div className="p-6 border-b border-white/10">
@@ -296,7 +274,7 @@ export default function DynamicDetailsPage() {
                   </div>
                   <div>
                     <h4 className="text-sm font-medium text-gray-400">Expiry Date</h4>
-                    <p className="text-white font-medium mt-1">{category.expiry_date ? formatSimpleDate(category.expiry_date):formatSimpleDate( category.valid_till)}</p>
+                    <p className="text-white font-medium mt-1">{category.expiry_date ? formatSimpleDate(category.expiry_date) : formatSimpleDate(category.valid_till)}</p>
                   </div>
                 </div>
               </div>
@@ -311,7 +289,7 @@ export default function DynamicDetailsPage() {
                     <h4 className="text-sm font-medium text-gray-400">Days to Expire</h4>
                     <div className="flex items-center gap-2 mt-1">
                       <span className={`font-medium ${getDaysStatusColor(category.days_to_expired)}`}>
-                        {category.days_to_expired } days
+                        {category.days_to_expired} days
                       </span>
                       {/* <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
                         category.days_to_expired < 0 
@@ -360,22 +338,20 @@ export default function DynamicDetailsPage() {
           <div className="flex border-b border-white/10">
             <button
               onClick={() => setActiveTab("remarks")}
-              className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-all ${
-                activeTab === "remarks"
-                  ? "border-blue-500 text-blue-400 bg-blue-500/10"
-                  : "border-transparent text-gray-400 hover:text-white hover:bg-white/5"
-              }`}
+              className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-all ${activeTab === "remarks"
+                ? "border-blue-500 text-blue-400 bg-blue-500/10"
+                : "border-transparent text-gray-400 hover:text-white hover:bg-white/5"
+                }`}
             >
               <MessageSquare className="w-4 h-4" />
               Remarks ({data.remarks.length})
             </button>
             <button
               onClick={() => setActiveTab("activities")}
-              className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-all ${
-                activeTab === "activities"
-                  ? "border-green-500 text-green-400 bg-green-500/10"
-                  : "border-transparent text-gray-400 hover:text-white hover:bg-white/5"
-              }`}
+              className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-all ${activeTab === "activities"
+                ? "border-green-500 text-green-400 bg-green-500/10"
+                : "border-transparent text-gray-400 hover:text-white hover:bg-white/5"
+                }`}
             >
               <Activity className="w-4 h-4" />
               Activities ({data.activities.length})
@@ -433,16 +409,15 @@ export default function DynamicDetailsPage() {
                   <div className="relative">
                     {/* Timeline line */}
                     <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-white/10"></div>
-                    
+
                     {data.activities.map((activity, index) => (
                       <div key={activity.id} className="relative pl-12 pb-6 last:pb-0">
                         {/* Timeline dot */}
-                        <div className={`absolute left-5 top-0 w-3 h-3 rounded-full border-2 border-white/20 ${
-                          index === 0 
-                            ? "bg-green-500 border-green-500" 
-                            : "bg-gray-700"
-                        }`}></div>
-                        
+                        <div className={`absolute left-5 top-0 w-3 h-3 rounded-full border-2 border-white/20 ${index === 0
+                          ? "bg-green-500 border-green-500"
+                          : "bg-gray-700"
+                          }`}></div>
+
                         {/* Activity card */}
                         <div className="p-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all">
                           <div className="flex items-start justify-between mb-3">
@@ -496,7 +471,7 @@ export default function DynamicDetailsPage() {
             </div>
           </div>
         </GlassCard>
-    </div>
+      </div>
     </div>
   );
 }

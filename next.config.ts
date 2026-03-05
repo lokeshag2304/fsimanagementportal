@@ -37,6 +37,11 @@ const nextConfig: NextConfig = {
     // ⚠️ Production build me TypeScript errors ignore karega
     ignoreBuildErrors: true,
   },
+  experimental: {
+    turbo: {
+      resolveAlias: {}
+    }
+  }
 };
 
 export default nextConfig;

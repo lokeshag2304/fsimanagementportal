@@ -17,18 +17,17 @@ import {
   Eye,
   EyeOff
 } from "lucide-react"
-import axios from "@/lib/axios"
+import api from "@/lib/api"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/useToast"
 import { useRouter } from "next/navigation"
-import Select from 'react-select'
+
 import { GlassSelect } from "@/components/glass/GlassSelect"
 import { getNavigationByRole } from "@/lib/getNavigationByRole"
 import Pagination from "@/common/Pagination"
 import DashboardLoader from "@/common/DashboardLoader"
 import { glassSelectStyles } from "@/common/DynamicDropdown"
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 const ASSETS_URL = process.env.NEXT_PUBLIC_ASSETS_URL;
 
 interface Domain {
@@ -77,6 +76,7 @@ interface ClientDetailsResponse {
 
 interface ApiResponse {
   status: boolean
+  success?: boolean
   message: string
 }
 
@@ -127,8 +127,8 @@ export default function ClientsPage() {
     try {
       if (!token) return
 
-      const response = await axios.post<DomainResponse>(
-        `${BASE_URL}/secure/Dropdowns/get-domains`,
+      const response = await api.post<DomainResponse>(
+        `/secure/Dropdowns/get-domains`,
         {},
         {
           headers: {
@@ -169,8 +169,8 @@ export default function ClientsPage() {
         return
       }
 
-      const response = await axios.post<ClientsResponse>(
-        `${BASE_URL}/secure/Usermanagement/get-clients-user-list`,
+      const response = await api.post<ClientsResponse>(
+        `/secure/Usermanagement/get-clients-user-list`,
         {
           type: 1, // 1 for clients
           page: pagination.page,
@@ -224,8 +224,8 @@ export default function ClientsPage() {
   // Initial fetch only
   useEffect(() => {
     isMountedRef.current = true
-    fetchClients()
-    fetchDomains()
+    fetchClients().catch(err => console.error("Load failed", err));
+    fetchDomains().catch(err => console.error("Load failed", err));
 
     return () => {
       isMountedRef.current = false
@@ -240,7 +240,7 @@ export default function ClientsPage() {
     if (!isMountedRef.current) return;
 
     const timeoutId = setTimeout(() => {
-      fetchClients()
+      fetchClients().catch(err => console.error("Load failed", err));
     }, 300)
 
     return () => {
@@ -283,7 +283,7 @@ export default function ClientsPage() {
     setShowPassword(false)
 
     // Refresh data after successful operation
-    fetchClients()
+    fetchClients().catch(err => console.error("Load failed", err));
   }
 
   // Handle error
@@ -311,8 +311,8 @@ export default function ClientsPage() {
     try {
       if (!token) return
 
-      const response = await axios.post<ClientDetailsResponse>(
-        `${BASE_URL}/secure/Usermanagement/get-clients-user-details`,
+      const response = await api.post<ClientDetailsResponse>(
+        `/secure/Usermanagement/get-clients-user-details`,
         { id },
         {
           headers: {
@@ -398,8 +398,8 @@ export default function ClientsPage() {
 
       const idsToDelete = itemToDelete ? [itemToDelete] : selectedItems
 
-      const response = await axios.post<ApiResponse>(
-        `${BASE_URL}/secure/Usermanagement/get-clients-user-delete`,
+      const response = await api.post<ApiResponse>(
+        `/secure/Usermanagement/get-clients-user-delete`,
         {
           ids: idsToDelete,
           s_id: user?.id || 6,
@@ -413,7 +413,7 @@ export default function ClientsPage() {
         }
       )
 
-      if (response.data.success) {
+      if (response.data.status || response.data.success) {
         handleSuccess(response.data.message || "Client(s) deleted successfully")
         if (!itemToDelete) {
           setSelectedItems([])
@@ -553,15 +553,15 @@ export default function ClientsPage() {
 
       if (editingClient) {
         // Update client
-        endpoint = `${BASE_URL}/secure/Usermanagement/update-clients-user`
+        endpoint = `/secure/Usermanagement/update-clients-user`
         formDataToSend.append('id', editingClient.id.toString())
         formDataToSend.append('type', '1') // Add type field for update
       } else {
         // Add new client
-        endpoint = `${BASE_URL}/secure/Usermanagement/add-clients-user`
+        endpoint = `/secure/Usermanagement/add-clients-user`
       }
 
-      const response = await axios.post<ApiResponse>(
+      const response = await api.post<ApiResponse>(
         endpoint,
         formDataToSend,
         {

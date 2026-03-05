@@ -3,14 +3,17 @@
 // - baseURL from NEXT_PUBLIC_BASE_URL
 // - Authorization Bearer token from localStorage ("token")
 // - 401 response -> clear token + redirect to /auth/login
-import api from '@/lib/axios';
+import axios from "axios";
 
+const api = axios.create({
+  baseURL: "http://127.0.0.1:8000/api",
+});
 // Auth APIs
 export const authApi = {
   // Login
   login: async (email: string, password: string) => {
     try {
-      const response = await api.post('/auth/login', { email, password });
+      const response = await api.post('auth/login', { email, password });
       return response.data;
     } catch (error: any) {
       throw error.response?.data || { message: error.message };
@@ -20,7 +23,7 @@ export const authApi = {
   // Send OTP for 2FA
   sendOtp: async (id: number, method: 'email' | 'sms' | 'whatsapp', contact?: string) => {
     try {
-      const response = await api.post('/auth/two_step_otp', { id, method, contact });
+      const response = await api.post('auth/two_step_otp', { id, method, contact });
       return response.data;
     } catch (error: any) {
       throw error.response?.data || { message: error.message };
@@ -30,7 +33,7 @@ export const authApi = {
   // Verify OTP (for login)
   verifyOtp: async (otp: string, method: 'email' | 'sms' | 'whatsapp', id: number) => {
     try {
-      const response = await api.post('/auth/verifyOtp', { otp, method, id });
+      const response = await api.post('auth/verifyOtp', { otp, method, id });
       return response.data;
     } catch (error: any) {
       throw error.response?.data || { message: error.message };
@@ -40,7 +43,7 @@ export const authApi = {
   // Verify OTP for forgot password
   verifyOtpForForget: async (otp: string, method: string, id: number) => {
     try {
-      const response = await api.post('/auth/verify-for-forget', {
+      const response = await api.post('auth/verify-for-forget', {
         otp,
         method,
         id
@@ -54,7 +57,7 @@ export const authApi = {
   // Send reset link for forgot password
   sendResetLink: async (email: string) => {
     try {
-      const response = await api.post('/auth/send_reset_link', { email });
+      const response = await api.post('auth/send_reset_link', { email });
       return response.data;
     } catch (error: any) {
       throw error.response?.data || { message: error.message };
@@ -64,7 +67,7 @@ export const authApi = {
   // Send WhatsApp OTP for forgot password
   sendWhatsappOtp: async (number: string, whatsapp_code: string = '91') => {
     try {
-      const response = await api.post('/auth/send_whatsap_otp', {
+      const response = await api.post('auth/send_whatsap_otp', {
         number,
         whatsapp_code
       });
@@ -77,7 +80,7 @@ export const authApi = {
   // Send SMS OTP for forgot password
   sendSmsOtp: async (number: string, sms_code: string = '91') => {
     try {
-      const response = await api.post('/auth/send_sms_otp', {
+      const response = await api.post('auth/send_sms_otp', {
         number,
         sms_code
       });
@@ -91,7 +94,7 @@ export const authApi = {
   resetPassword: async (token: string, newPassword: string) => {
     try {
       // Extract id from token if needed, or use a different endpoint
-      const response = await api.post('/auth/reset-password', {
+      const response = await api.post('auth/reset-password', {
         token,
         newPassword
       });
@@ -104,7 +107,7 @@ export const authApi = {
   // Reset password with ID (for phone/WhatsApp flow)
   resetPasswordWithId: async (id: string, token: string, newPassword: string) => {
     try {
-      const response = await api.post('/auth/reset-password', {
+      const response = await api.post('auth/reset-password', {
         id,
         token,
         newPassword

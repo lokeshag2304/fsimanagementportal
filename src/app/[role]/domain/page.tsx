@@ -15,7 +15,7 @@ import {
   ChevronLeft,
   ChevronRight
 } from "lucide-react"
-import axios from "@/lib/axios"
+import api from "@/lib/api"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/useToast"
 import { useRouter } from "next/navigation"
@@ -24,11 +24,18 @@ import DashboardLoader from "@/common/DashboardLoader"
 import { DeleteConfirmationModal } from "@/common/services/DeleteConfirmationModal"
 import { getNavigationByRole } from "@/lib/getNavigationByRole"
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
-
 interface Domain {
   id: number
+  domain_name: string
   name: string
+  renewal_date: string
+  deletion_date: string
+  days_left: number | null
+  days_to_delete: number | null
+  amount: number
+  status: number
+  remarks: string
+  last_updated: string
   created_at: string
 }
 
@@ -87,8 +94,8 @@ export default function DomainPage() {
         return
       }
 
-      const response = await axios.post<DomainsResponse>(
-        `${BASE_URL}/secure/Domain/list-domain`,
+      const response = await api.post<DomainsResponse>(
+        `/secure/Domain/list-domain`,
         {
           page: pagination.page,
           rowsPerPage: pagination.rowsPerPage,
@@ -139,7 +146,7 @@ export default function DomainPage() {
   // Initial fetch only
   useEffect(() => {
     isMountedRef.current = true
-    fetchDomains()
+    fetchDomains().catch(err => console.error("Load failed", err));
 
     return () => {
       isMountedRef.current = false
@@ -154,7 +161,7 @@ export default function DomainPage() {
     if (!isMountedRef.current) return;
 
     const timeoutId = setTimeout(() => {
-      fetchDomains()
+      fetchDomains().catch(err => console.error("Load failed", err));
     }, 300)
 
     return () => {
@@ -185,7 +192,7 @@ export default function DomainPage() {
     setEditValue("")
 
     // Refresh data after successful operation
-    fetchDomains()
+    fetchDomains().catch(err => console.error("Load failed", err));
   }
 
   // Handle error
@@ -232,11 +239,13 @@ export default function DomainPage() {
         return
       }
 
-      const response = await axios.post<ApiResponse>(
-        `${BASE_URL}/secure/Domain/add-domain`,
+      const response = await api.post<any>(
+        `/secure/domains`,
         {
-          name: editValue,
-          s_id: user?.id || 6
+          domain_name: editValue,
+          status: 1,
+          domain_protected: 1,
+          amount: 0
         },
         {
           headers: {
@@ -246,12 +255,12 @@ export default function DomainPage() {
         }
       )
 
-      if (response.data.success) {
-        handleSuccess(response.data.message)
+      if (response.status === 200 || response.status === 201 || response.data?.success) {
+        handleSuccess(response.data?.message || "Domain added successfully")
       } else {
         toast({
           title: "Error",
-          description: response.data.message,
+          description: response.data?.message || "Failed to add domain",
           variant: "destructive"
         })
       }
@@ -286,12 +295,10 @@ export default function DomainPage() {
         return
       }
 
-      const response = await axios.post<ApiResponse>(
-        `${BASE_URL}/secure/Domain/update-domain`,
+      const response = await api.put<any>(
+        `/secure/domains/${id}`,
         {
-          id: id,
-          name: editValue,
-          s_id: user?.id || 6
+          name: editValue
         },
         {
           headers: {
@@ -301,12 +308,12 @@ export default function DomainPage() {
         }
       )
 
-      if (response.data.success) {
-        handleSuccess(response.data.message)
+      if (response.status === 200 || response.status === 201 || response.data?.success) {
+        handleSuccess(response.data?.message || "Domain updated successfully")
       } else {
         toast({
           title: "Error",
-          description: response.data.message,
+          description: response.data?.message || "Failed to update domain",
           variant: "destructive"
         })
       }
@@ -359,22 +366,27 @@ export default function DomainPage() {
         return
       }
 
-      const response = await axios.post<ApiResponse>(
-        `${BASE_URL}/secure/Domain/delete-domain`,
-        {
-          ids: idsToDelete,
-          s_id: user?.id || 6
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      )
+      let deleteSuccessCount = 0;
+      let deleteErrorMsg = "";
 
-      if (response.data.success) {
-        handleSuccess(`${idsToDelete.length} domain(s) deleted successfully`)
+      for (const delId of idsToDelete) {
+        try {
+          const res = await api.delete(`/secure/domains/${delId}`, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          if (res.status === 200 || res.status === 204 || res.data?.success) {
+            deleteSuccessCount++;
+          }
+        } catch (e: any) {
+          deleteErrorMsg = e.response?.data?.message || "Error deleting";
+        }
+      }
+
+      if (deleteSuccessCount > 0) {
+        handleSuccess(`${deleteSuccessCount} domain(s) deleted successfully`)
         if (itemToDelete) {
           // Remove single item from selected items if it was selected
           setSelectedItems(prev => prev.filter(itemId => itemId !== itemToDelete))
@@ -385,7 +397,7 @@ export default function DomainPage() {
       } else {
         toast({
           title: "Error",
-          description: response.data.message,
+          description: deleteErrorMsg || "Failed to delete domain(s)",
           variant: "destructive"
         })
       }
@@ -435,13 +447,15 @@ export default function DomainPage() {
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString)
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
+      return date.toLocaleString('en-GB', {
         day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
+        month: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric',
+        hour12: true
+      }).toLowerCase()
     } catch {
       return dateString
     }
@@ -595,34 +609,19 @@ export default function DomainPage() {
                         className="w-4 h-4 rounded border-gray-300 bg-gray-700 text-blue-600 focus:ring-blue-500 cursor-pointer"
                       />
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[80px]">
-                      S.NO
-                    </th>
-                    <th
-                      className="py-3 px-4 text-left text-sm font-medium text-gray-300 cursor-pointer hover:text-white transition-colors min-w-[200px]"
-                      onClick={() => handleSort("name")}
-                    >
-                      <div className="flex items-center gap-1">
-                        Domain Name
-                        {pagination.orderBy === "name" && (
-                          <span className="text-xs">
-                            {pagination.order === "asc" ? "↑" : "↓"}
-                          </span>
-                        )}
-                      </div>
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[150px]">
-                      Created At
-                    </th>
-                    <th className="py-3 px-4 text-right text-sm font-medium text-gray-300 min-w-[120px]">
-                      Actions
-                    </th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[60px]">S.NO</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[160px]">Domain Name</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">Renewal Date</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[100px]">Days Left</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[100px]">Status</th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[160px]">Last Updated</th>
+                    <th className="py-3 px-4 text-right text-sm font-medium text-gray-300 min-w-[100px]">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={5} className="py-8 text-center">
+                      <td colSpan={8} className="py-8 text-center">
                         <div className="flex flex-col items-center justify-center gap-2">
                           <DashboardLoader label="Loading domains..." />
                         </div>
@@ -669,31 +668,36 @@ export default function DomainPage() {
                           {startItem + index}
                         </td>
                         <td className="py-3 px-4">
-                          {editingId === item.id ? (
-                            <div className="flex gap-2">
-                              <input
-                                type="text"
-                                value={editValue}
-                                onChange={(e) => setEditValue(e.target.value)}
-                                className="flex-1 px-3 py-1.5 bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.1)] rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                                autoFocus
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') handleSave(item.id)
-                                  if (e.key === 'Escape') handleCancel()
-                                }}
-                              />
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2">
-                              <Globe className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                              <span className="text-sm text-white font-medium">
-                                {item.name}
-                              </span>
-                            </div>
-                          )}
+                          <div className="flex items-center gap-2">
+                            <Globe className="w-4 h-4 text-[#CB8959] flex-shrink-0" />
+                            <span className="text-sm text-white font-medium">
+                              {item.domain_name || item.name || '-'}
+                            </span>
+                          </div>
                         </td>
                         <td className="py-3 px-4 text-sm text-gray-300">
-                          {formatDate(item.created_at)}
+                          {item.renewal_date ? new Date(item.renewal_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '-'}
+                        </td>
+                        <td className="py-3 px-4">
+                          {item.days_left !== null && item.days_left !== undefined ? (
+                            <span className={`text-sm font-medium ${item.days_left < 0 ? 'text-red-400' :
+                              item.days_left <= 30 ? 'text-yellow-400' :
+                                'text-green-400'
+                              }`}>
+                              {item.days_left < 0 ? `${Math.abs(item.days_left)}d expired` : `${item.days_left}d`}
+                            </span>
+                          ) : (
+                            <span className="text-sm text-gray-500">-</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`text-xs px-2 py-1 rounded-full ${item.status === 1 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                            }`}>
+                            {item.status === 1 ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-sm text-gray-300">
+                          {item.last_updated || '-'}
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex items-center justify-end gap-2">

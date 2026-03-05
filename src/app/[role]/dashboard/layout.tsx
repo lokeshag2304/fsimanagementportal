@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+
 import "../../globals.css"
 import { ThemeProvider } from "@/contexts/theme-context"
 import { ThemeScript } from "@/components/theme-script"
@@ -9,11 +9,13 @@ import { ToastProvider } from "@radix-ui/react-toast"
 import AuthGuard from "@/components/AuthGuard";
 
 
-const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Flying ⭐",
+  title: "Fsi Management Portal ⭐",
   description: "Sbcription management system",
+  icons: {
+    icon: "/tab-logo.png",
+  },
 }
 
 export default function RootLayout({

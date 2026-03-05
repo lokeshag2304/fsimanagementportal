@@ -245,7 +245,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         router.push("/UserAdmin/dashboard");
         break;
       case 3:
-        router.push("/ClientAdmin/client-details");
+        router.push("/client/dashboard");
         break;
       default:
         router.push("/");

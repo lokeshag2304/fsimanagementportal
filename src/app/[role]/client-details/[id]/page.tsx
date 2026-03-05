@@ -23,7 +23,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Header } from "@/components/layout";
 import { getNavigationByRole } from "@/lib/getNavigationByRole";
 import { useParams, useRouter } from "next/navigation"
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 // Type Counts Interface
 interface TypeCount {
   type_id: number;
@@ -73,7 +72,7 @@ export default function DynamicDetailsPage({
 
   useEffect(() => {
     if (user?.id) {
-      fetchClientDetails();
+      fetchClientDetails().catch(err => console.error("Load failed", err));
     }
   }, [user?.id]);
 
@@ -105,7 +104,7 @@ export default function DynamicDetailsPage({
       }
       
       const response = await fetch(
-        `${BASE_URL}/secure/Usermanagement/get-clients-details`,
+        `/secure/Usermanagement/get-clients-details`,
         {
           method: 'POST',
           headers: {
@@ -256,7 +255,7 @@ export default function DynamicDetailsPage({
 
   // Handle refresh
   const handleRefresh = () => {
-    fetchClientDetails();
+    fetchClientDetails().catch(err => console.error("Load failed", err));
   };
 
   if (loading) {

@@ -267,14 +267,12 @@
 
 "use client"
 
-import { useEffect, useState } from "react"
-import Select from "react-select"
+import { useEffect, useState, useRef } from "react"
+import Select, { components } from "react-select"
 import { useAuth } from "@/contexts/AuthContext"
 import { Plus } from "lucide-react"
 import { toast } from "@/hooks/useToast"
-import { on } from "events"
-
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL + "/secure/Dropdowns"
+import api from "@/lib/api"
 
 interface OptionType {
   value: number
@@ -556,9 +554,9 @@ const CustomMenuList = (props: any) => {
 
   return (
     <>
-      <div {...rest}>
+      <components.MenuList {...rest}>
         {children}
-      </div>
+      </components.MenuList>
       {showAddButton && (
         <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 sticky bottom-0">
           <button
@@ -594,7 +592,7 @@ export function ApiDropdown({
   const [error, setError] = useState<string | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [adding, setAdding] = useState(false)
-  let set = false;
+  const setRef = useRef(false);
 
   // Check if this endpoint should show add button
   const shouldShowAddButton = () => {
@@ -610,40 +608,47 @@ export function ApiDropdown({
     return ''
   }
 
-  useEffect(() => {
-    fetchOptions()
-  }, [endpoint])
 
-  const fetchOptions = async () => {
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchOptions(controller.signal);
+    return () => {
+      controller.abort();
+    };
+  }, [endpoint]);
+
+  const fetchOptions = async (signal?: AbortSignal) => {
     try {
       setLoading(true)
       setError(null)
 
       const token = user?.token
 
-      const res = await fetch(`${BASE_URL}/${endpoint}`, {
-        method: "POST",
+      const res = await api.post(`/secure/Dropdowns/${endpoint}`, {}, {
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`
         },
+        signal: signal
       })
 
-      const data = await res.json()
-
-      if (data.status) {
-        const formatted = data.data.map((item: any) => ({
+      if (res.data?.status) {
+        const formatted = res.data.data.map((item: any) => ({
           value: item.id,
           label: item.name,
         }))
-        if (formatted.length > 0 && set) {
+        if (formatted.length > 0 && setRef.current) {
           onChange(formatted[0])
+          setRef.current = false
         }
         setOptions(formatted)
       } else {
-        setError(data.message || "Failed to load dropdown")
+        setError(res.data?.message || "Failed to load dropdown")
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err.name === 'AbortError' || err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
+        return;
+      }
       console.error(err)
       setError("Failed to load dropdown")
     } finally {
@@ -657,22 +662,17 @@ export function ApiDropdown({
       const token = user?.token
       const addEndpoint = getAddEndpoint()
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/secure/${addEndpoint}`, {
-        method: "POST",
+      const response = await api.post(`/secure/${addEndpoint}`, {
+        name: name,
+        s_id: user?.id || 6
+      }, {
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          name: name,
-          s_id: user?.id || 6
-        }),
+          Authorization: `Bearer ${token}`
+        }
       })
 
-      const data = await response.json()
-
-      if (data.success) {
-        set = true
+      if (response.data?.success) {
+        setRef.current = true
         fetchOptions()
 
         // Close modal
@@ -680,17 +680,17 @@ export function ApiDropdown({
 
         toast({
           title: "Success",
-          description: data.message || "Item added successfully",
+          description: response.data?.message || "Item added successfully",
           variant: "default"
         })
       } else {
         toast({
           title: "Error",
-          description: data.message || "Failed to add item",
+          description: response.data?.message || "Failed to add item",
           variant: "destructive"
         })
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err)
     } finally {
       setAdding(false)

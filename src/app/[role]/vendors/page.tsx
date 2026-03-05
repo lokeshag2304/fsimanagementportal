@@ -15,15 +15,13 @@ import {
   ChevronRight,
   ProjectorIcon
 } from "lucide-react"
-import axios from "@/lib/axios"
+import api from "@/lib/api"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/useToast"
 import DashboardLoader from "@/common/DashboardLoader"
 import Pagination from "@/common/Pagination"
 import { DeleteConfirmationModal } from "@/common/services/DeleteConfirmationModal"
 import { getNavigationByRole } from "@/lib/getNavigationByRole"
-
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL
 
 interface Product {
   id: number
@@ -38,38 +36,39 @@ interface ProductsResponse {
 
 interface ApiResponse {
   success: boolean
+  status: boolean
   message: string
-  domain_id?: number
 }
 
-export default function VendersPage() {
+export default function VendorsPage() {
   const { user, getToken } = useAuth()
   const navigationTabs = getNavigationByRole(user?.role)
   const { toast } = useToast()
   const [data, setData] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
+  const [selectedItems, setSelectedItems] = useState<number[]>([])
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editValue, setEditValue] = useState("")
-  const [selectedItems, setSelectedItems] = useState<number[]>([])
   const [isAdding, setIsAdding] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [itemToDelete, setItemToDelete] = useState<number | null>(null)
+  const [totalProducts, setTotalProducts] = useState(0)
+
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const isMountedRef = useRef(true)
+
   const [pagination, setPagination] = useState({
     page: 0,
     rowsPerPage: 10,
     order: "desc" as "asc" | "desc",
     orderBy: "id"
   })
-  const [totalProducts, setTotalProducts] = useState(0)
-  const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [itemToDelete, setItemToDelete] = useState<number | null>(null)
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const isMountedRef = useRef(true)
 
-  // Fetch products function
   const fetchProducts = async () => {
-    if (!isMountedRef.current) return;
+    if (!isMountedRef.current) return
 
     try {
       setLoading(true)
@@ -84,8 +83,8 @@ export default function VendersPage() {
         return
       }
 
-      const response = await axios.post<ProductsResponse>(
-        `${BASE_URL}/secure/Venders/list-venders`,
+      const response = await api.post<ProductsResponse>(
+        `/secure/Venders/list-venders`,
         {
           page: pagination.page,
           rowsPerPage: pagination.rowsPerPage,
@@ -135,7 +134,7 @@ export default function VendersPage() {
   // Initial fetch only
   useEffect(() => {
     isMountedRef.current = true
-    fetchProducts()
+    fetchProducts().catch(err => console.error("Load failed", err));
 
     return () => {
       isMountedRef.current = false
@@ -150,7 +149,7 @@ export default function VendersPage() {
     if (!isMountedRef.current) return;
 
     const timeoutId = setTimeout(() => {
-      fetchProducts()
+      fetchProducts().catch(err => console.error("Load failed", err));
     }, 300)
 
     return () => {
@@ -180,8 +179,7 @@ export default function VendersPage() {
     setEditingId(null)
     setEditValue("")
 
-    // Refresh data after successful operation
-    fetchProducts()
+    fetchProducts().catch(err => console.error("Load failed", err));
   }
 
   // Handle error
@@ -226,8 +224,8 @@ export default function VendersPage() {
         return
       }
 
-      const response = await axios.post<ApiResponse>(
-        `${BASE_URL}/secure/Venders/add-venders`,
+      const response = await api.post<ApiResponse>(
+        `/secure/Venders/add-venders`,
         {
           name: editValue,
           s_id: user?.id || 6
@@ -240,8 +238,8 @@ export default function VendersPage() {
         }
       )
 
-      if (response.data.success) {
-        handleSuccess(response.data.message)
+      if (response.data.success || response.data.status) {
+        handleSuccess(response.data.message || "Vendor added successfully")
       } else {
         toast({
           title: "Error",
@@ -279,8 +277,8 @@ export default function VendersPage() {
         return
       }
 
-      const response = await axios.post<ApiResponse>(
-        `${BASE_URL}/secure/Venders/update-venders`,
+      const response = await api.post<ApiResponse>(
+        `/secure/Venders/update-venders`,
         {
           id: id,
           name: editValue,
@@ -294,8 +292,8 @@ export default function VendersPage() {
         }
       )
 
-      if (response.data.success) {
-        handleSuccess(response.data.message)
+      if (response.data.success || response.data.status) {
+        handleSuccess(response.data.message || "Vendor updated successfully")
       } else {
         toast({
           title: "Error",
@@ -304,7 +302,7 @@ export default function VendersPage() {
         })
       }
     } catch (error: any) {
-      handleError(error, "Failed to update vendors")
+      handleError(error, "Failed to update vendor")
     } finally {
       setIsSaving(false)
     }
@@ -361,8 +359,8 @@ export default function VendersPage() {
 
       const idsToDelete = Array.isArray(idToDelete) ? idToDelete : [idToDelete]
 
-      const response = await axios.post<ApiResponse>(
-        `${BASE_URL}/secure/Venders/delete-venders`,
+      const response = await api.post<ApiResponse>(
+        `/secure/Venders/delete-venders`,
         {
           ids: idsToDelete,
           s_id: user?.id || 6
@@ -375,14 +373,13 @@ export default function VendersPage() {
         }
       )
 
-      if (response.data.success) {
+      if (response.data.success || response.data.status) {
         const successMessage = idsToDelete.length === 1
           ? "Vendor deleted successfully"
           : `${idsToDelete.length} vendor(s) deleted successfully`
 
         handleSuccess(successMessage)
 
-        // Remove from selected items
         if (Array.isArray(idToDelete)) {
           setSelectedItems([])
         } else {
@@ -489,7 +486,7 @@ export default function VendersPage() {
                 <h2 className="text-xl font-semibold text-white">Vendors</h2>
               </div>
               <p className="text-sm text-gray-400 mt-1">
-                Manage your vendor and inventory
+                Manage your vendors
               </p>
             </div>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto">
@@ -544,7 +541,7 @@ export default function VendersPage() {
             </div>
           </div>
 
-          {/* Add Form - Only for adding new products */}
+          {/* Add Form */}
           {editingId === -1 && (
             <div className="mb-6 p-4 bg-[rgba(255,255,255,0.05)] rounded-lg border border-[rgba(255,255,255,0.1)]">
               <div className="flex items-center justify-between mb-3">
@@ -602,7 +599,6 @@ export default function VendersPage() {
 
           {/* Table Container */}
           <div className="overflow-hidden rounded-lg border border-[rgba(255,255,255,0.1)]">
-            {/* Table */}
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -806,5 +802,3 @@ export default function VendersPage() {
     </div>
   )
 }
-
-

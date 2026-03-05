@@ -35,8 +35,11 @@ import {
   Filter,
   ChevronLeft,
   ChevronRight,
+  Shield,
+  Server,
+  Globe,
 } from "lucide-react";
-import axios from "@/lib/axios";
+import api from "@/lib/api";
 
 import { useAuth } from "@/contexts/AuthContext";
 import Pagination from "@/common/Pagination";
@@ -44,8 +47,10 @@ import { getNavigationByRole } from "@/lib/getNavigationByRole";
 import DashboardLoader from "@/common/DashboardLoader";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import SearchResultsPage from "../search-result/page";
+import { subscribeEntity } from "@/lib/entityBus";
+import { formatLastUpdated } from "@/utils/dateFormatter";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
+
 
 // Staggered animation variants
 const containerVariants = {
@@ -78,38 +83,18 @@ const itemVariants = {
 };
 
 // API types
-interface DynamicStats {
-  total_clients: number;
-  total_users: number;
-  total_domains: number;
-  total_products: number;
-}
-
-interface CategoryItem {
+export interface SubscriptionItem {
   id: number;
-  record_type: string;
-  status: "Active" | "Deactive" | string;
-  created_at: string;
-  days_to_expired: number;
-  today_date: string;
-}
-
-interface RecentCategoriesResponse {
-  total: number;
-  page: number;
-  rowsPerPage: number;
-  data: CategoryItem[];
-}
-
-interface DashboardResponse {
-  status: boolean;
-  filters: {
-    start_date: string;
-    end_date: string;
-  };
-  stats: DynamicStats;
-  recent_categories: RecentCategoriesResponse;
-  type_counts?: Array<{ count: number; type?: string }>;
+  product: string;
+  client: string;
+  amount: string;
+  renewal_date: string;
+  deletion_date: string | null;
+  days_left: number;
+  days_to_delete: number | null;
+  status: number;
+  remarks: string | null;
+  updated_at: string | null;
 }
 
 interface PaginationState {
@@ -123,17 +108,23 @@ export default function Dashboard() {
   const [endDate, setEndDate] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [Mainloading, setMainLoading] = useState(true);
-  const [dashboardData, setDashboardData] = useState<DashboardResponse | null>(
-    null,
-  );
+  const [subscriptionsData, setSubscriptionsData] = useState<SubscriptionItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
   const [orderBy, setOrderBy] = useState<string>("id");
   const [orderDir, setOrderDir] = useState<"asc" | "desc">("desc");
   const [pagination, setPagination] = useState<PaginationState>({
     page: 0,
-    rowsPerPage: 10,
+    rowsPerPage: 100,
     total: 0,
+  });
+  const [counts, setCounts] = useState({
+    subscription: 0,
+    ssl: 0,
+    hosting: 0,
+    domains: 0,
+    emails: 0,
+    counter: 0
   });
 
   const { colors } = useTheme();
@@ -156,57 +147,69 @@ export default function Dashboard() {
 
       // Check if token exists
       if (!token) {
-        console.error("No authentication token found");
-        setDashboardData(null);
+        console.warn("No authentication token found");
+        setSubscriptionsData([]);
         setMainLoading(false);
         return;
       }
 
-      const payload = {
+      const params = {
         start_date: startDate,
         end_date: endDate,
-        page: pagination.page,
-        rowsPerPage: pagination.rowsPerPage,
         search: searchQuery,
         orderBy: orderBy,
         orderDir: orderDir,
         s_id: user?.id || "",
       };
 
-      const response = await axios.post<DashboardResponse>(
-        `${BASE_URL}/secure/dashboard/counting`,
-        payload,
+      // Fetch counting data
+      try {
+        const countsResponse = await api.post(
+          "/secure/dashboard/counting",
+          params,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        console.log("Dashboard Counts Response:", countsResponse.data);
+
+        // Safe extraction
+        const safeData = countsResponse?.data?.data || {};
+
+        setCounts(prev => ({
+          ...prev,
+          subscription: safeData.subscription ?? safeData.subscriptions ?? 0,
+          ssl: safeData.ssl ?? 0,
+          hosting: safeData.hosting ?? safeData.hostings ?? 0,
+          domains: safeData.domains ?? safeData.domain ?? 0,
+          emails: safeData.emails ?? safeData.email ?? 0,
+          counter: safeData.counter ?? safeData.counters ?? 0
+        }));
+
+      } catch (countError: any) {
+        console.warn("Counting API Error:", countError);
+      }
+
+      const response = await api.get<SubscriptionItem[]>(
+        "/secure/dashboard/subscriptions",
         {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        },
+          params,
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
 
-      if (
-        response.data.status &&
-        response.data.recent_categories?.data?.length > 0
-      ) {
-        setDashboardData(response.data);
-        setPagination((prev) => ({
-          ...prev,
-          total: response.data.recent_categories.total,
-        }));
+      if (response?.data && Array.isArray(response.data)) {
+        setSubscriptionsData(response.data);
       } else {
-        setDashboardData(null);
-        setPagination((prev) => ({
-          ...prev,
-          total: 0,
-        }));
+        setSubscriptionsData([]);
       }
     } catch (error: any) {
-      console.error("Error fetching dashboard data:", error);
-      if (error.response?.status === 401) {
-        console.error("Unauthorized: Token may be invalid or expired");
-        // You may want to redirect to login or refresh token here
+      console.warn("Error fetching dashboard data:", error);
+      if (error?.response?.status === 401) {
+        console.warn("Unauthorized: Token may be invalid or expired");
       }
-      setDashboardData(null);
+      setSubscriptionsData([]);
     } finally {
       setLoading(false);
       setMainLoading(false);
@@ -215,7 +218,7 @@ export default function Dashboard() {
 
   // Initial fetch on component mount
   useEffect(() => {
-    fetchDashboardData();
+    fetchDashboardData().catch(err => console.warn("Load failed", err));
   }, [
     pagination.page,
     pagination.rowsPerPage,
@@ -223,6 +226,13 @@ export default function Dashboard() {
     orderDir,
     debouncedSearch,
   ]);
+
+  useEffect(() => {
+    const unsub = subscribeEntity('all', () => {
+      fetchDashboardData().catch(err => console.warn(err));
+    });
+    return () => unsub();
+  }, [startDate, endDate, searchQuery, orderBy, orderDir, user]);
 
   // Handle page change
   const handlePageChange = (newPage: number) => {
@@ -232,7 +242,7 @@ export default function Dashboard() {
   // Handle search
   const handleSearch = () => {
     setPagination((prev) => ({ ...prev, page: 0 }));
-    fetchDashboardData();
+    fetchDashboardData().catch(err => console.warn("Load failed", err));
   };
 
   // Handle sort
@@ -248,13 +258,37 @@ export default function Dashboard() {
   // Format date for display
   const formatDateForDisplay = (dateString: string) => {
     if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
+    // If it already looks formatted like 'j/n/Y' (has slashes), return it as is
+    if (dateString.includes('/')) return dateString;
 
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return dateString;
+
+      // Check if it's just a date (YYYY-MM-DD) or has time
+      const hasTime = dateString.includes('T') || dateString.includes(':');
+
+      if (hasTime) {
+        return date.toLocaleString("en-GB", {
+          day: "numeric",
+          month: "numeric",
+          year: "numeric",
+          hour: "numeric",
+          minute: "numeric",
+          second: "numeric",
+          hour12: true
+        }).toLowerCase();
+      } else {
+        return date.toLocaleDateString("en-GB", {
+          day: "numeric",
+          month: "numeric",
+          year: "numeric"
+        });
+      }
+    } catch (e) {
+      return dateString;
+    }
+  };
   // Get status badge variant
   const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {
@@ -270,22 +304,22 @@ export default function Dashboard() {
   // Dynamic stats
   const statsData = {
     courses: {
-      total: dashboardData?.stats.total_products || 0,
+      total: 0,
       active: 0,
       upcoming: 0,
     },
     lessons: {
-      total: dashboardData?.stats.total_domains || 0,
+      total: 0,
       active: 0,
       upcoming: 0,
     },
     enrollments: {
-      total: dashboardData?.stats.total_users || 0,
+      total: 0,
       passed: 0,
       new: 0,
     },
     students: {
-      total: dashboardData?.stats.total_clients || 0,
+      total: 0,
       active: 0,
       new: 0,
     },
@@ -301,261 +335,136 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen pb-8">
-      <Header title="Dashboard Overview" tabs={navigationTabs} />
+      <Header
+        title="Dashboard Overview"
+        tabs={navigationTabs}
+      />
 
-      <div className="px-4 sm:px-6 space-y-6 mt-6">
+      <div className="px-4 sm:px-6 mt-6">
         {/* Date Filter Section */}
-        {/* <GlassCard variant="liquid" className="p-4"> */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            {/* <Filter className="w-4 h-4 text-[var(--text-muted)]" />
-              <span className="text-[var(--text-primary)] text-sm font-medium">Filter Dashboard Data</span> */}
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
-            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-              <div className="relative">
-                {/* <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" /> */}
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="p-1 w-full sm:w-40 glass-input border-white/[0.08]"
-                  placeholder="Start Date"
-                />
-              </div>
-              <div className="relative">
-                {/* <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" /> */}
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="p-1 w-full sm:w-40 glass-input border-white/[0.08]"
-                  placeholder="End Date"
-                />
-              </div>
-            </div>
-
+        <div className="flex justify-end mb-4">
+          <div className="flex items-center gap-3 bg-[var(--glass)] border border-[rgba(255,255,255,0.08)] p-1.5 rounded-xl">
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="px-2 py-1 text-xs bg-transparent text-[var(--text-primary)] focus:outline-none appearance-none"
+              placeholder="dd-mm-yyyy"
+            />
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="px-2 py-1 text-xs bg-transparent text-[var(--text-primary)] focus:outline-none appearance-none border-l border-[rgba(255,255,255,0.08)]"
+              placeholder="dd-mm-yyyy"
+            />
             <Button
               onClick={fetchDashboardData}
               disabled={loading}
               variant="glass"
               size="sm"
-              className="w-full p-1 sm:w-auto"
+              className="px-4 py-1 h-7 text-xs bg-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.15)] rounded-lg text-white"
             >
-              {loading ? "Loading..." : "Apply Filter"}
+              {loading ? "..." : "Apply Filter"}
             </Button>
           </div>
         </div>
 
         {/* Dynamic Stats Row */}
-        {dashboardData && dashboardData.type_counts ? (
-          <GlassCard variant="liquid" noPadding className="overflow-hidden p-5">
-            <StatsRow
-              stats={[
-                {
-                  title: "Subscription",
-                  value: dashboardData.type_counts[0]?.count || 0,
-                  icon: (
-                    <GraduationCap className="w-5 h-5 text-[var(--text-muted)]" />
-                  ),
-                  url: `${user?.role}/products`,
-                },
-                {
-                  title: "SSL",
-                  value: dashboardData.type_counts[1]?.count || 0,
-                  icon: <BookOpen className="w-5 h-5 text-[var(--text-muted)]" />,
-                  url: `${user?.role}/domains`,
-                },
-                {
-                  title: "Hosting",
-                  value: dashboardData.type_counts[2]?.count || 0,
-                  icon: <UserCheck className="w-5 h-5 text-[var(--text-muted)]" />,
-                  url: `${user?.role}/users`,
-                },
-                {
-                  title: "Domains",
-                  value: dashboardData.type_counts[3]?.count || 0,
-                  icon: <Users className="w-5 h-5 text-[var(--text-muted)]" />,
-                  url: `${user?.role}/clients`,
-                },
-                {
-                  title: "Emails",
-                  value: dashboardData.type_counts[4]?.count || 0,
-                  icon: <BookOpen className="w-5 h-5 text-[var(--text-muted)]" />,
-                  url: `${user?.role}/domains`,
-                },
-                {
-                  title: "Counter",
-                  value: dashboardData.type_counts[5]?.count || 0,
-                  icon: <UserCheck className="w-5 h-5 text-[var(--text-muted)]" />,
-                  url: `${user?.role}/users`,
-                },
-              ]}
-            />
-          </GlassCard>
-        ) : (
-          <GlassCard variant="liquid" noPadding className="overflow-hidden p-5">
-            <div className="text-center py-8 text-[var(--text-muted)]">
-              <p>No dashboard data available. Please check your authentication or try again.</p>
-            </div>
-          </GlassCard>
-        )}
-        {/* <GlassCard> */}
-        <SearchResultsPage />
-        {/* </GlassCard> */}
-        {/* Recent Categories Table */}
-        {/* <GlassCard variant="liquid" noPadding className="overflow-hidden">
+        <GlassCard variant="liquid" noPadding className="overflow-hidden mb-6 hidden-border">
+          <StatsRow
+            stats={[
+              {
+                title: "Subscription",
+                value: counts.subscription,
+                icon: (
+                  <ShoppingCart className="w-5 h-5 text-blue-400" />
+                ),
+                url: `${user?.role}/subscription`,
+              },
+              {
+                title: "SSL",
+                value: counts.ssl,
+                icon: <Shield className="w-5 h-5 text-green-400" />,
+                url: `${user?.role}/ssl`,
+              },
+              {
+                title: "Hosting",
+                value: counts.hosting,
+                icon: <Server className="w-5 h-5 text-purple-400" />,
+                url: `${user?.role}/hosting`,
+              },
+              {
+                title: "Domains",
+                value: counts.domains,
+                icon: <Globe className="w-5 h-5 text-orange-400" />,
+                url: `${user?.role}/domains`,
+              },
+              {
+                title: "Emails",
+                value: counts.emails,
+                icon: <BookOpen className="w-5 h-5 text-red-400" />,
+                url: `${user?.role}/sub-email`,
+              },
+              {
+                title: "Counter",
+                value: counts.counter,
+                icon: <BarChart3 className="w-5 h-5 text-indigo-400" />,
+                url: `${user?.role}/counter`,
+              },
+            ]}
+          />
+        </GlassCard>
+        <div className="mb-6">
+          <SearchResultsPage query={searchQuery} onSearchChange={setSearchQuery} />
+        </div>
+
+        {/* Recent Subscriptions Table */}
+        <GlassCard variant="liquid" noPadding className="overflow-hidden mb-6 hidden-border">
           <div className="p-4 sm:p-5">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-              <div>
-                <h3 className="text-[var(--text-tertiary)] font-medium text-sm sm:text-base">
-                  Recent Categories
-                </h3>
-                <p className="text-[var(--text-muted)] text-xs mt-1">
-                  Total: {dashboardData?.recent_categories.total || 0} records
-                </p>
-              </div>
-
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
-                <div className="relative w-full sm:w-64">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search categories..."
-                    className="pl-2 p-2 w-full glass-input border-white/[0.08]"
-                  />
-                </div>
-
-                <Select
-                  value={pagination.rowsPerPage.toString()}
-                  onValueChange={(value) =>
-                    setPagination((prev) => ({
-                      ...prev,
-                      rowsPerPage: parseInt(value),
-                      page: 0,
-                    }))
-                  }
-                >
-                  <SelectTrigger className="w-32 glass-input border-white/[0.08]">
-                    <SelectValue placeholder="Rows per page" />
-                  </SelectTrigger>
-                  <SelectContent className="glass-dropdown border-white/[0.08]">
-                    <SelectItem value="5">5 per page</SelectItem>
-                    <SelectItem value="10">10 per page</SelectItem>
-                    <SelectItem value="20">20 per page</SelectItem>
-                    <SelectItem value="50">50 per page</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="overflow-x-auto rounded-lg border border-white/[0.08]">
-              <table className="w-full">
-                <thead className="bg-[rgba(255,255,255,0.03)] border-b border-white/[0.08]">
+            <h3 className="text-[var(--text-tertiary)] font-medium text-sm sm:text-base mb-4">
+              Recent Subscriptions
+            </h3>
+            <div className="overflow-auto rounded-lg border border-white/[0.08] max-h-[400px]">
+              <table className="w-full relative">
+                <thead className="bg-[#1A1A1A] border-b border-white/[0.08] sticky top-0 z-10 shadow-sm">
                   <tr>
-                    <th
-                      className="py-3 px-4 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider cursor-pointer hover:bg-[rgba(255,255,255,0.05)]"
-                      // onClick={() => handleSort("id")}
-                    >
-                      <div className="flex items-center gap-1">Sr No</div>
-                    </th>
-                    <th className="py-3 px-4 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">
-                      Record Type
-                    </th>
-                    <th className="py-3 px-4 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="py-3 px-4 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">
-                      Created At
-                    </th>
-                    <th className="py-3 px-4 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">
-                      Days to Expired
-                    </th>
+                    <th className="py-3 px-4 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Sr No</th>
+                    <th className="py-3 px-4 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Product</th>
+                    <th className="py-3 px-4 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Client</th>
+                    <th className="py-3 px-4 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Amount</th>
+                    <th className="py-3 px-4 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Renewal Date</th>
+                    <th className="py-3 px-4 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Status</th>
+                    <th className="py-3 px-4 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider whitespace-nowrap">Last Updated</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/[0.08]">
-                  {loading ? (
-                    <tr>
-                      <td
-                        colSpan={5}
-                        className="py-8 text-center text-[var(--text-muted)]"
-                      >
-                        <DashboardLoader label="Loading..." />
-                      </td>
-                    </tr>
-                  ) : dashboardData?.recent_categories.data &&
-                    dashboardData.recent_categories.data.length > 0 ? (
-                    dashboardData.recent_categories.data.map((item, index) => (
-                      <tr
-                        key={item.id}
-                        className="hover:bg-[rgba(255,255,255,0.03)] transition-colors duration-200"
-                      >
-                        <td className="py-3 px-4 text-sm text-[var(--text-primary)] font-medium">
-                          {pagination.page * pagination.rowsPerPage + index + 1}
-                        </td>
-                        <td className="py-3 px-4 text-sm text-[var(--text-primary)]">
-                          {item.record_type}
-                        </td>
+                  {subscriptionsData && subscriptionsData.length > 0 ? (
+                    subscriptionsData.map((item, index) => (
+                      <tr key={`${item.id}-${index}`} className="hover:bg-[rgba(255,255,255,0.03)] transition-colors">
+                        <td className="py-3 px-4 text-sm text-[var(--text-primary)]">{index + 1}</td>
+                        <td className="py-3 px-4 text-sm text-[var(--text-primary)] font-medium capitalize">{item.product || "N/A"}</td>
+                        <td className="py-3 px-4 text-sm text-[var(--text-muted)] capitalize">{item.client || "N/A"}</td>
+                        <td className="py-3 px-4 text-sm text-[var(--text-primary)] font-medium text-green-400">₹{item.amount ? Number(item.amount).toFixed(2) : "0.00"}</td>
+                        <td className="py-3 px-4 text-sm text-[var(--text-muted)]">{formatDateForDisplay(item.renewal_date || "")}</td>
                         <td className="py-3 px-4">
-                          <Badge
-                            variant={getStatusVariant(item.status)}
-                            className="text-xs"
-                          >
-                            {item.status}
+                          <Badge variant={item.status === 1 ? "success" : "secondary"}>
+                            {item.status === 1 ? "Active" : "Inactive"}
                           </Badge>
                         </td>
-                        <td className="py-3 px-4 text-sm text-[var(--text-muted)]">
-                          {item.created_at}
-                        </td>
-                        <td className="py-3 px-4">
-                          <div
-                            className={`text-sm font-medium ${
-                              item.days_to_expired < 0
-                                ? "text-red-400"
-                                : item.days_to_expired < 30
-                                  ? "text-amber-400"
-                                  : "text-green-400"
-                            }`}
-                          >
-                            {item.days_to_expired} days
-                          </div>
-                        </td>
+                        <td className="py-3 px-4 text-sm text-[var(--text-muted)]">{formatLastUpdated(item.updated_at || "")}</td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td
-                        colSpan={5}
-                        className="py-8 text-center text-[var(--text-muted)]"
-                      >
-                        No data available
-                      </td>
+                      <td colSpan={7} className="py-8 text-center text-[var(--text-muted)]">No data available</td>
                     </tr>
                   )}
                 </tbody>
               </table>
             </div>
-
-            {dashboardData?.recent_categories &&
-              dashboardData.recent_categories.total > 0 && (
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t border-white/[0.08]">
-                  <div className="text-sm text-[var(--text-muted)]">
-                    Showing {dashboardData.recent_categories.data.length} of{" "}
-                    {dashboardData.recent_categories.total} entries
-                  </div>
-
-                  <Pagination
-                    page={pagination.page}
-                    rowsPerPage={pagination.rowsPerPage}
-                    totalItems={pagination.total}
-                    onPageChange={handlePageChange}
-                  />
-                </div>
-              )}
           </div>
-        </GlassCard> */}
+        </GlassCard>
       </div>
     </div>
   );

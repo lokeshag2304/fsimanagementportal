@@ -1,8 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import axios from "@/lib/axios"
-import { Header } from "@/components/layout"
+import api from "@/lib/api"
 import { GlassCard } from "@/components/glass"
 import {
   Search,
@@ -16,21 +15,23 @@ import {
   SearchCheckIcon
 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
-import { getNavigationByRole } from "@/lib/getNavigationByRole"
 import Pagination from "@/common/Pagination"
 import DashboardLoader from "@/common/DashboardLoader"
+import { formatLastUpdated } from "@/utils/dateFormatter"
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL
 
 interface SearchResult {
   id: number
-  record_type_name: string
-  expiry_date: string
+  record_type: string
+  created_at: string
   days_to_expired: number
   today_date: string
-  domain_name: string
-  product_name: string
-  status: 'Active' | 'Expired' | 'Warning' | 'Draft'
+  domain_name: string | null
+  product_name: string | null
+  client_name: string | null
+  vendor_name: string | null
+  amount: string | null
+  status: number
 }
 
 interface PaginationState {
@@ -38,32 +39,53 @@ interface PaginationState {
   rowsPerPage: number
 }
 
-export default function SearchResultsPage() {
+export default function SearchResultsPage({ query, onSearchChange }: { query?: string, onSearchChange?: (val: string) => void }) {
   const { user, getToken } = useAuth()
-  const navigationTabs = getNavigationByRole(user?.role)
   const [data, setData] = useState<SearchResult[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [searchQuery, setSearchQuery] = useState("")
+  
+  // Use prop if provided, otherwise local state (for standalone)
+  const [localSearchQuery, setLocalSearchQuery] = useState("");
+  const activeQuery = query !== undefined ? query : localSearchQuery;
+  
+  const [debouncedQuery, setDebouncedQuery] = useState(activeQuery);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(activeQuery);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [activeQuery]);
+
+  const handleSearchChange = (val: string) => {
+    if (onSearchChange) {
+      onSearchChange(val);
+    } else {
+      setLocalSearchQuery(val);
+    }
+    setPagination(prev => ({ ...prev, page: 0 }));
+  };
+
   const [pagination, setPagination] = useState<PaginationState>({
     page: 0,
-    rowsPerPage: 10
+    rowsPerPage: 5
   })
   const [totalItems, setTotalItems] = useState(0)
   const token = getToken();
 
-  // Fetch data from API
+  // Fetch ALL data from API ONCE
   const fetchSearchResults = async () => {
     try {
       setLoading(true)
       
-      const response = await axios.post(
-        `${BASE_URL}/secure/Categories/search-results`,
+      const response = await api.post(
+        `/secure/Categories/search-results`,
         {
-          s_id: user?.id, // Adjust based on your auth context
+          s_id: user?.id,
           page: pagination.page,
-          rowsPerPage: pagination.rowsPerPage,
-          search: searchQuery,
+          rowsPerPage: 500, // Load a large batch for instant local filtering
+          search: "", // Empty search to load all
           orderBy: "id",
           orderDir: "desc"
         },
@@ -76,26 +98,31 @@ export default function SearchResultsPage() {
         }
       )
 
-      if (response.data.status) {
-        setData(response.data.data)
-        setTotalItems(response.data.total)
+      if (response?.data?.success) {
+        setData(response?.data?.recent_categories?.data || [])
+        setTotalItems(response?.data?.recent_categories?.total || 0)
       } else {
         setError("Failed to fetch search results")
       }
-    } catch (err) {
-      console.error("Error fetching search results:", err)
-      setError("An error occurred while fetching data")
+    } catch (err: any) {
+      console.warn("Error fetching search results:", err)
+      if (err?.response?.status === 500) {
+        setData([])
+        setLoading(false)
+      } else {
+        setError("An error occurred while fetching data")
+      }
     } finally {
       setLoading(false)
     }
   }
 
-  // Fetch data on component mount and when pagination/search changes
+  // Fetch data on component mount
   useEffect(() => {
-    if (searchQuery) {
+    if (user?.id) {
       fetchSearchResults()
     }
-  }, [pagination.page, pagination.rowsPerPage, searchQuery])
+  }, [pagination.page, user?.id])
 
   const handlePageChange = (newPage: number) => {
     setPagination(prev => ({ ...prev, page: newPage }))
@@ -109,33 +136,26 @@ export default function SearchResultsPage() {
     return 'Draft'
   }
 
-  const getStatusColor = (status: SearchResult['status']) => {
-    switch (status) {
-      case 'Active': return 'text-green-400'
-      case 'Warning': return 'text-yellow-400'
-      case 'Expired': return 'text-red-400'
-      case 'Draft': return 'text-blue-400'
-      default: return 'text-gray-400'
-    }
-  }
+  // Instantly filter data locally for real-time appearance
+  const filteredDataAll = data.filter((item) => {
+    if (!activeQuery) return true;
+    const searchStr = activeQuery.toLowerCase();
+    
+    // Check across all possible columns
+    return (
+      (item.domain_name && item.domain_name.toLowerCase().includes(searchStr)) ||
+      (item.product_name && item.product_name.toLowerCase().includes(searchStr)) ||
+      (item.client_name && item.client_name.toLowerCase().includes(searchStr)) ||
+      (item.vendor_name && item.vendor_name.toLowerCase().includes(searchStr)) ||
+      (item.record_type && item.record_type.toLowerCase().includes(searchStr)) ||
+      (item.amount && item.amount.toString().toLowerCase().includes(searchStr))
+    );
+  });
 
-  const getStatusIcon = (status: SearchResult['status']) => {
-    switch (status) {
-      case 'Active': return <CheckCircle className="w-4 h-4" />
-      case 'Warning': return <AlertCircle className="w-4 h-4" />
-      case 'Expired': return <XCircle className="w-4 h-4" />
-      case 'Draft': return <FileText className="w-4 h-4" />
-      default: return <AlertCircle className="w-4 h-4" />
-    }
-  }
-
-  // Filter data locally if needed (though API handles search)
-  const filteredData = data.filter(item =>
-    item.record_type_name?.toLowerCase().includes(searchQuery?.toLowerCase()) ||
-    item.domain_name?.toLowerCase().includes(searchQuery?.toLowerCase()) ||
-    item.product_name?.toLowerCase().includes(searchQuery?.toLowerCase()) ||
-    item.status?.toLowerCase().includes(searchQuery?.toLowerCase())
-  )
+  const paginatedData = filteredDataAll.slice(
+    pagination.page * pagination.rowsPerPage,
+    (pagination.page + 1) * pagination.rowsPerPage
+  );
 
   // if (loading) {
   //   return (
@@ -147,158 +167,132 @@ export default function SearchResultsPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen">
-        <Header title="Search Results Management" tabs={navigationTabs} />
-        <div className="px-4 sm:px-6 mt-6">
-          <GlassCard className="p-6">
-            <div className="text-center py-8 text-red-400">
-              {error}
-            </div>
-          </GlassCard>
-        </div>
+      <div className="px-4 sm:px-6 mt-6">
+        <GlassCard className="p-6">
+          <div className="text-center py-8 text-red-400">
+            {error}
+          </div>
+        </GlassCard>
       </div>
     )
   }
 
   return (
-
-      <div className="px-4 sm:px-6 mt-6">
-        <GlassCard className="p-6">
-          {/* Header with Search */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-            <div>
-              <div className="flex items-center gap-2">
-                <SearchCheckIcon className="w-6 h-6 text-[#CB8969]" />
-                <h2 className="text-xl font-semibold text-white">Search Results</h2>
-              </div>
-              <p className="text-sm text-gray-400 mt-1">
-                View and track your search results.
-              </p>
+    <div className="w-full">
+      <GlassCard variant="liquid" noPadding className="overflow-hidden hidden-border">
+        <div className="p-4 sm:p-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div>
+            <div className="flex items-center gap-2">
+              <SearchCheckIcon className="w-5 h-5 text-[#CB8969]" />
+              <h2 className="text-lg font-semibold text-white">Search Results</h2>
             </div>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-                <input
-                  type="text"
-                  placeholder="Search results..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 py-2 w-full sm:w-auto bg-[rgba(255,255,255,var(--ui-opacity-10))] border border-[rgba(255,255,255,var(--glass-border-opacity))] rounded-lg text-white placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary)] focus:border-transparent"
-                />
-              </div>
-            </div>
+            <p className="text-xs text-gray-400 mt-1">
+              View and track your search results.
+            </p>
           </div>
+          
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <input
+              type="text"
+              placeholder="Search across all modules..."
+              value={activeQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                }
+              }}
+              className="pl-9 pr-4 py-1.5 w-[200px] sm:w-[250px] bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-white/30"
+            />
+          </div>
+        </div>
 
           {/* Table */}
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1000px]">
               <thead>
                 <tr className="border-b border-[rgba(255,255,255,var(--glass-border-opacity))]">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-[var(--text-tertiary)] w-[60px]">
+                  <th className="text-left py-3 px-4 text-xs font-medium text-[var(--text-tertiary)] w-[60px]">
                     S.NO
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-[var(--text-tertiary)]">
+                  <th className="text-left py-3 px-4 text-xs font-medium text-[var(--text-tertiary)]">
                     Type
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-[var(--text-tertiary)]">
+                  <th className="text-left py-3 px-4 text-xs font-medium text-[var(--text-tertiary)]">
                     Expire Date
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-[var(--text-tertiary)]">
+                  <th className="text-left py-3 px-4 text-xs font-medium text-[var(--text-tertiary)]">
                     Days to Expire
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-[var(--text-tertiary)]">
+                  <th className="text-left py-3 px-4 text-xs font-medium text-[var(--text-tertiary)]">
                     Today's Date
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-[var(--text-tertiary)]">
+                  <th className="text-left py-3 px-4 text-xs font-medium text-[var(--text-tertiary)]">
                     Domain Name
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-[var(--text-tertiary)]">
+                  <th className="text-left py-3 px-4 text-xs font-medium text-[var(--text-tertiary)]">
                     Product
                   </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-[var(--text-tertiary)]">
+                  <th className="text-left py-3 px-4 text-xs font-medium text-[var(--text-tertiary)]">
                     Status
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {
-                  loading ? (
+                  loading && data.length === 0 ? (
                     <tr>
                       <td colSpan={8} className="text-center py-4">
                         <DashboardLoader />
                       </td>
                     </tr>
                   )
+                  : paginatedData.length === 0 ? (
+                     <tr>
+                      <td colSpan={8} className="text-center py-4 text-[var(--text-muted)] text-sm">
+                        No search results found
+                      </td>
+                    </tr>
+                  )
                   : (
-                    filteredData.map((item, index) => (
+                    paginatedData.map((item, index) => (
                   <tr
-                    key={item.id}
+                    key={`${item.id}-${index}`}
                     className="border-b border-[rgba(255,255,255,var(--glass-border-opacity))] hover:bg-[rgba(255,255,255,var(--ui-opacity-5))] transition-colors"
                   >
                     <td className="py-3 px-4 text-sm text-[var(--text-secondary)]">
                       {(pagination.page * pagination.rowsPerPage) + index + 1}
                     </td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-[var(--text-muted)]" />
-                        <span className="text-sm text-white font-medium">{item.record_type_name}</span>
-                      </div>
+                    <td className="py-3 px-4 text-sm text-white">
+                      {item.record_type}
+                    </td>
+                    <td className="py-3 px-4 text-sm text-[var(--text-secondary)]">
+                      {formatLastUpdated(item.created_at)} {/* In backend it's mostly mapped over created_at currently */}
+                    </td>
+                    <td className="py-3 px-4 text-sm text-[var(--text-secondary)]">
+                      {item.days_to_expired !== null ? `${item.days_to_expired} days` : '-'}
+                    </td>
+                    <td className="py-3 px-4 text-sm text-[var(--text-secondary)]">
+                      {item.today_date}
+                    </td>
+                    <td className="py-3 px-4 text-sm text-[var(--text-secondary)]">
+                      {item.domain_name || '-'}
+                    </td>
+                    <td className="py-3 px-4 text-sm text-[var(--text-secondary)]">
+                      {item.product_name || '-'}
                     </td>
                     <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-[var(--text-muted)]" />
-                        <span className="text-sm text-[var(--text-secondary)]">
-                          {new Date(item.expiry_date).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric'
-                          })}
+                      {item.status === 1 ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-500/20 text-green-400">
+                          Active
                         </span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
-                        item.days_to_expired < 0 
-                          ? 'bg-red-500/20 text-red-400' 
-                          : item.days_to_expired <= 7 
-                            ? 'bg-yellow-500/20 text-yellow-400'
-                            : 'bg-green-500/20 text-green-400'
-                      }`}>
-                        <Clock className="w-3 h-3" />
-                        {item.days_to_expired >= 0 ? `${item.days_to_expired} days` : `${Math.abs(item.days_to_expired)} days ago`}
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="text-sm text-[var(--text-secondary)]">
-                        {new Date(item.today_date).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric'
-                        })}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
-                        <Package className="w-4 h-4 text-[var(--text-muted)]" />
-                        <span className="text-sm text-[var(--text-secondary)]">{item.domain_name}</span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
-                        <Package className="w-4 h-4 text-[var(--text-muted)]" />
-                        <span className="text-sm text-[var(--text-secondary)]">{item.product_name}</span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(item.status)} bg-opacity-20 ${
-                        item.status === 'Active' ? 'bg-green-500/20' :
-                        item.status === 'Warning' ? 'bg-yellow-500/20' :
-                        item.status === 'Expired' ? 'bg-red-500/20' :
-                        'bg-blue-500/20'
-                      }`}>
-                        {getStatusIcon(item.status)}
-                        {item.status}
-                      </div>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-500/20 text-gray-400">
+                          Inactive
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -307,26 +301,22 @@ export default function SearchResultsPage() {
               </tbody>
             </table>
             
-            {filteredData.length === 0 && (
-              <div className="text-center py-8">
-                <span className="text-[var(--text-muted)]">No search results found</span>
-              </div>
-            )}
           </div>
 
           {/* Pagination */}
-          {filteredData.length > 0 && (
+          {filteredDataAll.length > 0 && (
             <div className="mt-6">
               <Pagination
                 page={pagination.page}
                 rowsPerPage={pagination.rowsPerPage}
-                totalItems={totalItems}
+                totalItems={filteredDataAll.length}
                 onPageChange={handlePageChange}
               />
             </div>
           )}
-        </GlassCard>
-      </div>
+        </div>
+      </GlassCard>
+    </div>
   )
 }
 
