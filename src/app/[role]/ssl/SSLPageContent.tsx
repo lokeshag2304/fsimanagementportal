@@ -1699,7 +1699,8 @@ export default function SSLPage() {
                                   )}
                                 </div>
                               </td>
-                            </tr>                             {/* Expansion Row for Details */}
+                            </tr>
+                            {/* Expansion Row for Details */}
                             {expandedRowId === item.id && (
                               <tr className="bg-white/5 animate-in fade-in slide-in-from-top-4 duration-300">
                                 <td colSpan={isClient ? 7 : 15} className="py-4 px-6">
