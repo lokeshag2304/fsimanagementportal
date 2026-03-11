@@ -38,11 +38,13 @@ import Pagination from "@/common/Pagination";
 import DashboardLoader, { downloadBase64File } from "@/common/DashboardLoader";
 import { getNavigationByRole } from "@/lib/getNavigationByRole";
 import { ApiDropdown, glassSelectStyles } from "@/common/DynamicDropdown";
+import { CurrencyAmountInput } from "@/common/CurrencyAmountInput";
 import { GlassSelect } from "@/components/glass/GlassSelect";
 import { handleDateChangeLogic, getDaysToColor } from "@/utils/dateCalculations";
 import { normalizeEntityPayload } from "@/utils/normalizePayload";
 import { emitEntityChange } from "@/lib/entityBus";
 import { formatLastUpdated } from "@/utils/dateFormatter";
+import { getCurrencySymbol, currencySymbols } from "@/utils/currencies";
 
 interface Subscription {
   remark_id?: number | null;
@@ -56,6 +58,7 @@ interface Subscription {
   vendor_id?: number;
   renewal_date: string;
   amount: number | null;
+  currency: string;
   expiry_date: string;
   deletion_date?: string | null;
   days_to_delete?: number | null;
@@ -80,6 +83,7 @@ interface AddEditSubscription {
   vendor_id: number;
   renewal_date: string;
   amount: number;
+  currency: string;
   expiry_date: string;
   deletion_date?: string;
   days_to_delete?: number;
@@ -89,6 +93,15 @@ interface AddEditSubscription {
   vendor_name: string;
   remark_id: number;
 }
+
+const currencyOptions = [
+  { value: "INR", label: "INR (₹)" },
+  { value: "USD", label: "USD ($)" },
+  { value: "NGN", label: "NGN (₦)" },
+  { value: "CNY", label: "CNY (¥)" },
+  { value: "ADD_NEW", label: "+ Add Currency" },
+];
+
 
 interface ProductOption {
   id: number;
@@ -103,9 +116,10 @@ const SubscriptionRow = React.memo(({
   handleSave, handleCancelEdit, handleViewDetails, handleEdit, handleDeleteClick,
   loadingProducts, statusOptions, glassSelectStyles,
   getDaysToColor, calculateDays, formatDate, getProductNameById, isSaving,
-  isClient // Added isClient prop
+  isClient, currencyOptions // Added currency symbols and options
 }: any) => {
   const [isHistoryExpanded, setIsHistoryExpanded] = useState(false);
+  const [isDetailsExpanded, setIsDetailsExpanded] = useState(false);
 
   return (
     <>
@@ -248,37 +262,25 @@ const SubscriptionRow = React.memo(({
               />
             </td>
             <td className="py-3 px-4">
-              <input
-                type="number"
-                value={
-                  editData[item.id]?.amount ||
-                  item.amount ||
-                  ""
-                }
-                onChange={(e) =>
-                  handleEditChange(
-                    item.id,
-                    "amount",
-                    parseFloat(e.target.value) || 0
-                  )
-                }
-                className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                style={{ minHeight: "32px" }}
-                min="0"
-                step="0.01"
+              <CurrencyAmountInput
+                currency={editData[item.id]?.currency || item.currency || "INR"}
+                amount={editData[item.id]?.amount || item.amount || ""}
+                onCurrencyChange={(curr) => handleEditChange(item.id, "currency", curr)}
+                onAmountChange={(val) => handleEditChange(item.id, "amount", parseFloat(val) || 0)}
               />
             </td>
             <td className="py-3 px-4">
               <input
                 type="date"
                 value={
-                  editData[item.id]?.expiry_date ||
-                  item.expiry_date
+                  editData[item.id]?.renewal_date ??
+                  item.renewal_date ??
+                  ""
                 }
                 onChange={(e) =>
                   handleEditChange(
                     item.id,
-                    "expiry_date",
+                    "renewal_date",
                     e.target.value
                   )
                 }
@@ -289,7 +291,7 @@ const SubscriptionRow = React.memo(({
             <td className="py-3 px-4 text-sm text-gray-300">
               <input
                 type="number"
-                value={calculateDays(editData[item.id]?.expiry_date || item.expiry_date)}
+                value={(editData[item.id] as any)?.days_left ?? calculateDays(editData[item.id]?.renewal_date ?? item.renewal_date)}
                 readOnly
                 className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-xs cursor-not-allowed"
                 style={{ minHeight: '32px' }}
@@ -317,7 +319,7 @@ const SubscriptionRow = React.memo(({
                   ""
                 }
                 readOnly
-                className={`w-32 px-3 py-1 bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] rounded text-sm outline-none focus:ring-0 cursor-not-allowed ${getDaysToColor(editData[item.id]?.days_to_delete ?? item.days_to_delete)}`}
+                className={`w-20 px-3 py-1 bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] rounded text-sm outline-none focus:ring-0 cursor-not-allowed ${getDaysToColor(editData[item.id]?.days_to_delete ?? item.days_to_delete)}`}
               />
             </td>
           </>
@@ -341,7 +343,8 @@ const SubscriptionRow = React.memo(({
               {item.vendor_name || "--"}
             </td>
             <td className="py-3 px-4 text-sm text-gray-300">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center gap-1 font-medium text-white">
+                <span className="text-[#BC8969]">{getCurrencySymbol(item.currency)}</span>
                 {item.amount || "0.00"}
               </div>
             </td>
@@ -367,13 +370,12 @@ const SubscriptionRow = React.memo(({
 
         {editingId === item.id ? (
           <td className="py-3 px-4">
-            <div className="w-40">
+            <div className="w-full">
               <GlassSelect
                 options={statusOptions}
                 value={getSelectedStatusOption()}
                 onChange={handleStatusSelect}
                 isSearchable={false}
-                isClearable
                 styles={glassSelectStyles}
               />
             </div>
@@ -381,12 +383,12 @@ const SubscriptionRow = React.memo(({
         ) : (
           <td className="py-3 px-4">
             <div
-              className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${item.status === 1
+              className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${Number(item.status) === 1
                 ? "bg-green-500/20 text-green-400 border-green-500/20"
                 : "bg-red-500/20 text-red-400 border-red-500/20"
                 }`}
             >
-              {item.status === 1 ? "Active" : "Inactive"}
+              {Number(item.status) === 1 ? "Active" : "Inactive"}
             </div>
           </td>
         )}
@@ -442,7 +444,7 @@ const SubscriptionRow = React.memo(({
           {item.last_updated || formatLastUpdated(item.updated_at)}
         </td>
 
-        <td className="py-3 px-4">
+        <td className="py-3 px-4 whitespace-nowrap">
           <div
             className="flex items-center justify-end gap-2"
           >
@@ -472,36 +474,58 @@ const SubscriptionRow = React.memo(({
             ) : (
               <>
                 <GlassButton
-                  onClick={() => handleViewDetails(item)}
+                  onClick={() => setIsDetailsExpanded(!isDetailsExpanded)}
                   className="p-1.5 min-w-0 hover:bg-blue-500/20"
                   title="View Details"
                 >
                   <Eye className="w-4 h-4 text-gray-300 hover:text-blue-400 transition-colors" />
                 </GlassButton>
-                <GlassButton
-                  onClick={() => handleEdit(item)}
-                  className="p-1.5 min-w-0 hover:bg-white/10"
-                  title="Edit"
-                >
-                  <Edit className="w-4 h-4 text-gray-300 hover:text-blue-400 transition-colors" />
-                </GlassButton>
-                <GlassButton
-                  onClick={() => handleDeleteClick(item.id)}
-                  className="p-1.5 min-w-0 hover:bg-red-500/20"
-                  title="Delete"
-                >
-                  <Trash2 className="w-4 h-4 text-gray-300 hover:text-red-400 transition-colors" />
-                </GlassButton>
+                {!isClient && (
+                  <>
+                    <GlassButton
+                      onClick={() => handleEdit(item)}
+                      className="p-1.5 min-w-0 hover:bg-white/10"
+                      title="Edit"
+                    >
+                      <Edit className="w-4 h-4 text-gray-300 hover:text-blue-400 transition-colors" />
+                    </GlassButton>
+                    <GlassButton
+                      onClick={() => handleDeleteClick(item.id)}
+                      className="p-1.5 min-w-0 hover:bg-red-500/20"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-4 h-4 text-gray-300 hover:text-red-400 transition-colors" />
+                    </GlassButton>
+                  </>
+                )}
               </>
             )}
           </div>
         </td>
       </tr>
 
+      {/* Expansion Row for Details */}
+      {isDetailsExpanded && (
+        <tr className="bg-white/5 animate-in fade-in slide-in-from-top-4 duration-300">
+          <td colSpan={isClient ? 13 : 15} className="py-4 px-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 bg-black/20 p-4 rounded-xl border border-white/5 shadow-inner">
+              <div><span className="block text-xs text-gray-400 mb-1 text-left">Domain Name</span><span className="block text-sm text-gray-200 font-medium text-left">{item.domain_name || "--"}</span></div>
+              <div><span className="block text-xs text-gray-400 mb-1 text-left">Client Name</span><span className="block text-sm text-gray-200 font-medium text-left">{item.client_name || "--"}</span></div>
+              <div><span className="block text-xs text-gray-400 mb-1 text-left">Product</span><span className="block text-sm text-gray-200 font-medium text-left">{item.product_name || "--"}</span></div>
+              <div><span className="block text-xs text-gray-400 mb-1 text-left">Vendor</span><span className="block text-sm text-gray-200 font-medium text-left">{item.vendor_name || "--"}</span></div>
+              <div><span className="block text-xs text-gray-400 mb-1 text-left">Amount</span><span className="block text-sm text-gray-200 font-medium text-left">{getCurrencySymbol(item.currency)}{item.amount !== undefined ? item.amount : "--"}</span></div>
+              <div><span className="block text-xs text-gray-400 mb-1 text-left">Renewal Date</span><span className="block text-sm text-gray-200 font-medium text-left">{formatDate((item as any).renewal_date)}</span></div>
+              <div><span className="block text-xs text-gray-400 mb-1 text-left">Deletion Date</span><span className="block text-sm text-gray-200 font-medium text-left">{formatDate((item as any).deletion_date)}</span></div>
+              <div><span className="block text-xs text-gray-400 mb-1 text-left">Remarks</span><span className="block text-sm text-gray-200 font-medium text-left">{item.remarks || "--"}</span></div>
+            </div>
+          </td>
+        </tr>
+      )}
+
       {/* Expanded Remark History - Inline Stack Style */}
       {isHistoryExpanded && (
         <tr className="bg-blue-500/5 animate-in fade-in slide-in-from-top-4 duration-500">
-          <td colSpan={13} className="py-0 px-4">
+          <td colSpan={isClient ? 12 : 13} className="py-0 px-4">
             <div className="border-t border-blue-500/20 py-4 pb-6 ml-12 mr-12">
               <RemarkHistory key={`history-${item.id}-${item.updated_at}`} module="Subscription" recordId={item.id} />
             </div>
@@ -543,6 +567,7 @@ export default function SubscriptionsPage() {
     vendor_name: "",
     renewal_date: "",
     amount: "",
+    currency: "INR",
     expiry_date: "",
     deletion_date: "",
     days_left: "",
@@ -682,6 +707,7 @@ export default function SubscriptionsPage() {
       vendor_name: "",
       renewal_date: "",
       amount: "",
+      currency: "INR",
       expiry_date: "",
       deletion_date: "",
       days_left: "",
@@ -720,23 +746,37 @@ export default function SubscriptionsPage() {
         ...normalizeEntityPayload(newRecordData),
         client_id: isClient ? user?.id : newRecordData.client_id,
         record_type: 1,
-
         s_id: user?.id || 0,
         amount: parseFloat(newRecordData.amount) || 0,
+        currency: newRecordData.currency || "INR",
       };
 
       const response = await api.post("secure/subscriptions", payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      // Use the returned record or build one optimistically
-      const newRecord = response.data?.data || {
-        ...payload,
-        id: response.data?.id || Date.now(),
-        client_name: newRecordData.client_name,
-        product_name: newRecordData.product_name,
-        isNewRecord: true,
-      };
+      // Build the new record from the server response (which now contains computed days_left, days_to_delete, status)
+      const serverData = response.data?.data;
+      const newRecord = serverData
+        ? {
+          ...serverData,
+          // Coerce status to number (backend returns integer but JSON may parse to string in some cases)
+          status: Number(serverData.status) as 0 | 1,
+          days_left: serverData.days_left ?? null,
+          days_to_delete: serverData.days_to_delete ?? null,
+          isNewRecord: true,
+        }
+        : {
+          ...payload,
+          id: response.data?.id || Date.now(),
+          client_name: newRecordData.client_name,
+          product_name: newRecordData.product_name,
+          // Compute locally as fallback
+          days_left: (newRecordData as any).days_left ?? null,
+          days_to_delete: (newRecordData as any).days_to_delete ?? null,
+          status: Number(payload.status) as 0 | 1,
+          isNewRecord: true,
+        };
 
       setData((prev) => [newRecord, ...prev]);
       setTotalItems((prev) => prev + 1);
@@ -764,6 +804,7 @@ export default function SubscriptionsPage() {
         vendor_name: "",
         renewal_date: "",
         amount: "",
+        currency: "INR",
         expiry_date: "",
         deletion_date: "",
         days_left: "",
@@ -836,6 +877,8 @@ export default function SubscriptionsPage() {
         product_name: subscription.product_name || "",
         vendor_name: subscription.vendor_name || "",
         remarks: subscription.remarks || "",
+        amount: subscription.amount || 0,
+        currency: subscription.currency || "INR",
         remark_id: null,
       },
     });
@@ -861,7 +904,8 @@ export default function SubscriptionsPage() {
         record_type: 1,
         id,
         s_id: user?.id || 0,
-        amount: updatedData.amount || 0,
+        amount: updatedData.amount ?? data.find((item) => item.id === id)?.amount ?? 0,
+        currency: updatedData.currency || data.find((item) => item.id === id)?.currency || "INR",
         remark_id: updatedData.remark_id || null,
       };
 
@@ -912,16 +956,18 @@ export default function SubscriptionsPage() {
     field: keyof typeof newRecordData,
     value: any
   ) => {
-    let daysPreview = newRecordData.days_to_delete_preview;
+    let extra: any = {};
 
-    if (field === "deletion_date") {
-      daysPreview = value ? calculateDaysDifference(value) : "";
+    if (field === "renewal_date" || field === "deletion_date") {
+      const currentRenewal = field === "renewal_date" ? value : newRecordData.renewal_date;
+      const currentDeletion = field === "deletion_date" ? value : newRecordData.deletion_date;
+      extra = handleDateChangeLogic(field, value, currentRenewal, currentDeletion, toast) || {};
     }
 
     setNewRecordData((prev) => ({
       ...prev,
       [field]: value,
-      days_to_delete_preview: daysPreview,
+      ...extra,
     }));
   };
 
@@ -932,13 +978,18 @@ export default function SubscriptionsPage() {
     value: any
   ) => {
     setEditData((prev) => {
-      const updatedItem = {
-        ...prev[id],
+      const currentRow = prev[id] || {};
+      const actualRow = data.find((d) => d.id === id) || ({} as any);
+      const updatedItem: any = {
+        ...currentRow,
         [field]: value,
       };
 
-      if (field === "deletion_date") {
-        updatedItem.days_to_delete = value ? calculateDaysDifference(value) as any : "";
+      if (field === "renewal_date" || field === "deletion_date") {
+        const currentRenewal = field === "renewal_date" ? value : (currentRow.renewal_date ?? actualRow.renewal_date);
+        const currentDeletion = field === "deletion_date" ? value : (currentRow.deletion_date ?? actualRow.deletion_date);
+        const extra = handleDateChangeLogic(field, value, currentRenewal, currentDeletion, toast) || {};
+        Object.assign(updatedItem, extra);
       }
 
       return {
@@ -1039,16 +1090,16 @@ export default function SubscriptionsPage() {
 
   const isAllSelected = data.length > 0 && selectedItems.length === data.length;
 
-  const getStatusColor = (status: 0 | 1) => {
-    return status === 1 ? "text-green-400" : "text-red-400";
+  const getStatusColor = (status: 0 | 1 | string) => {
+    return Number(status) === 1 ? "text-green-400" : "text-red-400";
   };
 
-  const getStatusText = (status: 0 | 1) => {
-    return status === 1 ? "Active" : "Inactive";
+  const getStatusText = (status: 0 | 1 | string) => {
+    return Number(status) === 1 ? "Active" : "Inactive";
   };
 
-  const getStatusIcon = (status: 0 | 1) => {
-    return status === 1 ? (
+  const getStatusIcon = (status: 0 | 1 | string) => {
+    return Number(status) === 1 ? (
       <CheckCircle className="w-4 h-4" />
     ) : (
       <XCircle className="w-4 h-4" />
@@ -1251,10 +1302,10 @@ export default function SubscriptionsPage() {
           {/* Table Container */}
           <div className="overflow-hidden rounded-xl border border-white/10 backdrop-blur-sm">
             <div className="max-h-[500px] overflow-y-auto overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400/50 scrollbar-track-gray-800/50">
-              <table className="w-full">
+              <table className={`w-full table-fixed ${isClient ? 'min-w-[1200px]' : 'min-w-[2400px]'}`}>
                 <thead>
                   <tr className="bg-white/5 border-b border-white/10">
-                    <th className="py-3 px-4 text-left w-12">
+                    <th className="py-3 px-4 text-left w-[48px]">
                       <input
                         type="checkbox"
                         checked={isAllSelected}
@@ -1262,46 +1313,46 @@ export default function SubscriptionsPage() {
                         className="w-4 h-4 rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500/50 cursor-pointer"
                       />
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-14">
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[60px]">
                       S.NO
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[130px]">
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[220px]">
                       Product
                     </th>
                     {!isClient && (
-                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
+                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[200px]">
                         Client
                       </th>
                     )}
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[100px] w-32">
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[200px]">
                       Vendor
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[100px] w-24">
+                    <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 w-[220px]">
                       Amount
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[160px]">
                       Renewal Date
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[100px]">
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[120px]">
                       Days Left
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[160px]">
                       Deletion Date
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[100px]">
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[140px]">
                       Days to Delete
                     </th>
 
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[100px]">
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[140px]">
                       Status
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[180px]">
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[220px]">
                       Remarks
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[150px]">
                       Last Updated
                     </th>
-                    <th className="py-3 px-4 text-right text-sm font-medium text-gray-300 min-w-[160px]">
+                    <th className="py-3 px-4 text-right text-sm font-medium text-gray-300 w-[160px]">
                       Actions
                     </th>
                   </tr>
@@ -1309,267 +1360,257 @@ export default function SubscriptionsPage() {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={13} className="py-8 text-center">
+                      <td colSpan={isClient ? 13 : 14} className="py-8 text-center">
                         <div className="flex flex-col items-center justify-center gap-2">
                           <DashboardLoader label="Fetch Subscriptions..." />
                         </div>
                       </td>
                     </tr>
-                  ) : (
-                    <>
-                      {/* Add New Row */}
-                      {addingNew && (
-                        <tr className="border-b border-white/5 bg-blue-500/5">
-                          <td className="py-3 px-4"></td>
-                          <td className="py-3 px-4 text-sm text-gray-300">
-                            New
-                          </td>
-                          <td className="py-3 px-4">
-                            {loadingProducts ? (
-                              <div className="w-full px-2 py-1 bg-white/5 border border-white/10 rounded text-sm text-gray-400">
-                                Loading products...
-                              </div>
-                            ) : (
-                              <ApiDropdown
-                                label=""
-                                endpoint="get-products"
-                                value={
-                                  newRecordData.product_id
-                                    ? {
-                                      value: Number(newRecordData.product_id) as any,
-                                      label: newRecordData.product_name,
-                                    }
-                                    : null
-                                }
-                                onChange={(option) => {
-                                  handleNewRecordChange(
-                                    "product_id",
-                                    option?.value ?? null
-                                  );
-                                  handleNewRecordChange(
-                                    "product_name",
-                                    option?.label ?? ""
-                                  );
-                                }}
-                                placeholder="Product"
-                              />
-                            )}
-                          </td>
-                          {!isClient && (
-                            <td className="py-3 px-4">
-                              <ApiDropdown
-                                label=""
-                                endpoint="get-clients"
-                                value={
-                                  newRecordData.client_id
-                                    ? {
-                                      value: Number(newRecordData.client_id) as any,
-                                      label: newRecordData.client_name,
-                                    }
-                                    : null
-                                }
-                                onChange={(option) => {
-                                  handleNewRecordChange(
-                                    "client_id",
-                                    option?.value ?? null
-                                  );
-                                  handleNewRecordChange(
-                                    "client_name",
-                                    option?.label ?? ""
-                                  );
-                                }}
-                                placeholder="Client"
-                              />
-                            </td>
-                          )}
-                          <td className="py-3 px-4">
+                  ) : (<React.Fragment>
+                    {/* Add New Row */}
+                    {addingNew && (
+                      <tr key="new-row" className="border-b border-white/5 bg-blue-500/5">
+                        <td className="py-3 px-4"></td>
+                        <td className="py-3 px-4 text-sm text-gray-300">
+                          New
+                        </td>
+                        <td className="py-3 px-4">
+                          {loadingProducts ? (
+                            <div className="w-full px-2 py-1 bg-white/5 border border-white/10 rounded text-sm text-gray-400">
+                              Loading products...
+                            </div>
+                          ) : (
                             <ApiDropdown
                               label=""
-                              endpoint="get-venders"
+                              endpoint="get-products"
                               value={
-                                newRecordData.vendor_id
+                                newRecordData.product_id
                                   ? {
-                                    value: Number(newRecordData.vendor_id) as any,
-                                    label: newRecordData.vendor_name,
+                                    value: Number(newRecordData.product_id) as any,
+                                    label: newRecordData.product_name,
                                   }
                                   : null
                               }
                               onChange={(option) => {
                                 handleNewRecordChange(
-                                  "vendor_id",
+                                  "product_id",
                                   option?.value ?? null
                                 );
                                 handleNewRecordChange(
-                                  "vendor_name",
+                                  "product_name",
                                   option?.label ?? ""
                                 );
                               }}
-                              placeholder="Vendor"
+                              placeholder="Product"
                             />
-                          </td>
+                          )}
+                        </td>
+                        {!isClient && (
                           <td className="py-3 px-4">
-                            <input
-                              type="number"
-                              value={newRecordData.amount}
-                              onChange={(e) =>
-                                handleNewRecordChange("amount", e.target.value)
+                            <ApiDropdown
+                              label=""
+                              endpoint="get-clients"
+                              value={
+                                newRecordData.client_id
+                                  ? {
+                                    value: Number(newRecordData.client_id) as any,
+                                    label: newRecordData.client_name,
+                                  }
+                                  : null
                               }
-                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                              style={{ minHeight: "32px" }}
-                              placeholder="0.00"
-                              min="0"
-                              step="0.01"
-                            />
-                          </td>
-                          <td className="py-3 px-4">
-                            <input
-                              type="date"
-                              value={newRecordData.renewal_date}
-                              onChange={(e) =>
+                              onChange={(option) => {
                                 handleNewRecordChange(
-                                  "renewal_date",
-                                  e.target.value
-                                )
-                              }
-                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                              style={{ minHeight: "32px" }}
+                                  "client_id",
+                                  option?.value ?? null
+                                );
+                                handleNewRecordChange(
+                                  "client_name",
+                                  option?.label ?? ""
+                                );
+                              }}
+                              placeholder="Client"
                             />
                           </td>
-                          <td className="py-3 px-4 text-sm text-gray-300">
-                            <input
-                              type="number"
-                              value={calculateDays(newRecordData.renewal_date)}
-                              readOnly
-                              className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-xs cursor-not-allowed"
-                              style={{ minHeight: '32px' }}
-                            />
-                          </td>
-                          <td className="py-3 px-4">
-                            <input
-                              type="date"
-                              value={newRecordData.deletion_date}
-                              onChange={(e) => handleNewRecordChange("deletion_date", e.target.value)}
-                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                              style={{ minHeight: "32px" }}
-                            />
-                          </td>
-                          <td className="py-2 px-4 whitespace-nowrap">
-                            <input
-                              type="number"
-                              value={newRecordData.days_to_delete_preview}
-                              readOnly
-                              className={`w-32 px-3 py-1.5 bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] rounded text-sm outline-none focus:ring-0 cursor-not-allowed ${getDaysToColor(newRecordData.days_to_delete_preview)}`}
-                            />
-                          </td>
-                          <td className="py-3 px-4">
-                            <div className="w-40">
-                              <GlassSelect
-                                options={statusOptions}
-                                value={getSelectedStatusOption()}
-                                onChange={handleStatusSelect}
-                                isSearchable={false}
-                                isClearable
-                                styles={glassSelectStyles}
-                              />
-                            </div>
-
-                          </td>
-                          <td className="py-3 px-4">
-                            <input
-                              type="text"
-                              value={newRecordData.remarks}
-                              onChange={(e) =>
-                                handleNewRecordChange("remarks", e.target.value)
-                              }
-                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                              style={{ minHeight: "32px" }}
-                              placeholder="Remarks"
-                            />
-                          </td>
-                          <td className="py-3 px-4 text-sm text-gray-300">
-                            --
-                          </td>
-                          <td className="py-3 px-4">
-                            <div className="flex items-center justify-end gap-2">
-                              <GlassButton
-                                onClick={handleSaveNew}
-                                disabled={isSaving}
-                                className="p-1.5 min-w-0 bg-green-500/20 hover:bg-green-500/30"
-                                title="Save"
-                              >
-                                {isSaving ? (
-                                  <Loader2 className="w-4 h-4 animate-spin text-green-400" />
-                                ) : (
-                                  <Save className="w-4 h-4 text-green-400" />
-                                )}
-                              </GlassButton>
-                              <GlassButton
-                                onClick={handleCancelAdd}
-                                disabled={isSaving}
-                                className="p-1.5 min-w-0 bg-red-500/20 hover:bg-red-500/30"
-                                title="Cancel"
-                              >
-                                <X className="w-4 h-4 text-red-400" />
-                              </GlassButton>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-
-                      {/* Existing Data Rows */}
-                      {data.length === 0 ? (
-                        <tr>
-                          <td colSpan={13} className="py-8 text-center">
-                            <div className="flex flex-col items-center justify-center gap-2">
-                              <Package className="w-12 h-12 text-gray-400" />
-                              <span className="text-gray-400">
-                                No subscriptions found
-                              </span>
-                              {searchQuery && (
-                                <button
-                                  onClick={() => setSearchQuery("")}
-                                  className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
-                                >
-                                  Clear search
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ) : (
-                        paginatedData.map((item, index) => (
-                          <SubscriptionRow
-                            key={`${item.id}-${index}`}
-                            item={item}
-                            index={index}
-                            startItem={startItem}
-                            selectedItems={selectedItems}
-                            editingId={editingId}
-                            highlightedRecordId={highlightedRecordId}
-                            editData={editData}
-                            handleSelectItem={handleSelectItem}
-                            handleEditChange={handleEditChange}
-                            handleStatusSelect={handleStatusSelect}
-                            getSelectedStatusOption={getSelectedStatusOption}
-                            handleSave={handleSave}
-                            handleCancelEdit={handleCancelEdit}
-                            handleViewDetails={handleViewDetails}
-                            handleEdit={handleEdit}
-                            handleDeleteClick={handleDeleteClick}
-                            loadingProducts={loadingProducts}
-                            statusOptions={statusOptions}
-                            glassSelectStyles={glassSelectStyles}
-                            getDaysToColor={getDaysToColor}
-                            calculateDays={calculateDays}
-                            formatDate={formatDate}
-                            getProductNameById={getProductNameById}
-                            isSaving={isSaving}
-                            isClient={isClient}
+                        )}
+                        <td className="py-3 px-4">
+                          <ApiDropdown
+                            label=""
+                            endpoint="get-venders"
+                            value={
+                              newRecordData.vendor_id
+                                ? {
+                                  value: Number(newRecordData.vendor_id) as any,
+                                  label: newRecordData.vendor_name,
+                                }
+                                : null
+                            }
+                            onChange={(option) => {
+                              handleNewRecordChange(
+                                "vendor_id",
+                                option?.value ?? null
+                              );
+                              handleNewRecordChange(
+                                "vendor_name",
+                                option?.label ?? ""
+                              );
+                            }}
+                            placeholder="Vendor"
                           />
-                        ))
-                      )}
-                    </>
-                  )}
+                        </td>
+                        <td className="py-3 px-4">
+                          <CurrencyAmountInput
+                            currency={newRecordData.currency || "INR"}
+                            amount={newRecordData.amount}
+                            onCurrencyChange={(curr) => handleNewRecordChange("currency", curr)}
+                            onAmountChange={(val) => handleNewRecordChange("amount", val)}
+                          />
+                        </td>
+                        <td className="py-3 px-4">
+                          <input
+                            type="date"
+                            value={newRecordData.renewal_date}
+                            onChange={(e) =>
+                              handleNewRecordChange(
+                                "renewal_date",
+                                e.target.value
+                              )
+                            }
+                            className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                            style={{ minHeight: "32px" }}
+                          />
+                        </td>
+                        <td className="py-3 px-4 text-sm text-gray-300">
+                          <input
+                            type="number"
+                            value={calculateDays(newRecordData.renewal_date)}
+                            readOnly
+                            className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-xs cursor-not-allowed"
+                            style={{ minHeight: '32px' }}
+                          />
+                        </td>
+                        <td className="py-3 px-4">
+                          <input
+                            type="date"
+                            value={newRecordData.deletion_date}
+                            onChange={(e) => handleNewRecordChange("deletion_date", e.target.value)}
+                            className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                            style={{ minHeight: "32px" }}
+                          />
+                        </td>
+                        <td className="py-2 px-4 whitespace-nowrap">
+                          <input
+                            type="number"
+                            value={(newRecordData as any).days_to_delete ?? ""}
+                            readOnly
+                            className={`w-20 px-3 py-1.5 bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] rounded text-sm outline-none focus:ring-0 cursor-not-allowed ${getDaysToColor((newRecordData as any).days_to_delete)}`}
+                          />
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="w-full">
+                            <GlassSelect
+                              options={statusOptions}
+                              value={getSelectedStatusOption()}
+                              onChange={handleStatusSelect}
+                              isSearchable={false}
+                              styles={glassSelectStyles}
+                            />
+                          </div>
+
+                        </td>
+                        <td className="py-3 px-4">
+                          <input
+                            type="text"
+                            value={newRecordData.remarks}
+                            onChange={(e) =>
+                              handleNewRecordChange("remarks", e.target.value)
+                            }
+                            className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                            style={{ minHeight: "32px" }}
+                            placeholder="Remarks"
+                          />
+                        </td>
+                        <td className="py-3 px-4 text-sm text-gray-300">
+                          --
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center justify-end gap-2">
+                            <GlassButton
+                              onClick={handleSaveNew}
+                              disabled={isSaving}
+                              className="p-1.5 min-w-0 bg-green-500/20 hover:bg-green-500/30"
+                              title="Save"
+                            >
+                              {isSaving ? (
+                                <Loader2 className="w-4 h-4 animate-spin text-green-400" />
+                              ) : (
+                                <Save className="w-4 h-4 text-green-400" />
+                              )}
+                            </GlassButton>
+                            <GlassButton
+                              onClick={handleCancelAdd}
+                              disabled={isSaving}
+                              className="p-1.5 min-w-0 bg-red-500/20 hover:bg-red-500/30"
+                              title="Cancel"
+                            >
+                              <X className="w-4 h-4 text-red-400" />
+                            </GlassButton>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+
+                    {/* Existing Data Rows */}
+                    {data.length === 0 ? (
+                      <tr key="empty-row">
+                        <td colSpan={isClient ? 13 : 14} className="py-8 text-center text-gray-400">
+                          <div className="flex flex-col items-center justify-center gap-2">
+                            <Package className="w-12 h-12 text-gray-400" />
+                            <span>No subscriptions found</span>
+                            {searchQuery && (
+                              <button
+                                onClick={() => setSearchQuery("")}
+                                className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                              >
+                                Clear search
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      paginatedData.map((item, index) => (
+                        <SubscriptionRow
+                          key={`${item.id}-${index}`}
+                          item={item}
+                          index={index}
+                          startItem={startItem}
+                          selectedItems={selectedItems}
+                          editingId={editingId}
+                          highlightedRecordId={highlightedRecordId}
+                          editData={editData}
+                          handleSelectItem={handleSelectItem}
+                          handleEditChange={handleEditChange}
+                          handleStatusSelect={handleStatusSelect}
+                          getSelectedStatusOption={getSelectedStatusOption}
+                          handleSave={handleSave}
+                          handleCancelEdit={handleCancelEdit}
+                          handleViewDetails={handleViewDetails}
+                          handleEdit={handleEdit}
+                          handleDeleteClick={handleDeleteClick}
+                          loadingProducts={loadingProducts}
+                          statusOptions={statusOptions}
+                          glassSelectStyles={glassSelectStyles}
+                          getDaysToColor={getDaysToColor}
+                          calculateDays={calculateDays}
+                          formatDate={formatDate}
+                          getProductNameById={getProductNameById}
+                          isSaving={isSaving}
+                          isClient={isClient}
+                          currencyOptions={currencyOptions}
+                        />
+                      ))
+                    )}
+                  </React.Fragment>)}
                 </tbody>
               </table>
             </div>
@@ -1586,7 +1627,7 @@ export default function SubscriptionsPage() {
           </div>
 
           {/* Selected Items Info */}
-          {selectedItems.length > 0 && (
+          {selectedItems.length > 0 && !isClient && (
             <div className="mt-4 p-3 bg-white/5 rounded-lg border border-white/10 backdrop-blur-sm">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-300">

@@ -8,7 +8,7 @@ import {
 } from "@/components/shared/ToastProvider"
 
 const TOAST_LIMIT = 3
-const TOAST_REMOVE_DELAY = 5000 // 5 seconds
+const TOAST_REMOVE_DELAY = 4000 // 4 seconds — matches progress bar duration
 
 type ToasterToast = ToastProps & {
   id: string

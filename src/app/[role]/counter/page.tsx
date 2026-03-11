@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { Header } from "@/components/layout";
 import { GlassCard, GlassButton } from "@/components/glass";
 import { DeleteConfirmationModal } from "@/common/services/DeleteConfirmationModal";
@@ -42,7 +42,7 @@ import { ImportModal } from "@/components/ImportModal";
 import { HistoryModal } from "@/components/HistoryModal";
 import { apiService } from "@/common/services/apiService";
 import { normalizeEntityPayload } from "@/utils/normalizePayload";
-import { emitEntityChange } from "@/lib/entityBus";
+import { subscribeEntity, emitEntityChange } from "@/lib/entityBus";
 import { formatLastUpdated } from "@/utils/dateFormatter";
 import { getDaysToColor } from "@/utils/dateCalculations";
 
@@ -58,7 +58,6 @@ interface CounterRecord {
   counter_count: number;
   valid_till: string;
   days_to_expire: number;
-  today_date: string;
   status: 0 | 1;
   remarks: string;
   updated_at: string;
@@ -87,6 +86,7 @@ interface AddEditCounter {
 export default function CounterPage() {
   const { user, getToken } = useAuth();
   const token = getToken();
+  const isClient = user?.role === "ClientAdmin" || user?.login_type === 3;
   const navigationTabs = getNavigationByRole(user?.role);
   const { toast } = useToast();
   const router = useRouter();
@@ -179,7 +179,7 @@ export default function CounterPage() {
   };
 
   // Fetch counter records
-  const fetchCounterRecords = async () => {
+  const fetchCounterRecords = useCallback(async () => {
     if (!isMountedRef.current) return;
     try {
       setLoading(true);
@@ -200,7 +200,6 @@ export default function CounterPage() {
             ...item,
             counter_count: Math.floor(Number(item.counter_count || item.amount || 0)),
             valid_till: item.valid_till || item.renewal_date || item.expiry_date || '',
-            today_date: new Date().toISOString().split("T")[0]
           }));
           setData(mappedData);
           setTotalItems(resData.total || resData.data.length);
@@ -209,7 +208,6 @@ export default function CounterPage() {
             ...item,
             counter_count: Math.floor(Number(item.counter_count || item.amount || 0)),
             valid_till: item.valid_till || item.renewal_date || item.expiry_date || '',
-            today_date: new Date().toISOString().split("T")[0]
           }));
           setData(mappedData);
           setTotalItems(resData.length);
@@ -223,7 +221,17 @@ export default function CounterPage() {
     } finally {
       if (isMountedRef.current) setLoading(false);
     }
-  };
+  }, [pagination.page, pagination.rowsPerPage, searchQuery, token]);
+
+  useEffect(() => {
+    // Listen for subscription changes to refresh counters immediately
+    const unsubscribe = subscribeEntity('subscription', (event) => {
+      console.log('Subscription changed, refreshing counters...', event);
+      fetchCounterRecords();
+    });
+
+    return () => unsubscribe();
+  }, [fetchCounterRecords]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -421,6 +429,7 @@ export default function CounterPage() {
         });
         setAddingNew(false);
         await fetchCounterRecords();
+        emitEntityChange('counter', 'create', response.data?.data);
         // Reset form
         setNewRecordData({
           client_id: null,
@@ -517,6 +526,7 @@ export default function CounterPage() {
         setEditingId(null);
         setEditData({});
         await fetchCounterRecords();
+        emitEntityChange('counter', 'update', response.data?.data);
       } else {
         toast({
           title: "Error",
@@ -803,7 +813,7 @@ export default function CounterPage() {
               </div>
 
               <div className="flex gap-2">
-                {selectedItems.length > 0 && (
+                {selectedItems.length > 0 && !isClient && (
                   <GlassButton
                     variant="danger"
                     onClick={handleBulkDeleteClick}
@@ -819,7 +829,7 @@ export default function CounterPage() {
                   </GlassButton>
                 )}
 
-                {!addingNew && (
+                {!addingNew && !isClient && (
                   <GlassButton
                     variant="primary"
                     onClick={handleAddNew}
@@ -837,23 +847,28 @@ export default function CounterPage() {
                 >
                   {exportLoading ? ("Exporting...") : (" Export")}
                 </GlassButton>
-                <GlassButton
-                  variant="primary"
-                  onClick={() => setIsImportOpen(true)}
-                  className="flex items-center gap-2"
-                >
-                  <Upload className="w-4 h-4" />
-                  Import
-                </GlassButton>
-                <button
-                  onClick={() => setIsHistoryOpen(true)}
-                  className="px-4 py-2 bg-gray-800 text-white rounded flex items-center gap-2 transition-colors hover:bg-gray-700 font-medium text-sm"
-                >
-                  <History className="w-4 h-4" />
-                  History
-                </button>
-                <ImportModal recordType={6} title="Import Counter" isOpen={isImportOpen} setIsOpen={setIsImportOpen} onSuccess={handleImportSuccess} module="counter" />
-                <HistoryModal isOpen={isHistoryOpen} setIsOpen={setIsHistoryOpen} entity="counter" /></div>
+                {!isClient && (
+                  <>
+                    <GlassButton
+                      variant="primary"
+                      onClick={() => setIsImportOpen(true)}
+                      className="flex items-center gap-2"
+                    >
+                      <Upload className="w-4 h-4" />
+                      Import
+                    </GlassButton>
+                    <button
+                      onClick={() => setIsHistoryOpen(true)}
+                      className="px-4 py-2 bg-gray-800 text-white rounded flex items-center gap-2 transition-colors hover:bg-gray-700 font-medium text-sm"
+                    >
+                      <History className="w-4 h-4" />
+                      History
+                    </button>
+                    <ImportModal recordType={6} title="Import Counter" isOpen={isImportOpen} setIsOpen={setIsImportOpen} onSuccess={handleImportSuccess} module="counter" />
+                    <HistoryModal isOpen={isHistoryOpen} setIsOpen={setIsHistoryOpen} entity="counter" />
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
@@ -864,14 +879,16 @@ export default function CounterPage() {
               <table className="w-full">
                 <thead>
                   <tr className="bg-white/5 border-b border-white/10">
-                    <th className="py-3 px-4 text-left w-12">
-                      <input
-                        type="checkbox"
-                        checked={isAllSelected}
-                        onChange={(e) => handleSelectAll(e.target.checked)}
-                        className="w-4 h-4 rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500/50 cursor-pointer"
-                      />
-                    </th>
+                    {!isClient && (
+                      <th className="py-3 px-4 text-left w-12">
+                        <input
+                          type="checkbox"
+                          checked={isAllSelected}
+                          onChange={(e) => handleSelectAll(e.target.checked)}
+                          className="w-4 h-4 rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500/50 cursor-pointer"
+                        />
+                      </th>
+                    )}
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-14">
                       S.NO
                     </th>
@@ -892,9 +909,6 @@ export default function CounterPage() {
                     </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
                       Days to Expire
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
-                      Today's Date
                     </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
                       Status
@@ -1007,16 +1021,10 @@ export default function CounterPage() {
                             <input
                               type="number"
                               value={newRecordData.counter_count}
-                              onChange={(e) =>
-                                handleNewRecordChange(
-                                  "counter_count",
-                                  e.target.value,
-                                )
-                              }
-                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                              readOnly
+                              className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-sm cursor-not-allowed"
                               style={{ minHeight: "32px" }}
-                              min="0"
-                              placeholder="0"
+                              placeholder="Auto"
                             />
                           </td>
                           <td className="py-3 px-4">
@@ -1039,15 +1047,6 @@ export default function CounterPage() {
                               value={calculateDays(newRecordData.valid_till)}
                               readOnly
                               className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-xs cursor-not-allowed"
-                              style={{ minHeight: "32px" }}
-                            />
-                          </td>
-                          <td className="py-3 px-4 text-sm text-gray-300">
-                            <input
-                              type="date"
-                              value={new Date().toISOString().split("T")[0]}
-                              readOnly
-                              className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-sm cursor-not-allowed"
                               style={{ minHeight: "32px" }}
                             />
                           </td>
@@ -1149,19 +1148,21 @@ export default function CounterPage() {
                                 }`}
                               onClick={(e) => handleRowClick(e, item)}
                             >
-                              <td
-                                className="py-3 px-4"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={selectedItems.includes(item.id)}
-                                  onChange={(e) =>
-                                    handleSelectItem(item.id, e.target.checked)
-                                  }
-                                  className="w-4 h-4 rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500/50 cursor-pointer"
-                                />
-                              </td>
+                              {!isClient && (
+                                <td
+                                  className="py-3 px-4"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedItems.includes(item.id)}
+                                    onChange={(e) =>
+                                      handleSelectItem(item.id, e.target.checked)
+                                    }
+                                    className="w-4 h-4 rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500/50 cursor-pointer"
+                                  />
+                                </td>
+                              )}
                               <td className="py-3 px-4 text-sm text-gray-300">
                                 {startItem + index}
                               </td>
@@ -1262,19 +1263,13 @@ export default function CounterPage() {
                                     <input
                                       type="number"
                                       value={
-                                        editData[item.id]?.counter_count ||
-                                        item.counter_count
+                                        editData[item.id]?.counter_count !== undefined ?
+                                          editData[item.id]?.counter_count :
+                                          (item.counter_count !== undefined ? item.counter_count : "")
                                       }
-                                      onChange={(e) =>
-                                        handleEditChange(
-                                          item.id,
-                                          "counter_count",
-                                          parseInt(e.target.value),
-                                        )
-                                      }
-                                      className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                      readOnly
+                                      className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-sm cursor-not-allowed"
                                       style={{ minHeight: "32px" }}
-                                      min="0"
                                     />
                                   </td>
                                   <td className="py-3 px-4">
@@ -1282,7 +1277,8 @@ export default function CounterPage() {
                                       type="date"
                                       value={
                                         editData[item.id]?.valid_till ||
-                                        item.valid_till
+                                        item.valid_till ||
+                                        ""
                                       }
                                       onChange={(e) =>
                                         handleEditChange(
@@ -1304,18 +1300,6 @@ export default function CounterPage() {
                                       )}
                                       readOnly
                                       className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-xs cursor-not-allowed"
-                                      style={{ minHeight: "32px" }}
-                                    />
-                                  </td>
-                                  <td className="py-3 px-4 text-sm text-gray-300">
-                                    <input
-                                      type="date"
-                                      value={
-                                        item.today_date ||
-                                        new Date().toISOString().split("T")[0]
-                                      }
-                                      readOnly
-                                      className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-sm cursor-not-allowed"
                                       style={{ minHeight: "32px" }}
                                     />
                                   </td>
@@ -1425,9 +1409,6 @@ export default function CounterPage() {
                                       {isNaN(calculateDays(item.valid_till)) ? 'NaN' : calculateDays(item.valid_till)} days
                                     </div>
                                   </td>
-                                  <td className="py-3 px-4 text-sm text-gray-300">
-                                    {formatDate(item.today_date)}
-                                  </td>
                                   <td className="py-3 px-4">
                                     <div
                                       className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${getStatusColor(item.status)} ${item.status === 1
@@ -1501,35 +1482,41 @@ export default function CounterPage() {
                                       >
                                         <Eye className="w-4 h-4 text-gray-300 hover:text-blue-400 transition-colors" />
                                       </GlassButton>
-                                      <GlassButton
-                                        onClick={() => handleEdit(item)}
-                                        className="p-1.5 min-w-0 hover:bg-white/10"
-                                        title="Edit"
-                                      >
-                                        <Edit className="w-4 h-4 text-gray-300 hover:text-blue-400 transition-colors" />
-                                      </GlassButton>
-                                      <GlassButton
-                                        onClick={() => handleDeleteClick(item.id)}
-                                        className="p-1.5 min-w-0 hover:bg-red-500/20"
-                                        title="Delete"
-                                      >
-                                        <Trash2 className="w-4 h-4 text-gray-300 hover:text-red-400 transition-colors" />
-                                      </GlassButton>
+                                      {!isClient && (
+                                        <>
+                                          <GlassButton
+                                            onClick={() => handleEdit(item)}
+                                            className="p-1.5 min-w-0 hover:bg-white/10"
+                                            title="Edit"
+                                          >
+                                            <Edit className="w-4 h-4 text-gray-300 hover:text-blue-400 transition-colors" />
+                                          </GlassButton>
+                                          <GlassButton
+                                            onClick={() => handleDeleteClick(item.id)}
+                                            className="p-1.5 min-w-0 hover:bg-red-500/20"
+                                            title="Delete"
+                                          >
+                                            <Trash2 className="w-4 h-4 text-gray-300 hover:text-red-400 transition-colors" />
+                                          </GlassButton>
+                                        </>
+                                      )}
                                     </>
                                   )}
                                 </div>
                               </td>
                             </tr>
                             {/* Expanded Remark History - Inline Stack Style */}
-                            {expandedRemarks.has(item.id) && (
-                              <tr key={`history-${item.id}`} className="bg-blue-500/5 animate-in fade-in slide-in-from-top-4 duration-500">
-                                <td colSpan={10} className="py-0 px-4">
-                                  <div className="border-t border-blue-500/20 py-4 pb-6 ml-12 mr-12">
-                                    <RemarkHistory module="Counter" recordId={item.id} />
-                                  </div>
-                                </td>
-                              </tr>
-                            )}
+                            {
+                              expandedRemarks.has(item.id) && (
+                                <tr key={`history-${item.id}`} className="bg-blue-500/5 animate-in fade-in slide-in-from-top-4 duration-500">
+                                  <td colSpan={12} className="py-0 px-4">
+                                    <div className="border-t border-blue-500/20 py-4 pb-6 ml-12 mr-12">
+                                      <RemarkHistory module="Counter" recordId={item.id} />
+                                    </div>
+                                  </td>
+                                </tr>
+                              )
+                            }
                           </React.Fragment>
                         ))
                       )}

@@ -98,14 +98,20 @@ export default function LoginPage() {
 
             if (otpResponse.status) {
               toast({
-                variant: "destructive",
+                variant: "success",
                 title: "Success",
                 description: otpResponse.message || `OTP sent to your ${activeMethods[0]}`
               })
 
+              // Clear any leftover forgot password states
+              localStorage.removeItem('forgot_password_flow')
+              localStorage.removeItem('forgot_user_id')
+              localStorage.removeItem('forgot_method')
+              localStorage.removeItem('reset_contact')
+
               // Store data for verification page
               localStorage.setItem('otp_user_id', response.admin_id.toString())
-              localStorage.setItem('otp_method', activeMethods[0])
+              localStorage.setItem('otp_method', activeMethods[0] as string)
               localStorage.setItem('user_email', email)
 
               // Redirect to verify OTP page
@@ -128,6 +134,13 @@ export default function LoginPage() {
           }
         } else if (activeMethods.length > 1) {
           // Multiple methods active, go to selection page
+
+          // Clear any leftover forgot password states
+          localStorage.removeItem('forgot_password_flow')
+          localStorage.removeItem('forgot_user_id')
+          localStorage.removeItem('forgot_method')
+          localStorage.removeItem('reset_contact')
+
           localStorage.setItem('otp_user_id', response.admin_id.toString())
           localStorage.setItem('user_email', email)
           router.push('/auth/select-method')
@@ -150,7 +163,7 @@ export default function LoginPage() {
                 router.push('/UserAdmin/dashboard');
                 break;
               case 3:
-                router.push('/ClientAdmin/client-details');
+                router.push('/client/dashboard');
                 break;
               default:
                 router.push('/');
@@ -158,7 +171,7 @@ export default function LoginPage() {
           }, 1000);
 
           toast({
-            variant: "destructive",
+            variant: "success",
             title: "Success",
             description: "Login successful!"
           })

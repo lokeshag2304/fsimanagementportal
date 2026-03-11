@@ -99,7 +99,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       path: "/",
     });
 
-    // Also store in localStorage so the global axios interceptor can read it
     if (typeof window !== 'undefined') {
       localStorage.setItem('token', token);
     }

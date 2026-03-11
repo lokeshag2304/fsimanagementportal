@@ -186,7 +186,7 @@ export default function ProductsPage() {
 
   // Handle error
   const handleError = (error: any, defaultMessage: string) => {
-    console.error("Error:", error)
+    console.warn("API Request Failed:", error?.response?.data?.message || error?.message)
 
     if (error.response?.status === 401) {
       toast({

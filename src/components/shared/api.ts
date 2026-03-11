@@ -65,10 +65,11 @@ export const authApi = {
   },
 
   // Send WhatsApp OTP for forgot password
-  sendWhatsappOtp: async (number: string, whatsapp_code: string = '91') => {
+  sendWhatsappOtp: async (number: string, email: string, whatsapp_code: string = '91') => {
     try {
       const response = await api.post('auth/send_whatsap_otp', {
         number,
+        email,
         whatsapp_code
       });
       return response.data;
@@ -78,10 +79,11 @@ export const authApi = {
   },
 
   // Send SMS OTP for forgot password
-  sendSmsOtp: async (number: string, sms_code: string = '91') => {
+  sendSmsOtp: async (number: string, email: string, sms_code: string = '91') => {
     try {
       const response = await api.post('auth/send_sms_otp', {
         number,
+        email,
         sms_code
       });
       return response.data;
@@ -89,6 +91,7 @@ export const authApi = {
       throw error.response?.data || { message: error.message };
     }
   },
+
 
   // Reset password with token
   resetPassword: async (token: string, newPassword: string) => {

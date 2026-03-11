@@ -402,6 +402,19 @@ export const glassSelectStyles = {
     ...base,
     color: isDarkMode() ? "#ffffff" : "#111827",
     fontSize: "12px",
+    whiteSpace: "normal",
+    wordBreak: "break-word",
+    position: "relative" as any,
+    overflow: "visible",
+    textOverflow: "clip",
+    transform: "none",
+  }),
+
+  valueContainer: (base: any) => ({
+    ...base,
+    overflow: "visible",
+    textOverflow: "clip",
+    whiteSpace: "normal",
   }),
 
   /* PLACEHOLDER */
@@ -574,6 +587,17 @@ const CustomMenuList = (props: any) => {
 }
 
 /* ================================
+   Custom Single Value (Tooltip + Full Text)
+================================ */
+const CustomSingleValue = (props: any) => {
+  return (
+    <components.SingleValue {...props}>
+      <span title={props.data.label}>{props.children}</span>
+    </components.SingleValue>
+  )
+}
+
+/* ================================
    ApiDropdown Component
 ================================ */
 export function ApiDropdown({
@@ -720,6 +744,7 @@ export function ApiDropdown({
           menuPortalTarget={typeof window !== "undefined" ? document.body : null}
           menuPosition="fixed"
           components={{
+            SingleValue: CustomSingleValue,
             MenuList: (props) => (
               <CustomMenuList
                 {...props}

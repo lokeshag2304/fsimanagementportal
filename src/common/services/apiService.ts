@@ -98,14 +98,16 @@ class ApiService {
   async exportRecord(data: any, user: any, token: string | null): Promise<ApiResponse> {
     try {
       const response = await api.post<any>(
-        `subscription-models/export-categories`,
+        `secure/subscription-models/export-categories`,
         { ...data, s_id: user?.id || null },
         { headers: this.getHeaders(token) }
       );
       return response.data;
     } catch (error: any) {
-      console.error("API Export Error:", error?.response?.data || error.message);
-      return { status: false, message: "Server unreachable", success: false };
+      const errData = error?.response?.data;
+      const errMsg = errData?.message || error?.message || "Export failed";
+      console.error("API Export Error:", errData || error?.message || error);
+      return { status: false, message: errMsg, success: false };
     }
   }
 

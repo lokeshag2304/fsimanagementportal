@@ -1,6 +1,6 @@
 "use client"
 
-import Select from "react-select"
+import Select, { components } from "react-select"
 
 interface GlassSelectProps {
   label?: string
@@ -128,9 +128,21 @@ const glassSelectStyles = {
 
   singleValue: (base: any) => ({
     ...base,
-
     color: isDarkMode() ? "#ffffff" : "#111827",
     fontWeight: 500,
+    whiteSpace: "normal",
+    wordBreak: "break-word",
+    position: "relative" as any,
+    overflow: "visible",
+    textOverflow: "clip",
+    transform: "none",
+  }),
+
+  valueContainer: (base: any) => ({
+    ...base,
+    overflow: "visible",
+    textOverflow: "clip",
+    whiteSpace: "normal",
   }),
 
   placeholder: (base: any) => ({
@@ -176,6 +188,17 @@ const glassSelectStyles = {
 
 
 /* ================================
+   Custom Components
+================================ */
+const CustomSingleValue = (props: any) => {
+  return (
+    <components.SingleValue {...props}>
+      <span title={props.data.label}>{props.children}</span>
+    </components.SingleValue>
+  )
+}
+
+/* ================================
    GlassSelect Component
 ================================ */
 export function GlassSelect({
@@ -193,6 +216,7 @@ export function GlassSelect({
       <Select
         {...props}
         styles={glassSelectStyles}
+        components={{ SingleValue: CustomSingleValue }}
         className="react-select-container"
         classNamePrefix="react-select"
       />

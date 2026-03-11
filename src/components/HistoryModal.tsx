@@ -172,9 +172,9 @@ export function HistoryModal({ isOpen, setIsOpen, entity }: HistoryModalProps) {
                                         {(item.duplicate_file || item.duplicates > 0) && (
                                             <button
                                                 onClick={() => {
-                                                    const downloadUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/import-export-history/${item.id}/download-duplicates`;
+                                                    const downloadEndpoint = `/import-export-history/${item.id}/download-duplicates`;
 
-                                                    api.get(downloadUrl, {
+                                                    api.get(downloadEndpoint, {
                                                         headers: { Authorization: `Bearer ${token}` },
                                                         responseType: 'blob'
                                                     }).then(response => {
@@ -188,7 +188,7 @@ export function HistoryModal({ isOpen, setIsOpen, entity }: HistoryModalProps) {
                                                         window.URL.revokeObjectURL(blobUrl);
                                                     }).catch(err => {
                                                         console.error("Error downloading duplicates:", err);
-                                                        alert("Duplicate export file is not available.");
+                                                        alert("Duplicate export file is not available locally. This usually happens for rows imported before this feature was added.");
                                                     });
                                                 }}
                                                 className="text-amber-500 hover:text-amber-600 hover:bg-amber-50 p-1.5 rounded-md transition-all flex items-center gap-1 text-xs font-semibold mr-1"

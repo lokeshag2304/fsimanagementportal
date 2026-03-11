@@ -14,6 +14,7 @@ import { authApi } from "@/components/shared/api"
 export default function SendCodePage() {
   const [resetMethod, setResetMethod] = useState<'email' | 'sms' | 'whatsapp' | null>(null)
   const [contact, setContact] = useState("")
+  const [email, setEmail] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
@@ -58,13 +59,23 @@ export default function SendCodePage() {
       return
     }
 
-    if ((resetMethod === 'sms' || resetMethod === 'whatsapp') && !validatePhone(contact)) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Please enter a valid phone number"
-      })
-      return
+    if ((resetMethod === 'sms' || resetMethod === 'whatsapp')) {
+      if (!validateEmail(email)) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Please enter a valid email address"
+        })
+        return
+      }
+      if (!validatePhone(contact)) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Please enter a valid phone number"
+        })
+        return
+      }
     }
 
     setIsLoading(true)
@@ -73,24 +84,24 @@ export default function SendCodePage() {
       if (resetMethod === 'email') {
         // Send reset link via email
         const response = await authApi.sendResetLink(contact)
-        
+
         if (response.status) {
           toast({
             variant: "destructive",
             title: "Success",
             description: response.message || "Password reset link has been sent to your email"
           })
-          
+
           // Store reset data
           if (response.data?.token) {
             localStorage.setItem('reset_token', response.data.token)
             localStorage.setItem('reset_email', contact)
           }
-          
+
           // Clear method and contact
           localStorage.removeItem('reset_method')
           localStorage.removeItem('reset_contact')
-          
+
           // Redirect to login page
           setTimeout(() => {
             router.push('/auth/login')
@@ -104,24 +115,24 @@ export default function SendCodePage() {
         }
       } else if (resetMethod === 'sms') {
         // Send SMS OTP
-        const response = await authApi.sendSmsOtp(contact, '91')
-        
+        const response = await authApi.sendSmsOtp(contact, email, '91')
+
         if (response.status && response.Data?.id) {
           toast({
             variant: "destructive",
             title: "Success",
             description: response.message || "OTP sent to your phone via SMS"
           })
-          
+
           // Store data for OTP verification
           localStorage.setItem('forgot_user_id', response.Data.id.toString())
           localStorage.setItem('forgot_method', 'sms')
           localStorage.setItem('reset_contact', contact)
           localStorage.setItem('forgot_password_flow', 'true')
-          
+
           // Clear method
           localStorage.removeItem('reset_method')
-          
+
           // Redirect to OTP verification page
           setTimeout(() => {
             router.push('/auth/verify-otp')
@@ -135,24 +146,24 @@ export default function SendCodePage() {
         }
       } else if (resetMethod === 'whatsapp') {
         // Send WhatsApp OTP
-        const response = await authApi.sendWhatsappOtp(contact, '91')
-        
+        const response = await authApi.sendWhatsappOtp(contact, email, '91')
+
         if (response.status && response.Data?.id) {
           toast({
             variant: "destructive",
             title: "Success",
             description: response.message || "OTP sent to your WhatsApp"
           })
-          
+
           // Store data for OTP verification
           localStorage.setItem('forgot_user_id', response.Data.id.toString())
           localStorage.setItem('forgot_method', 'whatsapp')
           localStorage.setItem('reset_contact', contact)
           localStorage.setItem('forgot_password_flow', 'true')
-          
+
           // Clear method
           localStorage.removeItem('reset_method')
-          
+
           // Redirect to OTP verification page
           setTimeout(() => {
             router.push('/auth/verify-otp')
@@ -165,6 +176,7 @@ export default function SendCodePage() {
           })
         }
       }
+
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -222,13 +234,13 @@ export default function SendCodePage() {
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-2">Forgot Password?</h1>
           <p className="text-[var(--text-muted)]">
-            {resetMethod === 'email' 
+            {resetMethod === 'email'
               ? 'Enter your email to receive reset instructions'
               : 'Enter your phone number to receive verification code'
             }
           </p>
         </div>
-            
+
         <GlassCard className="p-6">
           {/* Info Box */}
           <div className="mb-6 p-4 rounded-xl bg-[rgba(var(--theme-primary-rgb),0.1)] border border-[rgba(var(--theme-primary-rgb),0.2)]">
@@ -237,22 +249,36 @@ export default function SendCodePage() {
                 <Icon className="w-4 h-4 text-white" />
               </div>
               <h3 className="font-medium text-[var(--text-primary)]">
-                {resetMethod === 'email' ? 'Email Verification' : 
-                 resetMethod === 'sms' ? 'SMS Verification' : 
-                 'WhatsApp Verification'}
+                {resetMethod === 'email' ? 'Email Verification' :
+                  resetMethod === 'sms' ? 'SMS Verification' :
+                    'WhatsApp Verification'}
               </h3>
             </div>
             <p className="text-[var(--text-muted)] text-sm ml-11">
-              {resetMethod === 'email' 
+              {resetMethod === 'email'
                 ? 'Enter your registered email address to receive password reset instructions'
                 : resetMethod === 'sms'
-                ? 'Enter your registered phone number to receive verification code via SMS'
-                : 'Enter your registered phone number to receive verification code via WhatsApp'
+                  ? 'Enter your registered phone number to receive verification code via SMS'
+                  : 'Enter your registered phone number to receive verification code via WhatsApp'
               }
             </p>
           </div>
 
           <div className="space-y-4">
+            {resetMethod !== 'email' && (
+              <div>
+                <div className="relative mb-4">
+                  <GlassInput
+                    type="email"
+                    placeholder="example@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+            )}
             <div>
               <div className="relative">
                 {/* <Icon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[var(--text-muted)]" /> */}
@@ -280,7 +306,7 @@ export default function SendCodePage() {
                   Back
                 </div>
               </GlassButton>
-              
+
               <GlassButton
                 onClick={handleSendCode}
                 variant="primary"

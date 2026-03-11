@@ -38,6 +38,7 @@ interface UserType {
   profile: string
   address?: string
   created_at: string
+  otp_enabled: number
 }
 
 interface UsersResponse {
@@ -86,6 +87,7 @@ export default function UsersPage() {
     phone: "",
     address: "",
     password: "",
+    otp_enabled: 1,
     profile: null as File | null,
     type: 2 // 2 for user
   })
@@ -260,6 +262,7 @@ export default function UsersPage() {
           phone: user.phone || user.number || "",
           address: user.address || "",
           password: user.password || "", // Empty for edit - user needs to enter new password if they want to change
+          otp_enabled: user.otp_enabled ?? 1,
           profile: null,
           type: 2
         })
@@ -466,6 +469,7 @@ export default function UsersPage() {
 
       formDataToSend.append('s_id', authUser?.id?.toString() || '6')
       formDataToSend.append('type', '2') // User type
+      formDataToSend.append('otp_enabled', formData.otp_enabled.toString())
 
       // Add profile if exists
       if (formData.profile) {
@@ -666,6 +670,9 @@ export default function UsersPage() {
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[150px]">
                       Created At
                     </th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[100px]">
+                      OTP
+                    </th>
                     <th className="py-3 px-4 text-right text-sm font-medium text-gray-300 min-w-[120px]">
                       Actions
                     </th>
@@ -783,6 +790,13 @@ export default function UsersPage() {
                           {item.created_at}
                         </td>
 
+                        {/* OTP Status */}
+                        <td className="py-3 px-4">
+                          <span className={`text-xs px-2 py-1 rounded-full ${item.otp_enabled == 1 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                            {item.otp_enabled == 1 ? 'Enabled' : 'Disabled'}
+                          </span>
+                        </td>
+
                         {/* Actions */}
                         <td className="py-3 px-4">
                           <div className="flex items-center justify-end gap-2">
@@ -823,41 +837,44 @@ export default function UsersPage() {
           </div>
 
           {/* Selected Items Info */}
-          {selectedItems.length > 0 && (
-            <div className="mt-4 p-3 bg-[rgba(255,255,255,0.05)] rounded-lg border border-[rgba(255,255,255,0.1)]">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-300">
-                  {selectedItems.length} user{selectedItems.length > 1 ? 's' : ''} selected
-                </span>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setSelectedItems([])}
-                    className="text-sm text-gray-400 hover:text-white transition-colors"
-                  >
-                    Clear selection
-                  </button>
-                  <button
-                    onClick={handleBulkDelete}
-                    disabled={isDeleting}
-                    className="text-sm text-red-400 hover:text-red-300 transition-colors disabled:opacity-50"
-                  >
-                    {isDeleting ? "Deleting..." : `Delete ${selectedItems.length} items`}
-                  </button>
+          {
+            selectedItems.length > 0 && (
+              <div className="mt-4 p-3 bg-[rgba(255,255,255,0.05)] rounded-lg border border-[rgba(255,255,255,0.1)]">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-300">
+                    {selectedItems.length} user{selectedItems.length > 1 ? 's' : ''} selected
+                  </span>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setSelectedItems([])}
+                      className="text-sm text-gray-400 hover:text-white transition-colors"
+                    >
+                      Clear selection
+                    </button>
+                    <button
+                      onClick={handleBulkDelete}
+                      disabled={isDeleting}
+                      className="text-sm text-red-400 hover:text-red-300 transition-colors disabled:opacity-50"
+                    >
+                      {isDeleting ? "Deleting..." : `Delete ${selectedItems.length} items`}
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-        </GlassCard>
-      </div>
+            )
+          }
+        </GlassCard >
+      </div >
 
       {/* Add/Edit Modal */}
-      <GlassModal
+      < GlassModal
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false)
           setEditingUser(null)
           setShowPassword(false)
-        }}
+        }
+        }
         title={editingUser ? "Edit User" : "Add New User"}
         size="lg"
       >
@@ -955,6 +972,23 @@ export default function UsersPage() {
             )}
           </div>
 
+          {/* OTP Toggle */}
+          <div className="flex items-center justify-between p-3 bg-[rgba(255,255,255,0.05)] rounded-lg border border-[rgba(255,255,255,0.1)] mb-4">
+            <div>
+              <span className="text-sm font-medium text-white mb-1 block uppercase tracking-wider">OTP Verification</span>
+              <p className="text-xs text-gray-400">Enable or disable OTP requirement for this user</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, otp_enabled: formData.otp_enabled === 1 ? 0 : 1 })}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${formData.otp_enabled === 1 ? "bg-blue-600" : "bg-gray-700"}`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.otp_enabled === 1 ? "translate-x-6" : "translate-x-1"}`}
+              />
+            </button>
+          </div>
+
           <div>
             <label className="block text-gray-300 text-sm mb-2">Profile Picture</label>
             <div className="flex items-center gap-4">
@@ -1045,10 +1079,10 @@ export default function UsersPage() {
             </button>
           </div>
         </div>
-      </GlassModal>
+      </GlassModal >
 
       {/* Delete Confirmation Modal */}
-      <DeleteConfirmationModal
+      < DeleteConfirmationModal
         isOpen={showDeleteModal}
         onClose={() => {
           setShowDeleteModal(false)
@@ -1058,11 +1092,12 @@ export default function UsersPage() {
         itemCount={itemToDelete ? 1 : selectedItems.length}
         isLoading={isDeleting}
         title={itemToDelete ? "Delete User" : "Delete Multiple Users"}
-        message={itemToDelete
-          ? "Are you sure you want to delete this user? This action cannot be undone."
-          : "Are you sure you want to delete the selected users? This action cannot be undone."
+        message={
+          itemToDelete
+            ? "Are you sure you want to delete this user? This action cannot be undone."
+            : "Are you sure you want to delete the selected users? This action cannot be undone."
         }
       />
-    </div>
+    </div >
   )
 }

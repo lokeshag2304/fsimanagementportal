@@ -25,7 +25,6 @@ interface SearchResult {
   record_type: string
   created_at: string
   days_to_expired: number
-  today_date: string
   domain_name: string | null
   product_name: string | null
   client_name: string | null
@@ -227,9 +226,6 @@ export default function SearchResultsPage({ query, onSearchChange }: { query?: s
                     Days to Expire
                   </th>
                   <th className="text-left py-3 px-4 text-xs font-medium text-[var(--text-tertiary)]">
-                    Today's Date
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-[var(--text-tertiary)]">
                     Domain Name
                   </th>
                   <th className="text-left py-3 px-4 text-xs font-medium text-[var(--text-tertiary)]">
@@ -244,14 +240,14 @@ export default function SearchResultsPage({ query, onSearchChange }: { query?: s
                 {
                   loading && data.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="text-center py-4">
+                      <td colSpan={7} className="text-center py-4">
                         <DashboardLoader />
                       </td>
                     </tr>
                   )
                   : paginatedData.length === 0 ? (
                      <tr>
-                      <td colSpan={8} className="text-center py-4 text-[var(--text-muted)] text-sm">
+                      <td colSpan={7} className="text-center py-4 text-[var(--text-muted)] text-sm">
                         No search results found
                       </td>
                     </tr>
@@ -273,9 +269,6 @@ export default function SearchResultsPage({ query, onSearchChange }: { query?: s
                     </td>
                     <td className="py-3 px-4 text-sm text-[var(--text-secondary)]">
                       {item.days_to_expired !== null ? `${item.days_to_expired} days` : '-'}
-                    </td>
-                    <td className="py-3 px-4 text-sm text-[var(--text-secondary)]">
-                      {item.today_date}
                     </td>
                     <td className="py-3 px-4 text-sm text-[var(--text-secondary)]">
                       {item.domain_name || '-'}

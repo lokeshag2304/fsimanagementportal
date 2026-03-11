@@ -1,3 +1,4 @@
+// app/Users/page.tsx
 "use client"
 
 import { useState, useEffect, useRef } from "react"
@@ -13,6 +14,7 @@ import {
   Mail,
   Phone,
   User,
+  Users as UsersIcon,
   MapPin,
   Eye,
   EyeOff
@@ -21,85 +23,61 @@ import api from "@/lib/api"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/useToast"
 import { useRouter } from "next/navigation"
-
-import { GlassSelect } from "@/components/glass/GlassSelect"
 import { getNavigationByRole } from "@/lib/getNavigationByRole"
 import Pagination from "@/common/Pagination"
 import DashboardLoader from "@/common/DashboardLoader"
-import { glassSelectStyles } from "@/common/DynamicDropdown"
 
-const ASSETS_URL = process.env.NEXT_PUBLIC_ASSETS_URL;
+const ASSETS_URL = process.env.NEXT_PUBLIC_ASSETS_URL || BASE_URL
 
-interface Domain {
-  id: number
-  name: string
-}
-
-interface DomainOption {
-  value: number
-  label: string
-}
-
-interface Client {
-  password: string
+interface UserType {
   id: number
   name: string
   email: string
   phone: string
   number: string
-  address: string
   profile: string
-  login_type: number
-  type: number
-  domain_ids: string[]
-  domains?: Domain[]
+  address?: string
   created_at: string
-  country?: string | null
   otp_enabled: number
 }
 
-interface ClientsResponse {
-  rows: Client[]
+interface UsersResponse {
+  rows: UserType[]
   total: number
 }
 
-interface DomainResponse {
+interface UserDetailsResponse {
   status: boolean
   message: string
-  data: Domain[]
-}
-
-interface ClientDetailsResponse {
-  status: boolean
-  message: string
-  data: Client
+  data: any
 }
 
 interface ApiResponse {
   status: boolean
-  success?: boolean
   message: string
 }
 
-export default function ClientsPage() {
-  const { user, getToken } = useAuth()
+export default function UsersPage() {
+  const { user: authUser, getToken } = useAuth()
   const token = getToken();
-  const navigationTabs = getNavigationByRole(user?.role)
+  const navigationTabs = getNavigationByRole(authUser?.role)
   const { toast } = useToast()
   const router = useRouter()
-  const [data, setData] = useState<Client[]>([])
+  const [data, setData] = useState<UserType[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedItems, setSelectedItems] = useState<number[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<number | null>(null)
-  const [editingClient, setEditingClient] = useState<Client | null>(null)
-  const [domains, setDomains] = useState<Domain[]>([])
-  const [domainOptions, setDomainOptions] = useState<DomainOption[]>([])
+  const [editingUser, setEditingUser] = useState<UserType | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [profilePreview, setProfilePreview] = useState<string | null>(null)
+
+  // Password visibility state
   const [showPassword, setShowPassword] = useState(false)
+
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isMountedRef = useRef(true)
 
@@ -107,13 +85,11 @@ export default function ClientsPage() {
     name: "",
     email: "",
     phone: "",
-    number: "",
     address: "",
     password: "",
-    domain_ids: [] as number[],
     otp_enabled: 1,
     profile: null as File | null,
-    type: 1 // 1 for client
+    type: 3 // 3 for superadmin
   })
 
   const [pagination, setPagination] = useState({
@@ -122,40 +98,10 @@ export default function ClientsPage() {
     order: "desc" as "asc" | "desc",
     orderBy: "id"
   })
-  const [totalClients, setTotalClients] = useState(0)
+  const [totalUsers, setTotalUsers] = useState(0)
 
-  // Fetch domains for dropdown
-  const fetchDomains = async () => {
-    try {
-      if (!token) return
-
-      const response = await api.post<DomainResponse>(
-        `/secure/Dropdowns/get-domains`,
-        {},
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      )
-
-      if (response.data.status) {
-        setDomains(response.data.data)
-        // Convert to react-select options
-        const options = response.data.data.map(domain => ({
-          value: domain.id,
-          label: domain.name
-        }))
-        setDomainOptions(options)
-      }
-    } catch (error) {
-      console.error("Error fetching domains:", error)
-    }
-  }
-
-  // Fetch clients list
-  const fetchClients = async () => {
+  // Fetch users list
+  const fetchUsers = async () => {
     if (!isMountedRef.current) return;
 
     try {
@@ -171,36 +117,23 @@ export default function ClientsPage() {
         return
       }
 
-      const response = await api.post<ClientsResponse>(
-        `/secure/Usermanagement/get-clients-user-list`,
-        {
-          type: 1, // 1 for clients
-          page: pagination.page,
-          rowsPerPage: pagination.rowsPerPage,
-          order: pagination.order,
-          orderBy: pagination.orderBy,
-          search: searchQuery
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      )
+      const response = await api.post('/secure/Usermanagement/get-clients-user-list', {
+        type: 3,
+        page: pagination.page,
+        rowsPerPage: pagination.rowsPerPage,
+        order: pagination.order,
+        orderBy: pagination.orderBy,
+        search: searchQuery
+      }, {
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+      })
 
       if (isMountedRef.current) {
-        // Map the response to ensure we have both phone and number fields
-        const formattedData = response.data.rows.map(client => ({
-          ...client,
-          phone: client.phone || client.number || "", // Use phone if exists, otherwise number
-          number: client.number || client.phone || "" // Use number if exists, otherwise phone
-        }))
-        setData(formattedData)
-        setTotalClients(response.data.total)
+        setData(response.data.rows)
+        setTotalUsers(response.data.total)
       }
     } catch (error: any) {
-      console.error("Error fetching clients:", error)
+      console.error("Error fetching users:", error)
 
       if (error.response?.status === 401) {
         toast({
@@ -212,7 +145,7 @@ export default function ClientsPage() {
       } else {
         toast({
           title: "Error",
-          description: error.response?.data?.message || "Failed to fetch clients",
+          description: error.response?.data?.message || "Failed to fetch users",
           variant: "destructive"
         })
       }
@@ -226,8 +159,7 @@ export default function ClientsPage() {
   // Initial fetch only
   useEffect(() => {
     isMountedRef.current = true
-    fetchClients().catch(err => console.error("Load failed", err));
-    fetchDomains().catch(err => console.error("Load failed", err));
+    fetchUsers().catch(err => console.error("Load failed", err));
 
     return () => {
       isMountedRef.current = false
@@ -242,7 +174,7 @@ export default function ClientsPage() {
     if (!isMountedRef.current) return;
 
     const timeoutId = setTimeout(() => {
-      fetchClients().catch(err => console.error("Load failed", err));
+      fetchUsers().catch(err => console.error("Load failed", err));
     }, 300)
 
     return () => {
@@ -274,25 +206,21 @@ export default function ClientsPage() {
       name: "",
       email: "",
       phone: "",
-      number: "",
       address: "",
       password: "",
-      domain_ids: [],
-      otp_enabled: 1,
       profile: null,
-      type: 1
+      type: 2
     })
-    setEditingClient(null)
+    setEditingUser(null)
+    setProfilePreview(null)
     setShowPassword(false)
-
     // Refresh data after successful operation
-    fetchClients().catch(err => console.error("Load failed", err));
+    fetchUsers().catch(err => console.error("Load failed", err));
   }
 
   // Handle error
   const handleError = (error: any, defaultMessage: string) => {
     console.error("Error:", error)
-
     if (error.response?.status === 401) {
       toast({
         title: "Session Expired",
@@ -309,71 +237,74 @@ export default function ClientsPage() {
     }
   }
 
-  // Fetch client details for editing
-  const fetchClientDetails = async (id: number) => {
+  // Fetch user details for editing
+  const fetchUserDetails = async (id: number) => {
     try {
       if (!token) return
 
-      const response = await api.post<ClientDetailsResponse>(
-        `/secure/Usermanagement/get-clients-user-details`,
-        { id },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
+      const response = await api.post('/secure/Usermanagement/get-clients-user-details', { id }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         }
-      )
+      })
 
       if (response.data.status && response.data.data) {
-        const client = response.data.data
+        const user = response.data.data
 
+        console.log("API से आया password:", user.password)
+
+        // Note: For security, we don't show the actual password from API
+        // Instead we'll use a placeholder or empty string
         setFormData({
-          name: client.name,
-          email: client.email,
-          phone: client.phone || client.number || "",
-          number: client.number || client.phone || "",
-          address: client.address || "",
-          password: client.password || "",
-          domain_ids: client.domain_ids?.map(id => parseInt(id)) || [],
-          otp_enabled: client.otp_enabled ?? 1,
+          name: user.name || "",
+          email: user.email || "",
+          phone: user.phone || user.number || "",
+          address: user.address || "",
+          password: user.password || "", // Empty for edit - user needs to enter new password if they want to change
+          otp_enabled: user.otp_enabled ?? 1,
           profile: null,
-          type: 1
+          type: 2
         })
 
-        setEditingClient(client)
+        // Set profile preview if exists
+        if (user.profile) {
+          setProfilePreview(`${ASSETS_URL}/${user.profile}`)
+        } else {
+          setProfilePreview(null)
+        }
+
+        setEditingUser(user)
         setIsModalOpen(true)
       }
     } catch (error) {
-      console.error("Error fetching client details:", error)
+      console.error("Error fetching user details:", error)
       toast({
         title: "Error",
-        description: "Failed to fetch client details",
+        description: "Failed to fetch user details",
         variant: "destructive"
       })
     }
   }
 
   const handleAdd = () => {
-    setEditingClient(null)
+    setEditingUser(null)
+    setProfilePreview(null)
+    setShowPassword(false)
     setFormData({
       name: "",
       email: "",
       phone: "",
-      number: "",
       address: "",
       password: "",
-      domain_ids: [],
-      otp_enabled: 1,
       profile: null,
-      type: 1
+      type: 3
     })
-    setShowPassword(false)
     setIsModalOpen(true)
   }
 
-  const handleEdit = (client: Client) => {
-    fetchClientDetails(client.id)
+  const handleEdit = (user: UserType) => {
+    fetchUserDetails(user.id)
   }
 
   const handleDelete = (id: number) => {
@@ -403,12 +334,12 @@ export default function ClientsPage() {
 
       const idsToDelete = itemToDelete ? [itemToDelete] : selectedItems
 
-      const response = await api.post<ApiResponse>(
+      const response = await api.post(
         `/secure/Usermanagement/get-clients-user-delete`,
         {
           ids: idsToDelete,
-          s_id: user?.id || 6,
-          type: 1 // Add type field for delete
+          s_id: authUser?.id || 6,
+          type: 3
         },
         {
           headers: {
@@ -418,20 +349,20 @@ export default function ClientsPage() {
         }
       )
 
-      if (response.data.status || response.data.success) {
-        handleSuccess(response.data.message || "Client(s) deleted successfully")
+      if (response.data.success || response.data.status) {
+        handleSuccess(response.data.message || "User(s) deleted successfully")
         if (!itemToDelete) {
           setSelectedItems([])
         }
       } else {
         toast({
           title: "Error",
-          description: response.data.message || "Failed to delete client(s)",
+          description: response.data.message || "Failed to delete user(s)",
           variant: "destructive"
         })
       }
     } catch (error: any) {
-      console.error("Error deleting client:", error)
+      console.error("Error deleting user:", error)
 
       if (error.response?.status === 401) {
         toast({
@@ -443,7 +374,7 @@ export default function ClientsPage() {
       } else {
         toast({
           title: "Error",
-          description: error.response?.data?.message || "Failed to delete client(s)",
+          description: error.response?.data?.message || "Failed to delete user(s)",
           variant: "destructive"
         })
       }
@@ -459,7 +390,7 @@ export default function ClientsPage() {
     if (!formData.name.trim()) {
       toast({
         title: "Error",
-        description: "Please enter client name",
+        description: "Please enter user name",
         variant: "destructive"
       })
       return
@@ -474,7 +405,7 @@ export default function ClientsPage() {
       return
     }
 
-    const phoneNumber = formData.phone.trim() || formData.number.trim()
+    const phoneNumber = formData.phone.trim()
     if (!phoneNumber) {
       toast({
         title: "Error",
@@ -495,7 +426,7 @@ export default function ClientsPage() {
       return
     }
 
-    if (!editingClient && !formData.password.trim()) {
+    if (!editingUser && !formData.password.trim()) {
       toast({
         title: "Error",
         description: "Please enter password",
@@ -531,24 +462,14 @@ export default function ClientsPage() {
       formDataToSend.append('phone', phoneNumber)
       formDataToSend.append('address', formData.address.trim())
 
-      // Only add password if it's not empty (for edit) or for new client
+      // Only add password if it's not empty (for edit) or for new user
       if (formData.password.trim()) {
         formDataToSend.append('password', formData.password.trim())
       }
 
-      formDataToSend.append('s_id', user?.id?.toString() || '6')
-      formDataToSend.append('type', '1') // Client type
+      formDataToSend.append('s_id', authUser?.id?.toString() || '6')
+      formDataToSend.append('type', '3') // SuperAdmin type
       formDataToSend.append('otp_enabled', formData.otp_enabled.toString())
-
-      // Add domain_ids - make sure to include even if empty
-      if (formData.domain_ids.length > 0) {
-        formData.domain_ids.forEach(id => {
-          formDataToSend.append('domain_ids[]', id.toString())
-        })
-      } else {
-        // If no domains selected, still send empty array
-        formDataToSend.append('domain_ids[]', '')
-      }
 
       // Add profile if exists
       if (formData.profile) {
@@ -557,17 +478,15 @@ export default function ClientsPage() {
 
       let endpoint = ''
 
-      if (editingClient) {
-        // Update client
-        endpoint = `/secure/Usermanagement/update-clients-user`
-        formDataToSend.append('id', editingClient.id.toString())
-        formDataToSend.append('type', '1') // Add type field for update
+      if (editingUser) {
+        endpoint = `/secure/Usermanagement/update-clients-user`;
+        formDataToSend.append('id', editingUser.id.toString());
+        formDataToSend.append('type', '3');
       } else {
-        // Add new client
-        endpoint = `/secure/Usermanagement/add-clients-user`
+        endpoint = `/secure/Usermanagement/add-clients-user`;
       }
 
-      const response = await api.post<ApiResponse>(
+      const response = await api.post(
         endpoint,
         formDataToSend,
         {
@@ -579,16 +498,16 @@ export default function ClientsPage() {
       )
 
       if (response.data.status) {
-        handleSuccess(response.data.message || (editingClient ? "Client updated successfully" : "Client added successfully"))
+        handleSuccess(response.data.message || (editingUser ? "User updated successfully" : "User added successfully"))
       } else {
         toast({
           title: "Error",
-          description: response.data.message || "Failed to save client",
+          description: response.data.message || "Failed to save user",
           variant: "destructive"
         })
       }
     } catch (error: any) {
-      console.error("Error saving client:", error)
+      console.error("Error saving user:", error)
 
       if (error.response?.status === 401) {
         toast({
@@ -606,7 +525,7 @@ export default function ClientsPage() {
       } else {
         toast({
           title: "Error",
-          description: "Failed to save client",
+          description: "Failed to save user",
           variant: "destructive"
         })
       }
@@ -635,43 +554,29 @@ export default function ClientsPage() {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0]
       setFormData({ ...formData, profile: file })
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(file)
+      setProfilePreview(previewUrl)
     }
-  }
-
-  const handleDomainSelect = (selectedOptions: DomainOption[] | null) => {
-    const selectedIds = selectedOptions ? selectedOptions.map(option => option.value) : []
-    setFormData({ ...formData, domain_ids: selectedIds })
   }
 
   const handlePageChange = (newPage: number) => {
     setPagination(prev => ({ ...prev, page: newPage }))
   }
 
-  const formatDate = (dateString: string) => {
-    try {
-      // The date string is already in format "Oct-17-2025 01:16pm"
-      // Just return as is since it's already formatted
-      return dateString
-    } catch {
-      return dateString
-    }
-  }
-
-  const getSelectedDomainOptions = () => {
-    return domainOptions.filter(option =>
-      formData.domain_ids.includes(option.value)
-    )
+  // Toggle password visibility
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword)
   }
 
   const isAllSelected = data.length > 0 && selectedItems.length === data.length
-  const totalPages = Math.ceil(totalClients / pagination.rowsPerPage)
+  const totalPages = Math.ceil(totalUsers / pagination.rowsPerPage)
   const startItem = pagination.page * pagination.rowsPerPage + 1
-  const endItem = Math.min((pagination.page + 1) * pagination.rowsPerPage, totalClients)
-
+  const endItem = Math.min((pagination.page + 1) * pagination.rowsPerPage, totalUsers)
 
   return (
     <div className="min-h-screen pb-8">
-      <Header title="Clients Management" tabs={navigationTabs} />
+      <Header title="Super Admins Management" tabs={navigationTabs} />
 
       <div className="px-4 sm:px-6 mt-6">
         <GlassCard className="p-6">
@@ -679,20 +584,20 @@ export default function ClientsPage() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
             <div>
               <div className="flex items-center gap-2">
-                <User className="w-6 h-6 text-[#BC8969]" />
-                <h2 className="text-xl font-semibold text-white">Clients</h2>
+                <UsersIcon className="w-6 h-6 text-[#BC8969]" />
+                <h2 className="text-xl font-semibold text-white">Super Admins</h2>
               </div>
               <p className="text-sm text-gray-400 mt-1">
-                Manage client accounts and their domains
+                Manage superadmin accounts
               </p>
             </div>
 
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto">
               <div className="relative flex-1 sm:flex-initial">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search clients..."
+                  placeholder="Search users..."
                   defaultValue={searchQuery}
                   onChange={(e) => handleSearchInput(e.target.value)}
                   className="w-full sm:w-64 pl-10 pr-4 py-2 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-lg text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
@@ -702,9 +607,9 @@ export default function ClientsPage() {
               <div className="flex gap-2">
                 {selectedItems.length > 0 && (
                   <GlassButton
-                    variant="danger"
+                    variant="default"
                     onClick={handleBulkDelete}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 bg-red-500/20 hover:bg-red-500/30 text-red-500 border border-red-500/50"
                     disabled={isSubmitting || isDeleting}
                   >
                     <Trash2 className="w-4 h-4" />
@@ -723,7 +628,7 @@ export default function ClientsPage() {
                   ) : (
                     <Plus className="w-4 h-4" />
                   )}
-                  Add Client
+                  Add User
                 </GlassButton>
               </div>
             </div>
@@ -778,7 +683,7 @@ export default function ClientsPage() {
                     <tr>
                       <td colSpan={9} className="py-8 text-center">
                         <div className="flex flex-col items-center justify-center gap-2">
-                          <DashboardLoader label="Loading clients..." />
+                          <DashboardLoader label="Loading users..." />
                         </div>
                       </td>
                     </tr>
@@ -786,8 +691,8 @@ export default function ClientsPage() {
                     <tr>
                       <td colSpan={9} className="py-8 text-center">
                         <div className="flex flex-col items-center justify-center gap-2">
-                          <User className="w-12 h-12 text-gray-400" />
-                          <span className="text-gray-400">No clients found</span>
+                          <UsersIcon className="w-12 h-12 text-gray-400" />
+                          <span className="text-gray-400">No users found</span>
                           {searchQuery && (
                             <button
                               onClick={() => {
@@ -849,7 +754,7 @@ export default function ClientsPage() {
 
                         {/* Name field */}
                         <td className="py-3 px-4">
-                          <span className="text-sm text-white font-medium hover:text-blue-400 cursor-pointer" onClick={() => router.push(`/${user?.role}/client-details/${item.id}`)}>{item.name}</span>
+                          <span className="text-sm text-white font-medium">{item.name}</span>
                         </td>
 
                         {/* Email field */}
@@ -882,7 +787,7 @@ export default function ClientsPage() {
 
                         {/* Created At field */}
                         <td className="py-3 px-4 text-sm text-gray-300">
-                          {formatDate(item.created_at)}
+                          {item.created_at}
                         </td>
 
                         {/* OTP Status */}
@@ -922,106 +827,55 @@ export default function ClientsPage() {
 
             {/* Pagination */}
             {!loading && data.length > 0 && (
-              // <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 bg-[rgba(255,255,255,0.05)] border-t border-[rgba(255,255,255,0.1)]">
-              //   <div className="text-sm text-gray-400 mb-3 sm:mb-0">
-              //     Showing {startItem} to {endItem} of {totalClients} clients
-              //   </div>
-              //   <div className="flex items-center gap-2">
-              //     <button
-              //       onClick={() => handlePageChange(pagination.page - 1)}
-              //       disabled={pagination.page === 0}
-              //       className="p-2 rounded-lg bg-[rgba(255,255,255,0.05)] text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[rgba(255,255,255,0.1)] transition-colors"
-              //       title="Previous"
-              //     >
-              //       Previous
-              //     </button>
-
-              //     <div className="flex items-center gap-1">
-              //       {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              //         let pageNum
-              //         if (totalPages <= 5) {
-              //           pageNum = i
-              //         } else if (pagination.page <= 2) {
-              //           pageNum = i
-              //         } else if (pagination.page >= totalPages - 3) {
-              //           pageNum = totalPages - 5 + i
-              //         } else {
-              //           pageNum = pagination.page - 2 + i
-              //         }
-
-              //         if (pageNum >= totalPages) return null
-
-              //         return (
-              //           <button
-              //             key={pageNum}
-              //             onClick={() => handlePageChange(pageNum)}
-              //             className={`px-3 py-1 rounded text-sm transition-colors ${
-              //               pagination.page === pageNum
-              //                 ? 'bg-blue-600 text-white'
-              //                 : 'bg-[rgba(255,255,255,0.05)] text-gray-300 hover:bg-[rgba(255,255,255,0.1)]'
-              //             }`}
-              //           >
-              //             {pageNum + 1}
-              //           </button>
-              //         )
-              //       })}
-              //     </div>
-
-              //     <button
-              //       onClick={() => handlePageChange(pagination.page + 1)}
-              //       disabled={pagination.page >= totalPages - 1}
-              //       className="p-2 rounded-lg bg-[rgba(255,255,255,0.05)] text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[rgba(255,255,255,0.1)] transition-colors"
-              //       title="Next"
-              //     >
-              //       Next
-              //     </button>
-              //   </div>
-              // </div>
               <Pagination
                 page={pagination.page}
                 rowsPerPage={pagination.rowsPerPage}
-                totalItems={totalClients}
+                totalItems={totalUsers}
                 onPageChange={handlePageChange}
               />
             )}
           </div>
 
           {/* Selected Items Info */}
-          {selectedItems.length > 0 && (
-            <div className="mt-4 p-3 bg-[rgba(255,255,255,0.05)] rounded-lg border border-[rgba(255,255,255,0.1)]">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-300">
-                  {selectedItems.length} client{selectedItems.length > 1 ? 's' : ''} selected
-                </span>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setSelectedItems([])}
-                    className="text-sm text-gray-400 hover:text-white transition-colors"
-                  >
-                    Clear selection
-                  </button>
-                  <button
-                    onClick={handleBulkDelete}
-                    disabled={isDeleting}
-                    className="text-sm text-red-400 hover:text-red-300 transition-colors disabled:opacity-50"
-                  >
-                    {isDeleting ? "Deleting..." : `Delete ${selectedItems.length} items`}
-                  </button>
+          {
+            selectedItems.length > 0 && (
+              <div className="mt-4 p-3 bg-[rgba(255,255,255,0.05)] rounded-lg border border-[rgba(255,255,255,0.1)]">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-300">
+                    {selectedItems.length} user{selectedItems.length > 1 ? 's' : ''} selected
+                  </span>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setSelectedItems([])}
+                      className="text-sm text-gray-400 hover:text-white transition-colors"
+                    >
+                      Clear selection
+                    </button>
+                    <button
+                      onClick={handleBulkDelete}
+                      disabled={isDeleting}
+                      className="text-sm text-red-400 hover:text-red-300 transition-colors disabled:opacity-50"
+                    >
+                      {isDeleting ? "Deleting..." : `Delete ${selectedItems.length} items`}
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-        </GlassCard>
-      </div>
+            )
+          }
+        </GlassCard >
+      </div >
 
       {/* Add/Edit Modal */}
-      <GlassModal
+      < GlassModal
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false)
-          setEditingClient(null)
-        }}
-        title={editingClient ? "Edit Client" : "Add New Client"}
+          setEditingUser(null)
+          setShowPassword(false)
+        }
+        }
+        title={editingUser ? "Edit User" : "Add New User"}
         size="lg"
       >
         <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2 pl-2">
@@ -1031,7 +885,7 @@ export default function ClientsPage() {
             </label>
             <input
               type="text"
-              placeholder="Enter client name"
+              placeholder="Enter user name"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="w-full px-3 py-2 bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.1)] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -1058,13 +912,12 @@ export default function ClientsPage() {
             <input
               type="tel"
               placeholder="Enter 10-digit phone number"
-              value={formData.phone || formData.number}
+              value={formData.phone}
               onChange={(e) => {
                 const value = e.target.value.replace(/\D/g, '').slice(0, 10)
                 setFormData({
                   ...formData,
-                  phone: value,
-                  number: value
+                  phone: value
                 })
               }}
               className="w-full px-3 py-2 bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.1)] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -1085,40 +938,45 @@ export default function ClientsPage() {
 
           <div>
             <label className="block text-gray-300 text-sm mb-2">
-              Password {!editingClient && <span className="text-red-400">*</span>}
+              Password {!editingUser && <span className="text-red-400">*</span>}
             </label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
-                placeholder={editingClient ? "Leave empty to keep current password" : "Enter password (min 6 characters)"}
+                placeholder={editingUser ? "Enter new password to change, or leave empty" : "Enter password (min 6 characters)"}
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="w-full px-3 py-2 bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.1)] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10"
+                className="w-full px-3 py-2 pr-10 bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.1)] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
+                onClick={togglePasswordVisibility}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                title={showPassword ? "Hide password" : "Show password"}
               >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                {showPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
               </button>
             </div>
-            {/* {editingClient ? (
+            {editingUser ? (
               <p className="text-xs text-gray-400 mt-1">
-                Leave password empty to keep current password
+                Enter new password to change, or leave empty to keep current password
               </p>
             ) : (
               <p className="text-xs text-gray-400 mt-1">
                 Minimum 6 characters
               </p>
-            )} */}
+            )}
           </div>
 
           {/* OTP Toggle */}
-          <div className="flex items-center justify-between p-3 bg-[rgba(255,255,255,0.05)] rounded-lg border border-[rgba(255,255,255,0.1)]">
+          <div className="flex items-center justify-between p-3 bg-[rgba(255,255,255,0.05)] rounded-lg border border-[rgba(255,255,255,0.1)] mb-4">
             <div>
               <span className="text-sm font-medium text-white mb-1 block uppercase tracking-wider">OTP Verification</span>
-              <p className="text-xs text-gray-400">Enable or disable OTP requirement for this client</p>
+              <p className="text-xs text-gray-400">Enable or disable OTP requirement for this user</p>
             </div>
             <button
               type="button"
@@ -1131,22 +989,63 @@ export default function ClientsPage() {
             </button>
           </div>
 
-          {/* Domain Selection using react-select */}
           <div>
-            <label className="block text-gray-300 text-sm mb-2">Select Domains</label>
-            <GlassSelect
-              //label="Select Domains"
-              isMulti
-              options={domainOptions}
-              value={getSelectedDomainOptions()}
-              onChange={handleDomainSelect}
-              placeholder="Select domains..."
-              isSearchable
-              isClearable
-              noOptionsMessage={() => "No domains found"}
-              styles={glassSelectStyles}
-            />
-
+            <label className="block text-gray-300 text-sm mb-2">Profile Picture</label>
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-full overflow-hidden bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)]">
+                {profilePreview ? (
+                  <img
+                    src={profilePreview}
+                    alt="Profile Preview"
+                    className="w-full h-full object-cover"
+                  />
+                ) : editingUser?.profile ? (
+                  <img
+                    src={`${ASSETS_URL}/${editingUser.profile}`}
+                    alt="Current Profile"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      // If image fails to load, show placeholder
+                      e.currentTarget.style.display = 'none'
+                    }}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <User className="w-8 h-8 text-white/40" />
+                  </div>
+                )}
+              </div>
+              <div className="flex-1">
+                <label className="block">
+                  <div className="cursor-pointer px-4 py-2 bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.1)] rounded-lg text-white text-sm text-center hover:bg-[rgba(255,255,255,0.2)] transition-colors">
+                    {profilePreview || editingUser?.profile ? "Change File" : "Choose File"}
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
+                </label>
+                {formData.profile && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    {formData.profile.name}
+                  </p>
+                )}
+                {(profilePreview || editingUser?.profile) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData({ ...formData, profile: null })
+                      setProfilePreview(null)
+                    }}
+                    className="mt-2 text-xs text-red-400 hover:text-red-300"
+                  >
+                    Remove photo
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
 
           <div className="flex gap-3 pt-4">
@@ -1154,7 +1053,9 @@ export default function ClientsPage() {
               className="flex-1 px-4 py-2 bg-[rgba(255,255,255,0.1)] text-white rounded-lg hover:bg-[rgba(255,255,255,0.2)] transition-colors disabled:opacity-50"
               onClick={() => {
                 setIsModalOpen(false)
-                setEditingClient(null)
+                setProfilePreview(null)
+                setEditingUser(null)
+                setShowPassword(false)
               }}
               disabled={isSubmitting}
             >
@@ -1168,20 +1069,20 @@ export default function ClientsPage() {
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  {editingClient ? "Saving..." : "Adding..."}
+                  {editingUser ? "Saving..." : "Adding..."}
                 </>
-              ) : editingClient ? (
+              ) : editingUser ? (
                 "Save Changes"
               ) : (
-                "Add Client"
+                "Add User"
               )}
             </button>
           </div>
         </div>
-      </GlassModal>
+      </GlassModal >
 
       {/* Delete Confirmation Modal */}
-      <DeleteConfirmationModal
+      < DeleteConfirmationModal
         isOpen={showDeleteModal}
         onClose={() => {
           setShowDeleteModal(false)
@@ -1190,12 +1091,13 @@ export default function ClientsPage() {
         onConfirm={confirmDelete}
         itemCount={itemToDelete ? 1 : selectedItems.length}
         isLoading={isDeleting}
-        title={itemToDelete ? "Delete Client" : "Delete Multiple Clients"}
-        message={itemToDelete
-          ? "Are you sure you want to delete this client? This action cannot be undone."
-          : "Are you sure you want to delete the selected clients? This action cannot be undone."
+        title={itemToDelete ? "Delete User" : "Delete Multiple Users"}
+        message={
+          itemToDelete
+            ? "Are you sure you want to delete this user? This action cannot be undone."
+            : "Are you sure you want to delete the selected users? This action cannot be undone."
         }
       />
-    </div>
+    </div >
   )
 }

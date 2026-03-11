@@ -1,6 +1,6 @@
 "use client"
 import { ReactNode } from 'react';
-import { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { Header } from "@/components/layout"
 import { GlassCard, GlassButton } from "@/components/glass"
 import { normalizeEntityPayload } from "@/utils/normalizePayload";
@@ -8,6 +8,7 @@ import { emitEntityChange } from "@/lib/entityBus";
 import { formatLastUpdated } from "@/utils/dateFormatter";
 import { handleDateChangeLogic, getDaysToColor } from "@/utils/dateCalculations";
 import { DeleteConfirmationModal } from "@/common/services/DeleteConfirmationModal"
+import { getCurrencySymbol, currencySymbols } from "@/utils/currencies";
 import {
   Edit,
   Trash2,
@@ -37,6 +38,7 @@ import Pagination from "@/common/Pagination"
 import DashboardLoader, { downloadBase64File } from "@/common/DashboardLoader"
 import { getNavigationByRole } from "@/lib/getNavigationByRole"
 import { ApiDropdown, glassSelectStyles } from "@/common/DynamicDropdown"
+import { CurrencyAmountInput } from "@/common/CurrencyAmountInput"
 import { GlassSelect } from "@/components/glass/GlassSelect"
 
 interface HostingRecord {
@@ -52,6 +54,7 @@ interface HostingRecord {
   vendor_id?: number
   expiry_date: string
   amount: number | null
+  currency?: string
   days_to_expire_today: number
   deletion_date?: string | null;
   days_to_delete?: number | null;
@@ -78,6 +81,7 @@ interface AddEditHosting {
   client_id: number
   expiry_date: string
   amount: number
+  currency?: string
   status: 0 | 1
   remarks: string
   remark_id: number;
@@ -85,6 +89,14 @@ interface AddEditHosting {
   deletion_date?: string;
   days_to_delete?: number;
 }
+
+const currencyOptions = [
+  { value: "INR", label: "INR (₹)" },
+  { value: "USD", label: "USD ($)" },
+  { value: "NGN", label: "NGN (₦)" },
+  { value: "CNY", label: "CNY (¥)" },
+];
+
 
 export default function HostingPage() {
   const { user, getToken } = useAuth()
@@ -117,6 +129,7 @@ export default function HostingPage() {
     product_name: "",
     expiry_date: "",
     amount: "",
+    currency: "INR",
     status: "1" as "1" | "0",
     remarks: "",
     deleted_at: "",
@@ -125,6 +138,7 @@ export default function HostingPage() {
   })
 
   const [editData, setEditData] = useState<Record<number, Partial<HostingRecord>>>({})
+  const [expandedRowId, setExpandedRowId] = useState<number | null>(null)
 
   const [pagination, setPagination] = useState({
     page: 0,
@@ -153,10 +167,18 @@ export default function HostingPage() {
       });
       const resData = response.data;
       if (resData?.data && Array.isArray(resData.data)) {
-        setData(resData.data);
+        const normalizedData = resData.data.map((item: any) => ({
+          ...item,
+          expiry_date: item.expiry_date || item.renewal_date || "",
+        }));
+        setData(normalizedData);
         setTotalItems(resData.total || resData.data.length);
       } else if (Array.isArray(resData)) {
-        setData(resData);
+        const normalizedData = resData.map((item: any) => ({
+          ...item,
+          expiry_date: item.expiry_date || item.renewal_date || "",
+        }));
+        setData(normalizedData);
         setTotalItems(resData.length);
       } else {
         setData([]);
@@ -190,7 +212,6 @@ export default function HostingPage() {
     }
   }, [searchQuery])
 
-  // Handle Add New
   const handleAddNew = () => {
     const today = new Date().toISOString().split('T')[0]
     setAddingNew(true)
@@ -205,6 +226,7 @@ export default function HostingPage() {
       product_name: "",
       expiry_date: "",
       amount: "",
+      currency: "INR",
       status: "1",
       remarks: "",
       deleted_at: "",
@@ -213,7 +235,6 @@ export default function HostingPage() {
     })
   }
 
-  // Cancel Add New
   const handleCancelAdd = () => {
     setAddingNew(false)
     setNewRecordData({
@@ -227,6 +248,7 @@ export default function HostingPage() {
       product_name: "",
       expiry_date: "",
       amount: "",
+      currency: "INR",
       status: "1",
       remarks: "",
       deleted_at: "",
@@ -332,6 +354,7 @@ export default function HostingPage() {
         client_id: isClient ? user?.id : (newRecordData.client_id!),
         expiry_date: newRecordData.expiry_date,
         amount: parseFloat(newRecordData.amount) || 0,
+        currency: newRecordData.currency || "INR",
         deletion_date: newRecordData.deletion_date || null,
         days_to_delete: newRecordData.days_to_delete ? parseInt(newRecordData.days_to_delete) : null,
         status: parseInt(newRecordData.status) as 0 | 1,
@@ -361,6 +384,7 @@ export default function HostingPage() {
           product_name: "",
           expiry_date: "",
           amount: "",
+          currency: "INR",
           status: "1",
           remarks: "",
           deleted_at: "",
@@ -397,6 +421,7 @@ export default function HostingPage() {
         product_id: record.product_id || undefined,
         vendor_id: record.vendor_id || undefined,
         amount: record.amount || 0,
+        currency: record.currency || "INR",
         remarks: record.remarks || "",
         deleted_at: record.deleted_at || "",
         deletion_date: record.deletion_date || null,
@@ -434,8 +459,9 @@ export default function HostingPage() {
         domain_id: updatedData.domain_id!,
         client_id: updatedData.client_id!,
         expiry_date: updatedData.expiry_date!,
-        amount: updatedData.amount || 0,
-        status: updatedData.status ?? 1,
+        amount: updatedData.amount ?? data.find((item) => item.id === id)?.amount ?? 0,
+        currency: updatedData.currency || data.find((item) => item.id === id)?.currency || "INR",
+        status: parseInt(updatedData.status as any),
         remarks: updatedData.remarks || "",
         remark_id: updatedData.remark_id || null,
         deleted_at: updatedData.deleted_at,
@@ -518,17 +544,7 @@ export default function HostingPage() {
   }
 
   const handleViewDetails = (item: HostingRecord) => {
-    if (!item.id) {
-      toast({
-        title: "Error",
-        description: "Product ID not found",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Redirect to details page with recordType and recordId
-    router.push(`/${user?.role}/categaries-details/${item.id}?recordType=3`);
+    setExpandedRowId((prev) => (prev === item.id ? null : item.id));
   };
 
   const confirmDelete = async () => {
@@ -705,62 +721,78 @@ export default function HostingPage() {
           <div className="overflow-hidden rounded-xl border border-white/10 backdrop-blur-sm">
             {/* Table */}
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className={`w-full table-fixed ${isClient ? 'min-w-[1000px]' : 'min-w-[2000px]'}`}>
                 <thead>
                   <tr className="bg-white/5 border-b border-white/10">
-                    <th className="py-3 px-4 text-left w-12">
-                      <input
-                        type="checkbox"
-                        checked={isAllSelected}
-                        onChange={(e) => handleSelectAll(e.target.checked)}
-                        className="w-4 h-4 rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500/50 cursor-pointer"
-                      />
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-14">
+                    {!isClient && (
+                      <th className="py-3 px-4 text-left w-[50px]">
+                        <input
+                          type="checkbox"
+                          checked={isAllSelected}
+                          onChange={(e) => handleSelectAll(e.target.checked)}
+                          className="w-4 h-4 rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500/50 cursor-pointer"
+                        />
+                      </th>
+                    )}
+                    <th className={`py-3 px-4 text-left text-sm font-medium text-gray-300 ${isClient ? 'w-[80px]' : 'w-[70px]'}`}>
                       S.NO
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[130px]">
+                    <th className={`py-3 px-4 text-left text-sm font-medium text-gray-300 ${isClient ? 'w-[220px]' : 'w-[200px]'}`}>
                       Domain Name
                     </th>
                     {!isClient && (
-                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
+                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[180px]">
                         Client
                       </th>
                     )}
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
+                    <th className={`py-3 px-4 text-left text-sm font-medium text-gray-300 ${isClient ? 'w-[200px]' : 'w-[180px]'}`}>
                       Product
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[100px] w-32">
-                      Vendor
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
+                    {!isClient && (
+                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[150px]">
+                        Vendor
+                      </th>
+                    )}
+                    <th className={`py-3 px-4 text-left text-sm font-medium text-gray-300 ${isClient ? 'w-[160px]' : 'w-[140px]'}`}>
                       Renewal Date
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-24">
-                      Amount
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
+                    {!isClient && (
+                      <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 w-[220px]">
+                        Amount
+                      </th>
+                    )}
+                    <th className={`py-3 px-4 text-left text-sm font-medium text-gray-300 ${isClient ? 'w-[140px]' : 'w-[120px]'}`}>
                       Days to Expire
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
-                      Deletion Date
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
-                      Days to Delete
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
+                    {!isClient && (
+                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[140px]">
+                        Deletion Date
+                      </th>
+                    )}
+                    {!isClient && (
+                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[120px]">
+                        Days to Delete
+                      </th>
+                    )}
+                    <th className={`py-3 px-4 text-center text-sm font-medium text-gray-300 ${isClient ? 'w-[120px]' : 'w-[150px]'}`}>
                       Status
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[180px]">
-                      Remarks
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
-                      Deleted Date
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
-                      Last Updated
-                    </th>
-                    <th className="py-3 px-4 text-right text-sm font-medium text-gray-300 min-w-[140px]">
+                    {!isClient && (
+                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[200px]">
+                        Remarks
+                      </th>
+                    )}
+                    {!isClient && (
+                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[140px]">
+                        Deleted Date
+                      </th>
+                    )}
+                    {!isClient && (
+                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[180px]">
+                        Last Updated
+                      </th>
+                    )}
+                    <th className={`py-3 px-4 text-right text-sm font-medium text-gray-300 ${isClient ? 'w-[100px]' : 'w-[140px]'}`}>
                       Actions
                     </th>
                   </tr>
@@ -768,18 +800,17 @@ export default function HostingPage() {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={13} className="py-8 text-center">
+                      <td colSpan={isClient ? 7 : 16} className="py-8 text-center">
                         <div className="flex flex-col items-center justify-center gap-2">
                           <DashboardLoader label="Fetching Hosting....." />
                         </div>
                       </td>
                     </tr>
-                  ) : (
-                    <>
+                  ) : (<React.Fragment>
                       {/* Add New Row */}
                       {addingNew && (
-                        <tr className="border-b border-white/5 bg-blue-500/5">
-                          <td className="py-3 px-4"></td>
+                        <tr key="new-row" className="border-b border-white/5 bg-blue-500/5">
+                          {!isClient && <td className="py-3 px-4"></td>}
                           <td className="py-3 px-4 text-sm text-gray-300">
                             New
                           </td>
@@ -835,56 +866,60 @@ export default function HostingPage() {
                               />
                             </td>
                           )}
-                          <td className="py-3 px-4">
-                            <ApiDropdown
-                              endpoint="get-products"
-                              value={
-                                newRecordData.product_id
-                                  ? {
-                                    value: newRecordData.product_id,
-                                    label: newRecordData.product_name,
-                                  }
-                                  : null
-                              }
-                              onChange={(option) => {
-                                handleNewRecordChange(
-                                  "product_id",
-                                  option?.value ?? null,
-                                );
-                                handleNewRecordChange(
-                                  "product_name",
-                                  option?.label ?? "",
-                                );
-                              }}
-                              placeholder="Product"
-                              className="min-h-[32px]"
-                            />
-                          </td>
-                          <td className="py-3 px-4">
-                            <ApiDropdown
-                              endpoint="get-venders"
-                              value={
-                                newRecordData.vendor_id
-                                  ? {
-                                    value: newRecordData.vendor_id,
-                                    label: newRecordData.vendor_name,
-                                  }
-                                  : null
-                              }
-                              onChange={(option) => {
-                                handleNewRecordChange(
-                                  "vendor_id",
-                                  option?.value ?? null,
-                                );
-                                handleNewRecordChange(
-                                  "vendor_name",
-                                  option?.label ?? "",
-                                );
-                              }}
-                              placeholder="Vendor"
-                              className="min-h-[32px]"
-                            />
-                          </td>
+                          {!isClient && (
+                            <td className="py-3 px-4">
+                              <ApiDropdown
+                                endpoint="get-products"
+                                value={
+                                  newRecordData.product_id
+                                    ? {
+                                      value: newRecordData.product_id,
+                                      label: newRecordData.product_name,
+                                    }
+                                    : null
+                                }
+                                onChange={(option) => {
+                                  handleNewRecordChange(
+                                    "product_id",
+                                    option?.value ?? null,
+                                  );
+                                  handleNewRecordChange(
+                                    "product_name",
+                                    option?.label ?? "",
+                                  );
+                                }}
+                                placeholder="Product"
+                                className="min-h-[32px]"
+                              />
+                            </td>
+                          )}
+                          {!isClient && (
+                            <td className="py-3 px-4">
+                              <ApiDropdown
+                                endpoint="get-venders"
+                                value={
+                                  newRecordData.vendor_id
+                                    ? {
+                                      value: newRecordData.vendor_id,
+                                      label: newRecordData.vendor_name,
+                                    }
+                                    : null
+                                }
+                                onChange={(option) => {
+                                  handleNewRecordChange(
+                                    "vendor_id",
+                                    option?.value ?? null,
+                                  );
+                                  handleNewRecordChange(
+                                    "vendor_name",
+                                    option?.label ?? "",
+                                  );
+                                }}
+                                placeholder="Vendor"
+                                className="min-h-[32px]"
+                              />
+                            </td>
+                          )}
                           <td className="py-3 px-4">
                             <input
                               type="date"
@@ -894,18 +929,16 @@ export default function HostingPage() {
                               style={{ minHeight: '32px' }}
                             />
                           </td>
-                          <td className="py-3 px-4">
-                            <input
-                              type="number"
-                              value={newRecordData.amount}
-                              onChange={(e) => handleNewRecordChange('amount', e.target.value)}
-                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                              style={{ minHeight: '32px' }}
-                              min="0"
-                              step="0.01"
-                              placeholder="0.00"
-                            />
-                          </td>
+                          {!isClient && (
+                            <td className="py-3 px-4">
+                              <CurrencyAmountInput
+                                currency={newRecordData.currency || "INR"}
+                                amount={newRecordData.amount}
+                                onCurrencyChange={(curr) => handleNewRecordChange("currency", curr)}
+                                onAmountChange={(val) => handleNewRecordChange("amount", val)}
+                              />
+                            </td>
+                          )}
                           <td className="py-3 px-4">
                             <input
                               type="number"
@@ -924,67 +957,75 @@ export default function HostingPage() {
                               style={{ minHeight: "32px" }}
                             />
                           </td>
-                          <td className="py-3 px-4">
-                            <input
-                              type="number"
-                              value={newRecordData.days_to_delete}
-                              onChange={(e) => handleNewRecordChange("days_to_delete", e.target.value)}
-                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                              style={{ minHeight: "32px" }}
-                              min="0"
-                            />
-                          </td>
-                          <td className="py-1 px-2">
-                            <div className="w-40">
-                              <GlassSelect
-                                options={[
-                                  { value: "1", label: "Active" },
-                                  { value: "0", label: "Inactive" },
-                                ]}
-                                value={
-                                  [
+                          {!isClient && (
+                            <td className="py-3 px-4">
+                              <input
+                                type="number"
+                                value={newRecordData.days_to_delete}
+                                onChange={(e) => handleNewRecordChange("days_to_delete", e.target.value)}
+                                className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                style={{ minHeight: "32px" }}
+                                min="0"
+                              />
+                            </td>
+                          )}
+                          {!isClient && (
+                            <td className="py-1 px-2">
+                              <div className="w-40">
+                                <GlassSelect
+                                  options={[
                                     { value: "1", label: "Active" },
                                     { value: "0", label: "Inactive" },
-                                  ].find(opt => opt.value === newRecordData.status) || null
+                                  ]}
+                                  value={
+                                    [
+                                      { value: "1", label: "Active" },
+                                      { value: "0", label: "Inactive" },
+                                    ].find(opt => opt.value === newRecordData.status) || null
+                                  }
+                                  onChange={(selected: any) =>
+                                    handleNewRecordChange(
+                                      "status",
+                                      selected?.value as "1" | "0"
+                                    )
+                                  }
+                                  placeholder="Status"
+                                  isSearchable={false}
+                                  styles={glassSelectStyles}
+                                />
+                              </div>
+                            </td>
+                          )}
+                          {!isClient && (
+                            <td className="py-3 px-4">
+                              <input
+                                type="text"
+                                value={newRecordData.remarks}
+                                onChange={(e) =>
+                                  handleNewRecordChange("remarks", e.target.value)
                                 }
-                                onChange={(selected: any) =>
-                                  handleNewRecordChange(
-                                    "status",
-                                    selected?.value as "1" | "0"
-                                  )
-                                }
-                                placeholder="Status"
-                                isSearchable={false}
-                                isClearable
-                                styles={glassSelectStyles}
+                                className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                style={{ minHeight: "32px" }}
+                                placeholder="Remarks"
                               />
-                            </div>
-
-                          </td>
-                          <td className="py-3 px-4">
-                            <input
-                              type="text"
-                              value={newRecordData.remarks}
-                              onChange={(e) =>
-                                handleNewRecordChange("remarks", e.target.value)
-                              }
-                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                              style={{ minHeight: "32px" }}
-                              placeholder="Remarks"
-                            />
-                          </td>
-                          <td className="py-3 px-4 text-sm text-gray-300">
-                            <input
-                              type="date"
-                              value={newRecordData.deleted_at}
-                              onChange={(e) => handleNewRecordChange('deleted_at', e.target.value)}
-                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                              style={{ minHeight: '32px' }}
-                            />
-                          </td>
-                          <td className="py-3 px-4 text-sm text-gray-300">
-                            {"- -"}
-                          </td>
+                            </td>
+                          )}
+                          {!isClient && (
+                            <td className="py-3 px-4 text-sm text-gray-300">
+                              <input
+                                type="date"
+                                value={newRecordData.deleted_at}
+                                onChange={(e) => handleNewRecordChange('deleted_at', e.target.value)}
+                                className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                style={{ minHeight: '32px' }}
+                              />
+                            </td>
+                          )}
+                          {!isClient && (
+                            <td className="py-3 px-4 text-sm text-gray-300">
+                              {"- -"}
+                            </td>
+                          )}
                           <td className="py-3 px-4">
                             <div className="flex items-center justify-end gap-2">
                               <GlassButton
@@ -1014,8 +1055,8 @@ export default function HostingPage() {
 
                       {/* Existing Data Rows */}
                       {data.length === 0 ? (
-                        <tr>
-                          <td colSpan={13} className="py-8 text-center">
+                        <tr key="empty-row">
+                          <td colSpan={isClient ? 7 : 16} className="py-8 text-center">
                             <div className="flex flex-col items-center justify-center gap-2">
                               <Server className="w-12 h-12 text-gray-400" />
                               <span className="text-gray-400">No hosting records found</span>
@@ -1032,19 +1073,21 @@ export default function HostingPage() {
                         </tr>
                       ) : (
                         data.map((item, index) => (
-                          <tr
-                            key={item.id}
-                            className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors ${editingId === item.id ? 'bg-blue-500/5' : ''
-                              }`}
-                          >
-                            <td className="py-3 px-4">
-                              <input
-                                type="checkbox"
-                                checked={selectedItems.includes(item.id)}
-                                onChange={(e) => handleSelectItem(item.id, e.target.checked)}
-                                className="w-4 h-4 rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500/50 cursor-pointer"
-                              />
-                            </td>
+                          <React.Fragment key={`wrap-${item.id}`}>
+                            <tr
+                              className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors ${editingId === item.id ? 'bg-blue-500/5' : ''
+                                }`}
+                            >
+                            {!isClient && (
+                              <td className="py-3 px-4">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedItems.includes(item.id)}
+                                  onChange={(e) => handleSelectItem(item.id, e.target.checked)}
+                                  className="w-4 h-4 rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500/50 cursor-pointer"
+                                />
+                              </td>
+                            )}
                             <td className="py-3 px-4 text-sm text-gray-300">
                               {startItem + index}
                             </td>
@@ -1134,53 +1177,54 @@ export default function HostingPage() {
                                     className="min-h-[32px]"
                                   />
                                 </td>
-                                <td className="py-3 px-4">
-                                  <ApiDropdown
-                                    endpoint="get-venders"
-                                    value={
-                                      editData[item.id]?.vendor_id
-                                        ? {
-                                          value: editData[item.id]?.vendor_id!,
-                                          label: editData[item.id]?.vendor_name || "",
-                                        }
-                                        : null
-                                    }
-                                    onChange={(option) => {
-                                      handleEditChange(
-                                        item.id,
-                                        "vendor_id",
-                                        option?.value ?? null,
-                                      );
-                                      handleEditChange(
-                                        item.id,
-                                        "vendor_name",
-                                        option?.label ?? "",
-                                      );
-                                    }}
-                                    placeholder="Vendor"
-                                    className="min-h-[32px]"
-                                  />
-                                </td>
+                                {!isClient && (
+                                  <td className="py-3 px-4">
+                                    <ApiDropdown
+                                      endpoint="get-venders"
+                                      value={
+                                        editData[item.id]?.vendor_id
+                                          ? {
+                                            value: editData[item.id]?.vendor_id!,
+                                            label: editData[item.id]?.vendor_name || "",
+                                          }
+                                          : null
+                                      }
+                                      onChange={(option) => {
+                                        handleEditChange(
+                                          item.id,
+                                          "vendor_id",
+                                          option?.value ?? null,
+                                        );
+                                        handleEditChange(
+                                          item.id,
+                                          "vendor_name",
+                                          option?.label ?? "",
+                                        );
+                                      }}
+                                      placeholder="Vendor"
+                                      className="min-h-[32px]"
+                                    />
+                                  </td>
+                                )}
                                 <td className="py-3 px-4">
                                   <input
                                     type="date"
-                                    value={editData[item.id]?.expiry_date || item.expiry_date}
+                                    value={editData[item.id]?.expiry_date || item.expiry_date || ""}
                                     onChange={(e) => handleEditChange(item.id, 'expiry_date', e.target.value)}
                                     className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
                                     style={{ minHeight: '32px' }}
                                   />
                                 </td>
-                                <td className="py-3 px-4">
-                                  <input
-                                    type="number"
-                                    value={editData[item.id]?.amount || item.amount || ""}
-                                    onChange={(e) => handleEditChange(item.id, 'amount', parseFloat(e.target.value) || 0)}
-                                    className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                                    style={{ minHeight: '32px' }}
-                                    min="0"
-                                    step="0.01"
-                                  />
-                                </td>
+                                {!isClient && (
+                                  <td className="py-3 px-4">
+                                    <CurrencyAmountInput
+                                      currency={editData[item.id]?.currency || item.currency || "INR"}
+                                      amount={editData[item.id]?.amount ?? item.amount ?? ""}
+                                      onCurrencyChange={(curr) => handleEditChange(item.id, "currency", curr)}
+                                      onAmountChange={(val) => handleEditChange(item.id, "amount", parseFloat(val) || 0)}
+                                    />
+                                  </td>
+                                )}
                                 <td className="py-3 px-4">
                                   <input
                                     type="number"
@@ -1191,7 +1235,7 @@ export default function HostingPage() {
                                   />
                                 </td>
                                 <td className="py-1 px-2">
-                                  <div className="w-40">
+                                  <div className="w-full mx-auto">
                                     <GlassSelect
                                       options={[
                                         { value: "1", label: "Active" },
@@ -1201,49 +1245,54 @@ export default function HostingPage() {
                                         [
                                           { value: "1", label: "Active" },
                                           { value: "0", label: "Inactive" },
-                                        ].find(opt => opt.value === newRecordData.status) || null
+                                        ].find(opt => opt.value === String(editData[item.id]?.status || item.status)) || null
                                       }
                                       onChange={(selected: any) =>
-                                        handleNewRecordChange(
+                                        handleEditChange(
+                                          item.id,
                                           "status",
-                                          selected?.value as "1" | "0"
+                                          selected?.value || null
                                         )
                                       }
                                       placeholder="Status"
                                       isSearchable={false}
-                                      isClearable
                                       styles={glassSelectStyles}
                                     />
                                   </div>
-
                                 </td>
-                                <td className="py-3 px-4">
-                                  <input
-                                    type="text"
-                                    value={editData[item.id]?.remarks || (item?.latest_remark?.remark as string) || ''}
-                                    onChange={(e) =>
-                                      handleEditChange(
-                                        item.id,
-                                        "remarks",
-                                        e.target.value,
-                                      )
-                                    }
-                                    className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                                    style={{ minHeight: "32px" }}
-                                  />
-                                </td>
-                                <td className="py-3 px-4 text-sm text-gray-300">
-                                  <input
-                                    type="date"
-                                    value={editData[item.id]?.deleted_at || item.deleted_at}
-                                    onChange={(e) => handleEditChange(item.id, 'deleted_at', e.target.value)}
-                                    className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                                    style={{ minHeight: '32px' }}
-                                  />
-                                </td>
-                                <td className="py-3 px-4 text-sm text-gray-300 whitespace-nowrap">
-                                  {(item as any).last_updated || formatLastUpdated(item.updated_at)}
-                                </td>
+                                {!isClient && (
+                                  <td className="py-3 px-4">
+                                    <input
+                                      type="text"
+                                      value={editData[item.id]?.remarks || (item?.latest_remark?.remark as string) || ''}
+                                      onChange={(e) =>
+                                        handleEditChange(
+                                          item.id,
+                                          "remarks",
+                                          e.target.value,
+                                        )
+                                      }
+                                      className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                      style={{ minHeight: "32px" }}
+                                    />
+                                  </td>
+                                )}
+                                {!isClient && (
+                                  <td className="py-3 px-4 text-sm text-gray-300">
+                                    <input
+                                      type="date"
+                                      value={editData[item.id]?.deleted_at || item.deleted_at || ""}
+                                      onChange={(e) => handleEditChange(item.id, 'deleted_at', e.target.value)}
+                                      className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                      style={{ minHeight: '32px' }}
+                                    />
+                                  </td>
+                                )}
+                                {!isClient && (
+                                  <td className="py-3 px-4 text-sm text-gray-300 whitespace-nowrap">
+                                    {(item as any).last_updated || formatLastUpdated(item.updated_at)}
+                                  </td>
+                                )}
                               </>
                             ) : (
                               <>
@@ -1273,26 +1322,23 @@ export default function HostingPage() {
                                     </span>
                                   </div>
                                 </td>
-                                <td className="py-3 px-4">
-                                  <div className="flex items-center gap-2">
-                                    {/* <Package className="w-4 h-4 text-gray-400 flex-shrink-0" /> */}
-                                    <span className="text-sm text-white font-medium">
-                                      {item.vendor_name}
-                                    </span>
-                                  </div>
-                                </td>
-                                <td className="py-3 px-4 text-sm text-gray-300">
-                                  <div className="flex items-center gap-2">
-                                    {/* <Calendar className="w-4 h-4 text-gray-400" /> */}
-                                    {formatDate(item.expiry_date)}
-                                  </div>
-                                </td>
-                                <td className="py-3 px-4 text-sm text-gray-300">
-                                  <div className="flex items-center gap-2">
-                                    {/* <DollarSign className="w-4 h-4 text-gray-400" /> */}
-                                    {item.amount || "0.00"}
-                                  </div>
-                                </td>
+                                {!isClient && (
+                                  <td className="py-3 px-4">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-sm text-white font-medium">
+                                        {item.vendor_name}
+                                      </span>
+                                    </div>
+                                  </td>
+                                )}
+                                {!isClient && (
+                                  <td className="py-3 px-4 text-sm text-gray-300">
+                                    <div className="flex items-center justify-center gap-1 font-medium text-white">
+                                      <span className="text-[#BC8969]">{getCurrencySymbol(item.currency)}</span>
+                                      {item.amount || "0.00"}
+                                    </div>
+                                  </td>
+                                )}
                                 <td className="py-3 px-4">
                                   <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${calculateDays(item.expiry_date) < 0
                                     ? 'bg-red-500/20 text-red-400 border-red-500/20'
@@ -1300,36 +1346,50 @@ export default function HostingPage() {
                                       ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/20'
                                       : 'bg-green-500/20 text-green-400 border-green-500/20'
                                     }`}>
-                                    {/* <Clock className="w-3 h-3" /> */}
                                     {calculateDays(item.expiry_date)} days
                                   </div>
                                 </td>
-                                <td className="py-3 px-4">
+                                {!isClient && (
+                                  <td className="py-3 px-4 text-sm text-gray-300">
+                                    {item.deletion_date ? formatDate(item.deletion_date) : "--"}
+                                  </td>
+                                )}
+                                {!isClient && (
+                                  <td className="py-3 px-4 text-sm text-gray-300">
+                                    {calculateDays(item.deletion_date as string)}
+                                  </td>
+                                )}
+                                <td className="py-3 px-4 text-center">
                                   <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${getStatusColor(item.status)} ${item.status === 1 ? 'bg-green-500/20 border-green-500/20' : 'bg-red-500/20 border-red-500/20'
                                     }`}>
                                     {getStatusIcon(item.status)}
                                     {getStatusText(item.status)}
                                   </div>
                                 </td>
-                                <td className="py-3 px-4">
-                                  <div className="flex items-center gap-2">
-                                    {/* <AlertCircle className="w-4 h-4 text-gray-400 flex-shrink-0" /> */}
-                                    <span className="text-sm text-gray-300 truncate max-w-[180px]">
-                                      {(item?.latest_remark?.remark as string) || ''}
-                                    </span>
-                                  </div>
-                                </td>
-                                <td className="py-3 px-4 text-sm text-gray-300">
-                                  {(item.deleted_at)}
-                                </td>
-                                <td className="py-3 px-4 text-sm text-gray-300 whitespace-nowrap">
-                                  {(item as any).last_updated || formatLastUpdated(item.updated_at)}
-                                </td>
+                                {!isClient && (
+                                  <td className="py-3 px-4">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-sm text-gray-300 truncate max-w-[180px]">
+                                        {(item?.latest_remark?.remark as string) || ''}
+                                      </span>
+                                    </div>
+                                  </td>
+                                )}
+                                {!isClient && (
+                                  <td className="py-3 px-4 text-sm text-gray-300">
+                                    {(item.deleted_at)}
+                                  </td>
+                                )}
+                                {!isClient && (
+                                  <td className="py-3 px-4 text-sm text-gray-300 whitespace-nowrap">
+                                    {(item as any).last_updated || formatLastUpdated(item.updated_at)}
+                                  </td>
+                                )}
                               </>
                             )}
 
-                            <td className="py-3 px-4">
-                              <div className="flex items-center justify-end gap-2">
+                            <td className="py-3 px-4 text-right">
+                              <div className="flex items-center justify-end gap-2 whitespace-nowrap">
                                 {editingId === item.id ? (
                                   <>
                                     <GlassButton
@@ -1362,29 +1422,51 @@ export default function HostingPage() {
                                     >
                                       <Eye className="w-4 h-4 text-gray-300 hover:text-blue-400 transition-colors" />
                                     </GlassButton>
-                                    <GlassButton
-                                      onClick={() => handleEdit(item)}
-                                      className="p-1.5 min-w-0 hover:bg-white/10"
-                                      title="Edit"
-                                    >
-                                      <Edit className="w-4 h-4 text-gray-300 hover:text-blue-400 transition-colors" />
-                                    </GlassButton>
-                                    <GlassButton
-                                      onClick={() => handleDeleteClick(item.id)}
-                                      className="p-1.5 min-w-0 hover:bg-red-500/20"
-                                      title="Delete"
-                                    >
-                                      <Trash2 className="w-4 h-4 text-gray-300 hover:text-red-400 transition-colors" />
-                                    </GlassButton>
+                                    {!isClient && (
+                                      <>
+                                        <GlassButton
+                                          onClick={() => handleEdit(item)}
+                                          className="p-1.5 min-w-0 hover:bg-white/10"
+                                          title="Edit"
+                                        >
+                                          <Edit className="w-4 h-4 text-gray-300 hover:text-blue-400 transition-colors" />
+                                        </GlassButton>
+                                        <GlassButton
+                                          onClick={() => handleDeleteClick(item.id)}
+                                          className="p-1.5 min-w-0 hover:bg-red-500/20"
+                                          title="Delete"
+                                        >
+                                          <Trash2 className="w-4 h-4 text-gray-300 hover:text-red-400 transition-colors" />
+                                        </GlassButton>
+                                      </>
+                                    )}
                                   </>
                                 )}
                               </div>
                             </td>
                           </tr>
+
+                          {/* Expansion Row for Details */}
+                          {expandedRowId === item.id && (
+                            <tr className="bg-white/5 animate-in fade-in slide-in-from-top-4 duration-300">
+                              <td colSpan={isClient ? 7 : 16} className="py-4 px-6">
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 bg-black/20 p-4 rounded-xl border border-white/5 shadow-inner">
+                                  <div><span className="block text-xs text-gray-400 mb-1 text-left">Domain Name</span><span className="block text-sm text-gray-200 font-medium text-left">{item.domain_name || "--"}</span></div>
+                                  <div><span className="block text-xs text-gray-400 mb-1 text-left">Client Name</span><span className="block text-sm text-gray-200 font-medium text-left">{item.client_name || "--"}</span></div>
+                                  <div><span className="block text-xs text-gray-400 mb-1 text-left">Product</span><span className="block text-sm text-gray-200 font-medium text-left">{item.product_name || "--"}</span></div>
+                                  <div><span className="block text-xs text-gray-400 mb-1 text-left">Vendor</span><span className="block text-sm text-gray-200 font-medium text-left">{item.vendor_name || "--"}</span></div>
+                                  <div><span className="block text-xs text-gray-400 mb-1 text-left">Amount</span><span className="block text-sm text-gray-200 font-medium text-left">{getCurrencySymbol(item.currency)}{item.amount || "--"}</span></div>
+                                  <div><span className="block text-xs text-gray-400 mb-1 text-left">Renewal Date</span><span className="block text-sm text-gray-200 font-medium text-left">{formatDate((item as any).renewal_date)}</span></div>
+                                  <div><span className="block text-xs text-gray-400 mb-1 text-left">Deletion Date</span><span className="block text-sm text-gray-200 font-medium text-left">{formatDate((item as any).deletion_date)}</span></div>
+                                  <div><span className="block text-xs text-gray-400 mb-1 text-left">Remarks</span><span className="block text-sm text-gray-200 font-medium text-left">{(item?.latest_remark?.remark as string) || "--"}</span></div>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                          </React.Fragment>
                         ))
                       )}
-                    </>
-                  )}
+                    </React.Fragment>)}
                 </tbody>
               </table>
             </div>

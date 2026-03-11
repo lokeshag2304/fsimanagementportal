@@ -204,7 +204,7 @@
 //           // }
 //           if (response.Data) {
 //   const apiUser = response.Data;
-  
+
 //   // Transform API data to match User interface (same as AuthContext)
 //   const userData: User = {
 //     id: apiUser.id,
@@ -405,7 +405,7 @@
 //             {otp.map((digit, index) => (
 //               <input
 //                 key={index}
-//                 ref={(el) => (inputRefs.current[index] = el)}
+//                 ref={(el) => { inputRefs.current[index] = el; }}
 //                 type="text"
 //                 inputMode="numeric"
 //                 maxLength={1}
@@ -499,7 +499,7 @@ interface User {
   id: number;
   name: string;
   email: string;
-  profile?: string;
+  profile: string;
   login_type: number;
   role: 'SuperAdmin' | 'UserAdmin' | 'ClientAdmin';
   whatsapp_status: number;
@@ -669,19 +669,19 @@ export default function VerifyOTPPage() {
 
           if (response.Data) {
             const apiUser = response.Data;
-            
+
             // Transform API data to match User interface
             const userData: User = {
               id: apiUser.id,
               name: apiUser.name,
               email: apiUser.email,
-              profile: apiUser.profile,
+              profile: apiUser.profile || "",
               login_type: apiUser.login_type,
-              role: apiUser.login_type === 1 
-                ? 'SuperAdmin' 
-                : apiUser.login_type === 2 
-                ? 'UserAdmin' 
-                : 'ClientAdmin',
+              role: apiUser.login_type === 1
+                ? 'SuperAdmin'
+                : apiUser.login_type === 2
+                  ? 'UserAdmin'
+                  : 'ClientAdmin',
               whatsapp_status: 1,
               email_status: 1,
               sms_status: 1,
@@ -707,7 +707,7 @@ export default function VerifyOTPPage() {
                   router.push("/UserAdmin/dashboard");
                   break;
                 case 3:
-                  router.push("/ClientAdmin/client-details");
+                  router.push("/client/dashboard");
                   break;
                 default:
                   router.push("/");
@@ -869,7 +869,7 @@ export default function VerifyOTPPage() {
             {otp.map((digit, index) => (
               <input
                 key={index}
-                ref={(el) => (inputRefs.current[index] = el)}
+                ref={(el) => { inputRefs.current[index] = el; }}
                 type="text"
                 inputMode="numeric"
                 maxLength={1}

@@ -38,6 +38,7 @@ export const roleNavigationMap: Record<Role, NavItem[]> = {
       hasDropdown: true,
       hasSubmenu: true,
       submenu: [
+        { name: "Super Admin", href: "/SuperAdmin/superadmins" },
         { name: "Client", href: "/SuperAdmin/clients" },
         { name: "User Admin", href: "/SuperAdmin/users" },
       ],
@@ -60,25 +61,10 @@ export const roleNavigationMap: Record<Role, NavItem[]> = {
 
   ClientAdmin: [
     { name: "Dashboard", href: "/client/dashboard", icon: Home },
-
-    { name: "Subscription", href: "/client/subscription", icon: UserPlus },
     { name: "SSL", href: "/client/ssl", icon: Book },
-    { name: "Counter", href: "/client/counter", icon: BookOpen },
     { name: "Domains", href: "/client/domains", icon: Globe },
     { name: "Emails", href: "/client/sub-email", icon: Rocket },
     { name: "Hosting", href: "/client/hosting", icon: Rocket },
-    {
-      name: "Tool",
-      href: "/client/products",
-      icon: Package,
-      hasDropdown: true,
-      hasSubmenu: true,
-      submenu: [
-        { name: "Products", href: "/client/products" },
-        { name: "Domain", href: "/client/domain" },
-        { name: "Vendors", href: "/client/vendors" },
-      ],
-    },
     { name: "Activity", href: "/client/activity", icon: Rocket },
   ],
 
@@ -117,6 +103,10 @@ export const roleNavigationMap: Record<Role, NavItem[]> = {
     { name: "Activity", href: "/UserAdmin/activity", icon: Rocket },
   ],
 }
+
+// Support for both naming conventions
+roleNavigationMap["User" as Role] = roleNavigationMap.UserAdmin;
+roleNavigationMap["Client" as Role] = roleNavigationMap.ClientAdmin;
 
 
 

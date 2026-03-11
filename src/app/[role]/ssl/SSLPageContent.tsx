@@ -36,10 +36,12 @@ import Pagination from "@/common/Pagination";
 import DashboardLoader, { downloadBase64File } from "@/common/DashboardLoader";
 import { getNavigationByRole } from "@/lib/getNavigationByRole";
 import { ApiDropdown, glassSelectStyles } from "@/common/DynamicDropdown";
+import { CurrencyAmountInput } from "@/common/CurrencyAmountInput";
 import { GlassSelect } from "@/components/glass/GlassSelect";
 import { formatLastUpdated } from "@/utils/dateFormatter";
 import { emitEntityChange } from "@/lib/entityBus";
 import { handleDateChangeLogic, getDaysToColor } from "@/utils/dateCalculations";
+import { getCurrencySymbol, currencySymbols } from "@/utils/currencies";
 
 interface SSLRecord {
   id: number;
@@ -63,6 +65,7 @@ interface SSLRecord {
   product_name: string;
   renewal_date: string;
   amount: number | null;
+  currency?: string;
   remarks: string;
   remark_id: number | null;
   has_remark_history?: boolean;
@@ -83,6 +86,7 @@ interface AddEditSSL {
   domain_id: number;
   client_id: number;
   amount: number;
+  currency?: string;
   renewal_date: string;
   expiry_date: string;
   deletion_date?: string;
@@ -92,6 +96,14 @@ interface AddEditSSL {
   remarks: string;
   remark_id: number;
 }
+
+const currencyOptions = [
+  { value: "INR", label: "INR (₹)" },
+  { value: "USD", label: "USD ($)" },
+  { value: "NGN", label: "NGN (₦)" },
+  { value: "CNY", label: "CNY (¥)" },
+];
+
 
 function useDebounce<T>(value: T, delay = 400): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -142,6 +154,7 @@ export default function SSLPage() {
     vendor_name: "",
     product_name: "",
     amount: "",
+    currency: "INR",
     renewal_date: "",
     expiry_date: "",
     deletion_date: "",
@@ -166,6 +179,7 @@ export default function SSLPage() {
     {},
   );
   const [expandedRemarkId, setExpandedRemarkId] = useState<number | null>(null);
+  const [expandedRowId, setExpandedRowId] = useState<number | null>(null);
 
   const [pagination, setPagination] = useState({
     page: 0,
@@ -232,6 +246,7 @@ export default function SSLPage() {
       vendor_name: "",
       product_name: "",
       amount: "",
+      currency: "INR",
       renewal_date: "",
       expiry_date: "",
       deletion_date: "",
@@ -312,6 +327,7 @@ export default function SSLPage() {
         domain_id: newRecordData.domain_id!,
         client_id: newRecordData.client_id!,
         amount: parseFloat(newRecordData.amount) || 0,
+        currency: newRecordData.currency || "INR",
         renewal_date: newRecordData.renewal_date,
         expiry_date: newRecordData.expiry_date,
         deletion_date: newRecordData.deletion_date || null,
@@ -342,6 +358,7 @@ export default function SSLPage() {
           vendor_name: "",
           product_name: "",
           amount: "",
+          currency: "INR",
           renewal_date: "",
           expiry_date: "",
           deletion_date: "",
@@ -377,6 +394,7 @@ export default function SSLPage() {
         ...record,
         renewal_date: record.renewal_date || "",
         amount: record.amount || 0,
+        currency: record.currency || "INR",
         deletion_date: record.deletion_date || null,
         days_to_delete: record.days_to_delete ?? null,
         remark_id: record?.latest_remark?.id || null,
@@ -416,7 +434,8 @@ export default function SSLPage() {
         vendor_id: updatedData.vendor_id!,
         domain_id: updatedData.domain_id!,
         client_id: updatedData.client_id!,
-        amount: updatedData.amount || 0,
+        amount: updatedData.amount ?? data.find((item) => item.id === id)?.amount ?? 0,
+        currency: updatedData.currency || data.find((item) => item.id === id)?.currency || "INR",
         renewal_date: updatedData.renewal_date!,
         expiry_date: updatedData.expiry_date!,
         deletion_date: updatedData.deletion_date || null,
@@ -675,17 +694,7 @@ export default function SSLPage() {
   };
 
   const handleViewDetails = (item: SSLRecord) => {
-    if (!item.id) {
-      toast({
-        title: "Error",
-        description: "Product ID not found",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Redirect to details page with recordType and recordId
-    router.push(`/${user?.role}/categaries-details/${item.id}?recordType=2`);
+    setExpandedRowId((prev) => (prev === item.id ? null : item.id));
   };
 
   const handlePageChange = (newPage: number) => {
@@ -824,63 +833,73 @@ export default function SSLPage() {
           <div className="overflow-hidden rounded-xl border border-white/10 backdrop-blur-sm">
             {/* Table */}
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className={`w-full table-fixed ${isClient ? 'min-w-[1000px]' : 'min-w-[2000px]'}`}>
                 <thead>
-                  <tr className="bg-white/5 border-b border-white/10">
-                    <th className="py-3 px-4 text-left w-12">
-                      <input
-                        type="checkbox"
-                        checked={isAllSelected}
-                        onChange={(e) => handleSelectAll(e.target.checked)}
-                        className="w-4 h-4 rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500/50 cursor-pointer"
-                      />
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[80px]">
+                  <tr className="bg-white/5 border-b border-white/10 uppercase tracking-wider">
+                    {!isClient && (
+                      <th className="py-3 px-4 text-left w-[50px]">
+                        <input
+                          type="checkbox"
+                          checked={isAllSelected}
+                          onChange={(e) => handleSelectAll(e.target.checked)}
+                          className="w-4 h-4 rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500/50 cursor-pointer"
+                        />
+                      </th>
+                    )}
+                    <th className={`py-3 px-4 text-left text-xs font-semibold text-gray-400 ${isClient ? 'w-[80px]' : 'w-[70px]'}`}>
                       S.NO
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[130px]">
+                    <th className={`py-3 px-4 text-left text-xs font-semibold text-gray-400 ${isClient ? 'w-[220px]' : 'w-[200px]'}`}>
                       Domain Name
                     </th>
                     {!isClient && (
-                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
+                      <th className="py-3 px-4 text-left text-xs font-semibold text-gray-400 w-[180px]">
                         Client
                       </th>
                     )}
-
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[180px]">
+                    <th className={`py-3 px-4 text-left text-xs font-semibold text-gray-400 ${isClient ? 'w-[200px]' : 'w-[180px]'}`}>
                       Product
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[180px]">
-                      Vendor
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[180px]">
-                      Amount
-                    </th>
-                    {/* <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
+                    {!isClient && (
+                      <th className="py-3 px-4 text-left text-xs font-semibold text-gray-400 w-[150px]">
+                        Vendor
+                      </th>
+                    )}
+                    {!isClient && (
+                      <th className="py-3 px-4 text-center text-xs font-semibold text-gray-400 w-[220px]">
+                        Amount
+                      </th>
+                    )}
+                    <th className={`py-3 px-4 text-left text-xs font-semibold text-gray-400 ${isClient ? 'w-[160px]' : 'w-[140px]'}`}>
                       Renewal Date
-                    </th> */}
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
-                      Renewal Date
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
+                    <th className={`py-3 px-4 text-left text-xs font-semibold text-gray-400 ${isClient ? 'w-[140px]' : 'w-[120px]'}`}>
                       Days to Expire
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
-                      Deletion Date
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
-                      Days to Delete
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
+                    {!isClient && (
+                      <th className="py-3 px-4 text-left text-xs font-semibold text-gray-400 w-[140px]">
+                        Deletion Date
+                      </th>
+                    )}
+                    {!isClient && (
+                      <th className="py-3 px-4 text-left text-xs font-semibold text-gray-400 w-[120px]">
+                        Days to Delete
+                      </th>
+                    )}
+                    <th className={`py-3 px-4 text-center text-xs font-semibold text-gray-400 ${isClient ? 'w-[120px]' : 'w-[150px]'}`}>
                       Status
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[180px]">
-                      Remarks
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
-                      Last Updated
-                    </th>
-                    <th className="py-3 px-4 text-right text-sm font-medium text-gray-300 min-w-[140px]">
+                    {!isClient && (
+                      <th className="py-3 px-4 text-left text-xs font-semibold text-gray-400 w-[200px]">
+                        Remarks
+                      </th>
+                    )}
+                    {!isClient && (
+                      <th className="py-3 px-4 text-left text-xs font-semibold text-gray-400 w-[180px]">
+                        Last Updated
+                      </th>
+                    )}
+                    <th className={`py-3 px-4 text-right text-xs font-semibold text-gray-400 ${isClient ? 'w-[100px]' : 'w-[140px]'}`}>
                       Actions
                     </th>
                   </tr>
@@ -888,17 +907,15 @@ export default function SSLPage() {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={15} className="py-8 text-center">
+                      <td colSpan={isClient ? 7 : 15} className="py-8 text-center text-gray-400 uppercase tracking-wider text-xs font-medium">
                         <div className="flex flex-col items-center justify-center gap-2">
                           <DashboardLoader label="Fetching SSL Certificates..." />
                         </div>
                       </td>
                     </tr>
-                  ) : (
-                    <>
-                      {/* Add New Row */}
+                  ) : (<React.Fragment>
                       {addingNew && (
-                        <tr className="border-b border-white/5 bg-blue-500/5">
+                        <tr key="new-row" className="border-b border-white/5 bg-blue-500/5">
                           <td className="py-3 px-4"></td>
                           <td className="py-3 px-4 text-sm text-gray-300">
                             New
@@ -1006,17 +1023,11 @@ export default function SSLPage() {
                             />
                           </td>
                           <td className="py-3 px-4">
-                            <input
-                              type="number"
-                              value={newRecordData.amount}
-                              onChange={(e) =>
-                                handleNewRecordChange("amount", e.target.value)
-                              }
-                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                              style={{ minHeight: "32px" }}
-                              placeholder="0.00"
-                              min="0"
-                              step="0.01"
+                            <CurrencyAmountInput
+                              currency={newRecordData.currency || "INR"}
+                              amount={newRecordData.amount}
+                              onCurrencyChange={(curr) => handleNewRecordChange("currency", curr)}
+                              onAmountChange={(val) => handleNewRecordChange("amount", val)}
                             />
                           </td>
                           {/* <td className="py-3 px-4">
@@ -1056,59 +1067,66 @@ export default function SSLPage() {
                               style={{ minHeight: "32px" }}
                             />
                           </td>
+                          {!isClient && (
+                            <td className="py-3 px-4">
+                              <input
+                                type="date"
+                                value={newRecordData.deletion_date}
+                                onChange={(e) =>
+                                  handleNewRecordChange(
+                                    "deletion_date",
+                                    e.target.value,
+                                  )
+                                }
+                                className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                style={{ minHeight: "32px" }}
+                              />
+                            </td>
+                          )}
+                          {!isClient && (
+                            <td className="py-3 px-4">
+                              <input
+                                type="number"
+                                value={newRecordData.days_to_delete}
+                                readOnly
+                                className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-xs cursor-not-allowed"
+                                style={{ minHeight: "32px" }}
+                              />
+                            </td>
+                          )}
                           <td className="py-3 px-4">
-                            <input
-                              type="date"
-                              value={newRecordData.deletion_date}
-                              onChange={(e) =>
-                                handleNewRecordChange(
-                                  "deletion_date",
-                                  e.target.value,
-                                )
-                              }
-                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                              style={{ minHeight: "32px" }}
-                            />
-                          </td>
-                          <td className="py-3 px-4">
-                            <input
-                              type="number"
-                              value={newRecordData.days_to_delete}
-                              readOnly
-                              className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-xs cursor-not-allowed"
-                              style={{ minHeight: "32px" }}
-                            />
-                          </td>
-                          <td className="py-3 px-4">
-                            <div className="w-40">
+                            <div className="w-full">
                               <GlassSelect
                                 options={statusOptions}
                                 value={getSelectedStatusOption()}
                                 onChange={handleStatusSelect}
                                 placeholder="Status"
                                 isSearchable={false}
-                                isClearable
                                 styles={glassSelectStyles}
                               />
                             </div>
                           </td>
-                          <td className="py-3 px-4">
-                            <input
-                              type="text"
-                              value={newRecordData.remarks}
-                              onChange={(e) =>
-                                handleNewRecordChange("remarks", e.target.value)
-                              }
-                              className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                              style={{ minHeight: "32px" }}
-                              placeholder="Remarks"
-                            />
-                          </td>
-                          <td className="py-3 px-4 text-sm text-gray-300">
-                            {newRecordData?.updated_at_custom
-                              ? newRecordData?.updated_at_custom
-                              : "--"}
-                          </td>
+                          {!isClient && (
+                            <td className="py-3 px-4">
+                              <input
+                                type="text"
+                                value={newRecordData.remarks}
+                                onChange={(e) =>
+                                  handleNewRecordChange("remarks", e.target.value)
+                                }
+                                className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                style={{ minHeight: "32px" }}
+                                placeholder="Remarks"
+                              />
+                            </td>
+                          )}
+                          {!isClient && (
+                            <td className="py-3 px-4 text-sm text-gray-300">
+                              {newRecordData?.updated_at_custom
+                                ? newRecordData?.updated_at_custom
+                                : "--"}
+                            </td>
+                          )}
                           <td className="py-3 px-4">
                             <div className="flex items-center justify-end gap-2">
                               <GlassButton
@@ -1135,11 +1153,9 @@ export default function SSLPage() {
                           </td>
                         </tr>
                       )}
-
-                      {/* Existing Data Rows */}
                       {data.length === 0 ? (
-                        <tr>
-                          <td colSpan={15} className="py-8 text-center">
+                        <tr key="empty-row">
+                          <td colSpan={isClient ? 7 : 15} className="py-8 text-center text-gray-400">
                             <div className="flex flex-col items-center justify-center gap-2">
                               <Shield className="w-12 h-12 text-gray-400" />
                               <span className="text-gray-400">
@@ -1163,16 +1179,18 @@ export default function SSLPage() {
                               className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors ${editingId === item.id ? "bg-blue-500/5" : ""
                                 }`}
                             >
-                              <td className="py-3 px-4">
-                                <input
-                                  type="checkbox"
-                                  checked={selectedItems.includes(item.id)}
-                                  onChange={(e) =>
-                                    handleSelectItem(item.id, e.target.checked)
-                                  }
-                                  className="w-4 h-4 rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500/50 cursor-pointer"
-                                />
-                              </td>
+                              {!isClient && (
+                                <td className="py-3 px-4">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedItems.includes(item.id)}
+                                    onChange={(e) =>
+                                      handleSelectItem(item.id, e.target.checked)
+                                    }
+                                    className="w-4 h-4 rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500/50 cursor-pointer"
+                                  />
+                                </td>
+                              )}
                               <td className="py-3 px-4 text-sm text-gray-300">
                                 {startItem + index}
                               </td>
@@ -1277,59 +1295,50 @@ export default function SSLPage() {
                                       className="min-h-[32px]"
                                     />
                                   </td>
-                                  <td className="py-3 px-4">
-                                    <ApiDropdown
-                                      endpoint="get-venders"
-                                      value={
-                                        editData[item.id]?.vendor_id
-                                          ? {
-                                            value:
-                                              editData[item.id]?.vendor_id!,
-                                            label:
-                                              editData[item.id]?.vendor_name ||
-                                              "",
-                                          }
-                                          : null
-                                      }
-                                      onChange={(option) => {
-                                        handleEditChange(
-                                          item.id,
-                                          "vendor_id",
-                                          option?.value ?? null,
-                                        );
-                                        handleEditChange(
-                                          item.id,
-                                          "vendor_name",
-                                          option?.label ?? "",
-                                        );
-                                      }}
-                                      placeholder="Vendor"
-                                      className="min-h-[32px]"
-                                    />
-                                  </td>
+                                  {!isClient && (
+                                    <td className="py-3 px-4">
+                                      <ApiDropdown
+                                        endpoint="get-venders"
+                                        value={
+                                          editData[item.id]?.vendor_id
+                                            ? {
+                                              value:
+                                                editData[item.id]?.vendor_id!,
+                                              label:
+                                                editData[item.id]?.vendor_name ||
+                                                "",
+                                            }
+                                            : null
+                                        }
+                                        onChange={(option) => {
+                                          handleEditChange(
+                                            item.id,
+                                            "vendor_id",
+                                            option?.value ?? null,
+                                          );
+                                          handleEditChange(
+                                            item.id,
+                                            "vendor_name",
+                                            option?.label ?? "",
+                                          );
+                                        }}
+                                        placeholder="Vendor"
+                                        className="min-h-[32px]"
+                                      />
+                                    </td>
+                                  )}
 
                                   {/* Amount */}
-                                  <td className="py-3 px-4">
-                                    <input
-                                      type="number"
-                                      value={
-                                        editData[item.id]?.amount ||
-                                        item.amount ||
-                                        ""
-                                      }
-                                      onChange={(e) =>
-                                        handleEditChange(
-                                          item.id,
-                                          "amount",
-                                          parseFloat(e.target.value) || 0,
-                                        )
-                                      }
-                                      className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                                      style={{ minHeight: "32px" }}
-                                      min="0"
-                                      step="0.01"
-                                    />
-                                  </td>
+                                  {!isClient && (
+                                    <td className="py-3 px-4">
+                                      <CurrencyAmountInput
+                                        currency={editData[item.id]?.currency || item.currency || "INR"}
+                                        amount={editData[item.id]?.amount ?? item.amount ?? ""}
+                                        onCurrencyChange={(curr) => handleEditChange(item.id, "currency", curr)}
+                                        onAmountChange={(val) => handleEditChange(item.id, "amount", parseFloat(val) || 0)}
+                                      />
+                                    </td>
+                                  )}
 
                                   {/* Renewal Date */}
                                   {/* <td className="py-3 px-4">
@@ -1354,7 +1363,8 @@ export default function SSLPage() {
                                       type="date"
                                       value={
                                         editData[item.id]?.expiry_date ||
-                                        item.expiry_date
+                                        item.expiry_date ||
+                                        ""
                                       }
                                       onChange={(e) =>
                                         handleEditChange(
@@ -1393,41 +1403,45 @@ export default function SSLPage() {
                                   </td>
 
                                   {/* Deletion Date */}
-                                  <td className="py-3 px-4">
-                                    <input
-                                      type="date"
-                                      value={
-                                        editData[item.id]?.deletion_date ||
-                                        item.deletion_date || ""
-                                      }
-                                      onChange={(e) =>
-                                        handleEditChange(
-                                          item.id,
-                                          "deletion_date",
-                                          e.target.value,
-                                        )
-                                      }
-                                      className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                                      style={{ minHeight: "32px" }}
-                                    />
-                                  </td>
+                                  {!isClient && (
+                                    <td className="py-3 px-4">
+                                      <input
+                                        type="date"
+                                        value={
+                                          editData[item.id]?.deletion_date ||
+                                          item.deletion_date || ""
+                                        }
+                                        onChange={(e) =>
+                                          handleEditChange(
+                                            item.id,
+                                            "deletion_date",
+                                            e.target.value,
+                                          )
+                                        }
+                                        className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                        style={{ minHeight: "32px" }}
+                                      />
+                                    </td>
+                                  )}
 
                                   {/* Days to Delete */}
-                                  <td className="py-3 px-4">
-                                    <input
-                                      type="number"
-                                      value={
-                                        editData[item.id]?.days_to_delete ?? item.days_to_delete ?? ""
-                                      }
-                                      readOnly
-                                      className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-xs cursor-not-allowed"
-                                      style={{ minHeight: "32px" }}
-                                    />
-                                  </td>
+                                  {!isClient && (
+                                    <td className="py-3 px-4">
+                                      <input
+                                        type="number"
+                                        value={
+                                          editData[item.id]?.days_to_delete ?? item.days_to_delete ?? ""
+                                        }
+                                        readOnly
+                                        className="w-full px-2 py-1 bg-white/10 border border-white/10 rounded text-gray-400 text-xs cursor-not-allowed"
+                                        style={{ minHeight: "32px" }}
+                                      />
+                                    </td>
+                                  )}
 
                                   {/* Status */}
                                   <td className="py-3 px-4">
-                                    <div className="w-40">
+                                    <div className="w-full">
                                       <GlassSelect
                                         options={statusOptions}
                                         value={getEditSelectedStatusOption(
@@ -1441,36 +1455,40 @@ export default function SSLPage() {
                                         }
                                         placeholder="Status"
                                         isSearchable={false}
-                                        isClearable
                                         styles={glassSelectStyles}
                                       />
                                     </div>
                                   </td>
 
                                   {/* Remarks */}
-                                  <td className="py-3 px-4">
-                                    <input
-                                      type="text"
-                                      value={
-                                        editData[item.id]?.remarks ||
-                                        item?.latest_remark?.remark
-                                      }
-                                      onChange={(e) =>
-                                        handleEditChange(
-                                          item.id,
-                                          "remarks",
-                                          e.target.value,
-                                        )
-                                      }
-                                      className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                                      style={{ minHeight: "32px" }}
-                                    />
-                                  </td>
+                                  {!isClient && (
+                                    <td className="py-3 px-4">
+                                      <input
+                                        type="text"
+                                        value={
+                                          editData[item.id]?.remarks ||
+                                          item?.latest_remark?.remark ||
+                                          ""
+                                        }
+                                        onChange={(e) =>
+                                          handleEditChange(
+                                            item.id,
+                                            "remarks",
+                                            e.target.value,
+                                          )
+                                        }
+                                        className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                        style={{ minHeight: "32px" }}
+                                      />
+                                    </td>
+                                  )}
 
                                   {/* Last Updated (Read-only) */}
-                                  <td className="py-3 px-4 text-sm text-gray-300">
-                                    {item.last_updated || formatLastUpdated(item.updated_at)}
-                                  </td>
+                                  {!isClient && (
+                                    <td className="py-3 px-4 text-sm text-gray-300">
+                                      {item.last_updated || formatLastUpdated(item.updated_at)}
+                                    </td>
+                                  )}
                                 </>
                               ) : (
                                 /* View Mode */
@@ -1506,21 +1524,26 @@ export default function SSLPage() {
                                     </div>
                                   </td>
 
-                                  <td className="py-3 px-4">
-                                    <div className="flex items-center gap-2">
-                                      <Package className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                                      <span className="text-sm text-white font-medium">
-                                        {item.vendor_name}
-                                      </span>
-                                    </div>
-                                  </td>
+                                  {!isClient && (
+                                    <td className="py-3 px-4">
+                                      <div className="flex items-center gap-2">
+                                        <Package className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                        <span className="text-sm text-white font-medium">
+                                          {item.vendor_name}
+                                        </span>
+                                      </div>
+                                    </td>
+                                  )}
 
                                   {/* Amount */}
-                                  <td className="py-3 px-4 text-sm text-gray-300">
-                                    <div className="flex items-center gap-2">
-                                      {item.amount || "0.00"}
-                                    </div>
-                                  </td>
+                                  {!isClient && (
+                                    <td className="py-3 px-4 text-xs text-gray-300">
+                                      <div className="flex items-center justify-center gap-1 font-medium text-white">
+                                        <span className="text-[#BC8969]">{getCurrencySymbol(item.currency)}</span>
+                                        {item.amount || "0.00"}
+                                      </div>
+                                    </td>
+                                  )}
 
                                   {/* Renewal Date */}
                                   {/* <td className="py-3 px-4 text-sm text-gray-300">
@@ -1553,25 +1576,29 @@ export default function SSLPage() {
                                   </td>
 
                                   {/* Deletion Date */}
-                                  <td className="py-3 px-4 text-sm text-gray-300">
-                                    <div className="flex items-center gap-2">
-                                      {item.deletion_date ? formatDate(item.deletion_date) : "--"}
-                                    </div>
-                                  </td>
+                                  {!isClient && (
+                                    <td className="py-3 px-4 text-sm text-gray-300">
+                                      <div className="flex items-center gap-2">
+                                        {item.deletion_date ? formatDate(item.deletion_date) : "--"}
+                                      </div>
+                                    </td>
+                                  )}
 
                                   {/* Days to Delete */}
-                                  <td className="py-3 px-4">
-                                    {item.deletion_date ? (
-                                      <div className={`px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-gray-500/10 border-gray-500/20 ${getDaysToColor(item.days_to_delete)}`}>
-                                        {item.days_to_delete} days
-                                      </div>
-                                    ) : (
-                                      <span className="text-gray-500">--</span>
-                                    )}
-                                  </td>
+                                  {!isClient && (
+                                    <td className="py-3 px-4">
+                                      {item.deletion_date ? (
+                                        <div className={`px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-gray-500/10 border-gray-500/20 ${getDaysToColor(item.days_to_delete)}`}>
+                                          {item.days_to_delete} days
+                                        </div>
+                                      ) : (
+                                        <span className="text-gray-500">--</span>
+                                      )}
+                                    </td>
+                                  )}
 
                                   {/* Status */}
-                                  <td className="py-3 px-4">
+                                  <td className="py-3 px-4 text-center">
                                     <div
                                       className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${item.status === 1
                                         ? "bg-green-500/20 text-green-400 border-green-500/20"
@@ -1584,36 +1611,39 @@ export default function SSLPage() {
                                   </td>
 
                                   {/* Remarks */}
-                                  <td className="py-3 px-4">
-                                    <div className="flex items-center gap-2">
-                                      {/* <AlertCircle className="w-4 h-4 text-gray-400 flex-shrink-0" /> */}
-                                      <span className="text-sm text-gray-300 truncate max-w-[150px]">
-                                        {item.remarks || "--"}
-                                      </span>
-                                      {item.has_remark_history && (
-                                        <button
-                                          onClick={() => setExpandedRemarkId(expandedRemarkId === item.id ? null : item.id)}
-                                          className={`p-1 rounded-full transition-all duration-300 ${expandedRemarkId === item.id
-                                            ? "bg-blue-500/30 text-blue-300 rotate-180"
-                                            : "hover:bg-blue-500/20 text-blue-400 hover:text-blue-300"
-                                            }`}
-                                          title="View Remark History"
-                                        >
-                                          <Clock className="w-4 h-4" />
-                                        </button>
-                                      )}
-                                    </div>
-                                  </td>
+                                  {!isClient && (
+                                    <td className="py-3 px-4">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-sm text-gray-300 truncate max-w-[150px]">
+                                          {item.remarks || "--"}
+                                        </span>
+                                        {item.has_remark_history && (
+                                          <button
+                                            onClick={() => setExpandedRemarkId(expandedRemarkId === item.id ? null : item.id)}
+                                            className={`p-1 rounded-full transition-all duration-300 ${expandedRemarkId === item.id
+                                              ? "bg-blue-500/30 text-blue-300 rotate-180"
+                                              : "hover:bg-blue-500/20 text-blue-400 hover:text-blue-300"
+                                              }`}
+                                            title="View Remark History"
+                                          >
+                                            <Clock className="w-4 h-4" />
+                                          </button>
+                                        )}
+                                      </div>
+                                    </td>
+                                  )}
 
                                   {/* Last Updated */}
-                                  <td className="py-3 px-4 text-sm text-gray-300">
-                                    {item.last_updated || formatLastUpdated(item.updated_at)}
-                                  </td>
+                                  {!isClient && (
+                                    <td className="py-3 px-4 text-sm text-gray-300">
+                                      {item.last_updated || formatLastUpdated(item.updated_at)}
+                                    </td>
+                                  )}
                                 </>
                               )}
 
                               {/* Actions */}
-                              <td className="py-3 px-4">
+                              <td className="py-3 px-4 whitespace-nowrap">
                                 <div className="flex items-center justify-end gap-2">
                                   {editingId === item.id ? (
                                     <>
@@ -1647,30 +1677,50 @@ export default function SSLPage() {
                                       >
                                         <Eye className="w-4 h-4 text-gray-300 hover:text-blue-400 transition-colors" />
                                       </GlassButton>
-                                      <GlassButton
-                                        onClick={() => handleEdit(item)}
-                                        className="p-1.5 min-w-0 hover:bg-white/10"
-                                        title="Edit"
-                                      >
-                                        <Edit className="w-4 h-4 text-gray-300 hover:text-blue-400 transition-colors" />
-                                      </GlassButton>
-                                      <GlassButton
-                                        onClick={() => handleDeleteClick(item.id)}
-                                        className="p-1.5 min-w-0 hover:bg-red-500/20"
-                                        title="Delete"
-                                      >
-                                        <Trash2 className="w-4 h-4 text-gray-300 hover:text-red-400 transition-colors" />
-                                      </GlassButton>
+                                      {!isClient && (
+                                        <>
+                                          <GlassButton
+                                            onClick={() => handleEdit(item)}
+                                            className="p-1.5 min-w-0 hover:bg-white/10"
+                                            title="Edit"
+                                          >
+                                            <Edit className="w-4 h-4 text-gray-300 hover:text-blue-400 transition-colors" />
+                                          </GlassButton>
+                                          <GlassButton
+                                            onClick={() => handleDeleteClick(item.id)}
+                                            className="p-1.5 min-w-0 hover:bg-red-500/20"
+                                            title="Delete"
+                                          >
+                                            <Trash2 className="w-4 h-4 text-gray-300 hover:text-red-400 transition-colors" />
+                                          </GlassButton>
+                                        </>
+                                      )}
                                     </>
                                   )}
                                 </div>
                               </td>
-                            </tr>
+                            </tr>                             {/* Expansion Row for Details */}
+                            {expandedRowId === item.id && (
+                              <tr className="bg-white/5 animate-in fade-in slide-in-from-top-4 duration-300">
+                                <td colSpan={isClient ? 7 : 15} className="py-4 px-6">
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6 bg-black/20 p-4 rounded-xl border border-white/5 shadow-inner">
+                                    <div><span className="block text-xs text-gray-400 mb-1 text-left">Domain Name</span><span className="block text-sm text-gray-200 font-medium text-left">{item.domain_name || "--"}</span></div>
+                                    <div><span className="block text-xs text-gray-400 mb-1 text-left">Client Name</span><span className="block text-sm text-gray-200 font-medium text-left">{item.client_name || "--"}</span></div>
+                                    <div><span className="block text-xs text-gray-400 mb-1 text-left">Product</span><span className="block text-sm text-gray-200 font-medium text-left">{item.product_name || "--"}</span></div>
+                                    <div><span className="block text-xs text-gray-400 mb-1 text-left">Vendor</span><span className="block text-sm text-gray-200 font-medium text-left">{item.vendor_name || "--"}</span></div>
+                                    <div><span className="block text-xs text-gray-400 mb-1 text-left">Amount</span><span className="block text-sm text-gray-200 font-medium text-left">{getCurrencySymbol(item.currency)}{item.amount || "--"}</span></div>
+                                    <div><span className="block text-xs text-gray-400 mb-1 text-left">Renewal Date</span><span className="block text-sm text-gray-200 font-medium text-left">{formatDate((item as any).renewal_date)}</span></div>
+                                    <div><span className="block text-xs text-gray-400 mb-1 text-left">Deletion Date</span><span className="block text-sm text-gray-200 font-medium text-left">{formatDate((item as any).deletion_date)}</span></div>
+                                    <div><span className="block text-xs text-gray-400 mb-1 text-left">Remarks</span><span className="block text-sm text-gray-200 font-medium text-left">{item.remarks || "--"}</span></div>
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
 
                             {/* Expansion Row for Remark History */}
                             {expandedRemarkId === item.id && (
                               <tr key={`history-row-${item.id}`} className="bg-blue-500/5 animate-in fade-in slide-in-from-top-4 duration-500">
-                                <td colSpan={15} className="py-0 px-4">
+                                <td colSpan={isClient ? 7 : 15} className="py-0 px-4">
                                   <div className="border-t border-blue-500/20 py-4 pb-6 ml-12 mr-12">
                                     <RemarkHistory key={`history-${item.id}-${item.updated_at}`} module="SSL" recordId={item.id} />
                                   </div>
@@ -1680,8 +1730,7 @@ export default function SSLPage() {
                           </React.Fragment>
                         ))
                       )}
-                    </>
-                  )}
+                    </React.Fragment>)}
                 </tbody>
               </table>
             </div>

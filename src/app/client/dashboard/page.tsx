@@ -20,12 +20,14 @@ import { getNavigationByRole } from "@/lib/getNavigationByRole";
 import DashboardLoader from "@/common/DashboardLoader";
 import SearchResultsPage from "../../[role]/search-result/page";
 import { subscribeEntity } from "@/lib/entityBus";
+import { getCurrencySymbol, currencySymbols } from "@/utils/currencies";
 
 export interface SubscriptionItem {
     id: number;
     product: string;
     client: string;
     amount: string;
+    currency?: string;
     renewal_date: string;
     deletion_date: string | null;
     days_left: number;
@@ -34,6 +36,7 @@ export interface SubscriptionItem {
     remarks: string | null;
     updated_at: string | null;
 }
+
 
 export default function ClientDashboard() {
     const [startDate, setStartDate] = useState<string>("");
@@ -97,16 +100,18 @@ export default function ClientDashboard() {
                 });
             } catch (e) { }
 
-            const response = await api.get<SubscriptionItem[]>(
-                "/secure/dashboard/subscriptions",
-                {
-                    params,
-                    headers: { Authorization: `Bearer ${token}` },
-                }
-            );
+            if (user?.role !== "ClientAdmin" && user?.role !== "client" && user?.role !== "Client") {
+                const response = await api.get<SubscriptionItem[]>(
+                    "/secure/dashboard/subscriptions",
+                    {
+                        params,
+                        headers: { Authorization: `Bearer ${token}` },
+                    }
+                );
 
-            if (response?.data && Array.isArray(response.data)) {
-                setSubscriptionsData(response.data);
+                if (response?.data && Array.isArray(response.data)) {
+                    setSubscriptionsData(response.data);
+                }
             }
         } catch (error) {
             console.error("Dashboard error:", error);
@@ -142,56 +147,62 @@ export default function ClientDashboard() {
             <Header title="My Dashboard" tabs={navigationTabs} />
 
             <div className="px-4 sm:px-6 mt-6">
-                <GlassCard variant="liquid" noPadding className="overflow-hidden mb-6 hidden-border">
-                    <StatsRow
-                        stats={[
-                            { title: "Subscriptions", value: counts.subscription, icon: <ShoppingCart className="w-5 h-5 text-blue-400" />, url: "/client/subscription" },
-                            { title: "SSL", value: counts.ssl, icon: <Shield className="w-5 h-5 text-green-400" />, url: "/client/ssl" },
-                            { title: "Hosting", value: counts.hosting, icon: <Server className="w-5 h-5 text-purple-400" />, url: "/client/hosting" },
-                            { title: "Domains", value: counts.domains, icon: <Globe className="w-5 h-5 text-orange-400" />, url: "/client/domains" },
-                            { title: "Emails", value: counts.emails, icon: <BookOpen className="w-5 h-5 text-red-400" />, url: "/client/sub-email" },
-                            { title: "Counter", value: counts.counter, icon: <BarChart3 className="w-5 h-5 text-indigo-400" />, url: "/client/counter" },
-                        ]}
-                    />
-                </GlassCard>
+                <StatsRow
+                    stats={[
+                        { title: "Subscriptions", value: counts.subscription, icon: <ShoppingCart className="w-5 h-5 text-blue-400" />, url: "/client/subscription" },
+                        { title: "SSL", value: counts.ssl, icon: <Shield className="w-5 h-5 text-green-400" />, url: "/client/ssl" },
+                        { title: "Hosting", value: counts.hosting, icon: <Server className="w-5 h-5 text-purple-400" />, url: "/client/hosting" },
+                        { title: "Domains", value: counts.domains, icon: <Globe className="w-5 h-5 text-orange-400" />, url: "/client/domains" },
+                        { title: "Emails", value: counts.emails, icon: <BookOpen className="w-5 h-5 text-red-400" />, url: "/client/sub-email" },
+                        { title: "Counter", value: counts.counter, icon: <BarChart3 className="w-5 h-5 text-indigo-400" />, url: "/client/counter" },
+                    ].filter(stat => {
+                        if (user?.role === "ClientAdmin" || user?.role === "client" || user?.role === "Client") {
+                            return stat.title !== "Subscriptions" && stat.title !== "Counter";
+                        }
+                        return true;
+                    })}
+                />
 
-                <div className="mb-6">
+                <div className="mt-8 pt-8 border-t border-[rgba(255,255,255,0.05)] mb-6">
                     <SearchResultsPage query={searchQuery} onSearchChange={setSearchQuery} />
                 </div>
 
-                <GlassCard variant="liquid" noPadding className="overflow-hidden mb-6 hidden-border">
-                    <div className="p-4 sm:p-5">
-                        <h3 className="text-white font-medium mb-4 text-lg">My Recent Subscriptions</h3>
-                        <div className="overflow-auto rounded-lg border border-white/[0.08]">
-                            <table className="w-full">
-                                <thead className="bg-[#1A1A1A] text-gray-400 uppercase text-xs">
-                                    <tr>
-                                        <th className="py-3 px-4 text-left">Sr No</th>
-                                        <th className="py-3 px-4 text-left">Product</th>
-                                        <th className="py-3 px-4 text-left">Amount</th>
-                                        <th className="py-3 px-4 text-left">Renewal Date</th>
-                                        <th className="py-3 px-4 text-left">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-white/[0.08]">
-                                    {subscriptionsData.map((item, index) => (
-                                        <tr key={item.id} className="hover:bg-white/[0.03]">
-                                            <td className="py-3 px-4 text-sm text-white">{index + 1}</td>
-                                            <td className="py-3 px-4 text-sm text-white font-medium">{item.product}</td>
-                                            <td className="py-3 px-4 text-sm text-green-400 font-medium">₹{Number(item.amount).toFixed(2)}</td>
-                                            <td className="py-3 px-4 text-sm text-gray-400">{formatDateForDisplay(item.renewal_date)}</td>
-                                            <td className="py-3 px-4">
-                                                <Badge variant={item.status === 1 ? "success" : "secondary"}>
-                                                    {item.status === 1 ? "Active" : "Inactive"}
-                                                </Badge>
-                                            </td>
+                {(user?.role !== "ClientAdmin" && user?.role !== "client" && user?.role !== "Client") && (
+                    <GlassCard variant="liquid" noPadding className="overflow-hidden mb-6 hidden-border">
+                        <div className="p-4 sm:p-5">
+                            <h3 className="text-white font-medium mb-4 text-lg">My Recent Subscriptions</h3>
+                            <div className="overflow-auto rounded-lg border border-white/[0.08]">
+                                <table className="w-full">
+                                    <thead className="bg-[#1A1A1A] text-gray-400 uppercase text-xs">
+                                        <tr>
+                                            <th className="py-3 px-4 text-left">Sr No</th>
+                                            <th className="py-3 px-4 text-left">Product</th>
+                                            <th className="py-3 px-4 text-left">Amount</th>
+                                            <th className="py-3 px-4 text-left">Renewal Date</th>
+                                            <th className="py-3 px-4 text-left">Status</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody className="divide-y divide-white/[0.08]">
+                                        {subscriptionsData.map((item, index) => (
+                                            <tr key={item.id} className="hover:bg-white/[0.03]">
+                                                <td className="py-3 px-4 text-sm text-white">{index + 1}</td>
+                                                <td className="py-3 px-4 text-sm text-white font-medium">{item.product}</td>
+                                                <td className="py-3 px-4 text-sm text-green-400 font-medium">{getCurrencySymbol(item.currency)}{item.amount && !isNaN(Number(item.amount)) ? Number(item.amount).toFixed(2) : "0.00"}</td>
+                                                <td className="py-3 px-4 text-sm text-gray-400">{formatDateForDisplay(item.renewal_date)}</td>
+                                                <td className="py-3 px-4">
+                                                    <Badge variant={item.status === 1 ? "success" : "secondary"}>
+                                                        {item.status === 1 ? "Active" : "Inactive"}
+                                                    </Badge>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                    </div>
-                </GlassCard>
+                    </GlassCard>
+                )}
+
             </div>
         </div>
     );

@@ -1,0 +1,21 @@
+﻿next.config.ts(41,5): error TS2353: Object literal may only specify known properties, and 'turbo' does not exist in type 'ExperimentalConfig'.
+src/app/[role]/client-details/[id]/page.tsx(422,77): error TS2339: Property 'product_name' does not exist on type 'RecentCategory'.
+src/app/[role]/hosting/HostingContent.tsx(1059,28): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+src/app/[role]/hosting/HostingContent.tsx(1457,29): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+src/app/[role]/superadmins/page.tsx(30,58): error TS2304: Cannot find name 'BASE_URL'.
+src/app/[role]/superadmins/page.tsx(205,17): error TS2345: Argument of type '{ name: string; email: string; phone: string; address: string; password: string; profile: null; type: number; }' is not assignable to parameter of type 'SetStateAction<{ name: string; email: string; phone: string; address: string; password: string; otp_enabled: number; profile: File | null; type: number; }>'.
+  Property 'otp_enabled' is missing in type '{ name: string; email: string; phone: string; address: string; password: string; profile: null; type: number; }' but required in type '{ name: string; email: string; phone: string; address: string; password: string; otp_enabled: number; profile: File | null; type: number; }'.
+src/app/[role]/superadmins/page.tsx(294,17): error TS2345: Argument of type '{ name: string; email: string; phone: string; address: string; password: string; profile: null; type: number; }' is not assignable to parameter of type 'SetStateAction<{ name: string; email: string; phone: string; address: string; password: string; otp_enabled: number; profile: File | null; type: number; }>'.
+  Property 'otp_enabled' is missing in type '{ name: string; email: string; phone: string; address: string; password: string; profile: null; type: number; }' but required in type '{ name: string; email: string; phone: string; address: string; password: string; otp_enabled: number; profile: File | null; type: number; }'.
+src/app/[role]/users/page.tsx(30,58): error TS2304: Cannot find name 'BASE_URL'.
+src/app/[role]/users/page.tsx(205,17): error TS2345: Argument of type '{ name: string; email: string; phone: string; address: string; password: string; profile: null; type: number; }' is not assignable to parameter of type 'SetStateAction<{ name: string; email: string; phone: string; address: string; password: string; otp_enabled: number; profile: File | null; type: number; }>'.
+  Property 'otp_enabled' is missing in type '{ name: string; email: string; phone: string; address: string; password: string; profile: null; type: number; }' but required in type '{ name: string; email: string; phone: string; address: string; password: string; otp_enabled: number; profile: File | null; type: number; }'.
+src/app/[role]/users/page.tsx(294,17): error TS2345: Argument of type '{ name: string; email: string; phone: string; address: string; password: string; profile: null; type: number; }' is not assignable to parameter of type 'SetStateAction<{ name: string; email: string; phone: string; address: string; password: string; otp_enabled: number; profile: File | null; type: number; }>'.
+  Property 'otp_enabled' is missing in type '{ name: string; email: string; phone: string; address: string; password: string; profile: null; type: number; }' but required in type '{ name: string; email: string; phone: string; address: string; password: string; otp_enabled: number; profile: File | null; type: number; }'.
+src/app/auth/change-password/[token]/page.tsx(110,48): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/app/user-management/customer-admin/page.tsx(155,64): error TS2304: Cannot find name 'index'.
+src/app/user-management/support-admin/page.tsx(147,64): error TS2304: Cannot find name 'index'.
+src/components/shared/data-table.tsx(91,36): error TS2554: Expected 2 arguments, but got 1.
+src/components/shared/data-table.tsx(96,34): error TS2554: Expected 2 arguments, but got 1.
+src/components/shared/data-table.tsx(108,34): error TS2554: Expected 2 arguments, but got 1.

@@ -49,6 +49,7 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import SearchResultsPage from "../search-result/page";
 import { subscribeEntity } from "@/lib/entityBus";
 import { formatLastUpdated } from "@/utils/dateFormatter";
+import { getCurrencySymbol, currencySymbols } from "@/utils/currencies";
 
 
 
@@ -88,6 +89,7 @@ export interface SubscriptionItem {
   product: string;
   client: string;
   amount: string;
+  currency?: string;
   renewal_date: string;
   deletion_date: string | null;
   days_left: number;
@@ -102,6 +104,7 @@ interface PaginationState {
   rowsPerPage: number;
   total: number;
 }
+
 
 export default function Dashboard() {
   const [startDate, setStartDate] = useState<string>("");
@@ -191,16 +194,20 @@ export default function Dashboard() {
         console.warn("Counting API Error:", countError);
       }
 
-      const response = await api.get<SubscriptionItem[]>(
-        "/secure/dashboard/subscriptions",
-        {
-          params,
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      if (user?.role !== "ClientAdmin" && user?.role !== "client" && user?.role !== "Client") {
+        const response = await api.get<SubscriptionItem[]>(
+          "/secure/dashboard/subscriptions",
+          {
+            params,
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
 
-      if (response?.data && Array.isArray(response.data)) {
-        setSubscriptionsData(response.data);
+        if (response?.data && Array.isArray(response.data)) {
+          setSubscriptionsData(response.data);
+        } else {
+          setSubscriptionsData([]);
+        }
       } else {
         setSubscriptionsData([]);
       }
@@ -373,6 +380,7 @@ export default function Dashboard() {
         {/* Dynamic Stats Row */}
         <GlassCard variant="liquid" noPadding className="overflow-hidden mb-6 hidden-border">
           <StatsRow
+            className="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3"
             stats={[
               {
                 title: "Subscription",
@@ -445,7 +453,10 @@ export default function Dashboard() {
                         <td className="py-3 px-4 text-sm text-[var(--text-primary)]">{index + 1}</td>
                         <td className="py-3 px-4 text-sm text-[var(--text-primary)] font-medium capitalize">{item.product || "N/A"}</td>
                         <td className="py-3 px-4 text-sm text-[var(--text-muted)] capitalize">{item.client || "N/A"}</td>
-                        <td className="py-3 px-4 text-sm text-[var(--text-primary)] font-medium text-green-400">₹{item.amount ? Number(item.amount).toFixed(2) : "0.00"}</td>
+                         <td className="py-3 px-4 text-sm text-[var(--text-primary)] font-medium text-green-400">
+                           {getCurrencySymbol(item.currency)}
+                           {item.amount ? Number(item.amount).toFixed(2) : "0.00"}
+                         </td>
                         <td className="py-3 px-4 text-sm text-[var(--text-muted)]">{formatDateForDisplay(item.renewal_date || "")}</td>
                         <td className="py-3 px-4">
                           <Badge variant={item.status === 1 ? "success" : "secondary"}>

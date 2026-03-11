@@ -1,0 +1,118 @@
+﻿
+  GET|HEAD        / generatΓÇª
+  POST            _ignition/execute-solution ignition.executeSolution ΓÇ║ Spatie\LaravelIgnition ΓÇ║ ExecuteΓÇª
+  GET|HEAD        _ignition/health-check ignition.healthCheck ΓÇ║ Spatie\LaravelIgnition ΓÇ║ HealthCΓÇª
+  POST            _ignition/update-config ignition.updateConfig ΓÇ║ Spatie\LaravelIgnition ΓÇ║ UpdateCΓÇª
+  POST            api/auth/change_password generated::gJa5AE1pSkfQ5j38 ΓÇ║ AuthControllerΓÇª
+  GET|HEAD        api/auth/hack-password generated::EAaM7DQIgTCiZr0A ΓÇ║ AuthContrΓÇª
+  POST            api/auth/login generated::buS0IJnSSrywyIFe ΓÇ║ AuthControllerΓÇª
+  POST            api/auth/reset-password generated::0jkkzPaDYpTXvVcm ΓÇ║ AuthControlleΓÇª
+  POST            api/auth/send_reset_link generated::DjcWeM2n6gEwmvXL ΓÇ║ AuthControllΓÇª
+  POST            api/auth/send_sms_otp generated::Ue6QLh2z9g9XpMXh ΓÇ║ AuthControllerΓÇª
+  POST            api/auth/send_whatsap_otp generated::p2NQx8zTEbpecYz9 ΓÇ║ AuthControllerΓÇª
+  POST            api/auth/two_step_otp generated::hKNj7I6omfJ1BswX ΓÇ║ AuthControllerΓÇª
+  POST            api/auth/verify-for-forget generated::LRECITcdEO3UONfR ΓÇ║ AuthController@ΓÇª
+  POST            api/auth/verifyOtp generated::7cFgfFiLNkY76cmi ΓÇ║ AuthControllerΓÇª
+  GET|HEAD        api/getLogo generated::wd0ugO5qi5nECuvA ΓÇ║ SettingController@getLΓÇª
+  GET|HEAD        api/history generated::n7WjwWJMpTSwQΓÇª
+  GET|HEAD        api/import-export-history generated:ΓÇª
+  DELETE          api/import-export-history/{id} generΓÇª
+  GET|HEAD        api/import-export-history/{id}/download generated::1WGZJAyBdEvCcc3R ΓÇ║ IΓÇª
+  GET|HEAD        api/import-history generated::wsG6hKSAnhLPjcs2 ΓÇ║ ImportHistoryControΓÇª
+  GET|HEAD        api/import-history/download/{id} generated::xXLbCiJibO2uspei ΓÇ║ ImportHiΓÇª
+  GET|HEAD        api/remark-history generated::pb1Gzdkg9UndR9CY ΓÇ║ RemarkHistoryControΓÇª
+  POST            api/secure/Activites/Get-acitivites generated::gCFqbXEShClt3TBJ ΓÇ║ ActivitiesΓÇª
+  POST            api/secure/Domain/add-domain generated::K6c03vL8T9u5IlK5 ΓÇ║ DomainCoΓÇª
+  POST            api/secure/Domain/delete-domain generated::rTCrG8CFmE0ZkA1z ΓÇ║ DomainCΓÇª
+  POST            api/secure/Domain/list-domain generated::lEljLr0xpxodEU9Z ΓÇ║ DomainΓÇª
+  POST            api/secure/Domain/update-domain generated::oqfKZKsN2UWXxc2n ΓÇ║ DomainΓÇª
+  POST            api/secure/Dropdowns/get-clients generated::KHuAkVEAJKFIPd9N ΓÇ║ DropdoΓÇª
+  POST            api/secure/Dropdowns/get-domains generated::AF7sRLxFmH7VT1cT ΓÇ║ DropdoΓÇª
+  POST            api/secure/Dropdowns/get-products generated::ReGrRHhtejUixqLS ΓÇ║ DropdΓÇª
+  POST            api/secure/Dropdowns/get-venders generated::hGrCfIu1gn0i2L4s ΓÇ║ DropdoΓÇª
+  POST            api/secure/Products/add-products generated::JqUQ4b6OVSYtaiAZ ΓÇ║ ProductsΓÇª
+  POST            api/secure/Products/delete-products generated::IIObvfIDO79rTAVC ΓÇ║ ProducΓÇª
+  POST            api/secure/Products/list-products generated::5X0FYtwWQ5qiqw6j ΓÇ║ ProducΓÇª
+  POST            api/secure/Products/update-products generated::mvVYzK6iArEMcFoW ΓÇ║ ProducΓÇª
+  POST            api/secure/Profile/Get-Profile generated::stQbdMOkiQJkWvxg ΓÇ║ ProfilΓÇª
+  POST            api/secure/Profile/Update-Profile generated::7o6IUdn3pfvztqWC ΓÇ║ ProfilΓÇª
+  POST            api/secure/Remark/add generated::1SeZ5jeaZpHktvdz ΓÇ║ RemarkCategoriesController@addCΓÇª
+  POST            api/secure/Usermanagement/add-clients-user generated::glByLRhLcCbxBbhB ΓÇª
+  POST            api/secure/Usermanagement/get-clients-details generated::SahWGLdhXViyaΓÇª
+  POST            api/secure/Usermanagement/get-clients-user-delete generated::JQLpΓÇª
+  POST            api/secure/Usermanagement/get-clients-user-details generated::HNYi6SJWI2zrUjjrΓÇª
+  POST            api/secure/Usermanagement/get-clients-user-list generated:ΓÇª
+  POST            api/secure/Usermanagement/update-clients-user generated::cWICZlddVOEJDPEL ΓÇª
+  POST            api/secure/Venders/add generated::5Qz7iJWuPN7c5pYz ΓÇ║ VendorsControlleΓÇª
+  POST            api/secure/Venders/add-venders generated::m6cmhsFwvqDBHKgL ΓÇ║ VendorsCΓÇª
+  POST            api/secure/Venders/delete-venders generated::AeOLKuzUk4kboSNw ΓÇ║ VendorsΓÇª
+  POST            api/secure/Venders/list-venders generated::aBlEEv8enZ8pGRFG ΓÇ║ VendorΓÇª
+  POST            api/secure/Venders/update-venders generated::hYEPYXIMe0COIBSJ ΓÇ║ VendorΓÇª
+  POST            api/secure/Vendors/add generated::hi6LW8GUQwEDWxBy ΓÇ║ VendorsControlleΓÇª
+  POST            api/secure/Vendors/add-venders generated::bRCq5lwMSqel3pkk ΓÇ║ ProductsCΓÇª
+  POST            api/secure/Vendors/delete-venders generated::fPyLkzjk5M95HPYI ΓÇ║ ProductsΓÇª
+  POST            api/secure/Vendors/list-venders generated::ImEVaNbrUL9THeYQ ΓÇ║ ProductΓÇª
+  POST            api/secure/Vendors/update-venders generated::do5MBH3bmb3dTCyz ΓÇ║ ProductΓÇª
+  GET|HEAD        api/secure/activities activities.index ΓÇ║ ActivityConΓÇª
+  POST            api/secure/activities activities.store ΓÇ║ ActivityConΓÇª
+  GET|HEAD        api/secure/activities/{activity} activities.show  ΓÇª
+  PUT|PATCH       api/secure/activities/{activity} activities.update ΓÇ║ AΓÇª
+  DELETE          api/secure/activities/{activity} activities.destroy ΓÇ║ AcΓÇª
+  GET|HEAD        api/secure/counters counters.index ΓÇ║ CounterContrΓÇª
+  POST            api/secure/counters counters.store ΓÇ║ CounterContrΓÇª
+  GET|HEAD        api/secure/counters/{counter} counters.show ΓÇ║ CΓÇª
+  PUT|PATCH       api/secure/counters/{counter} counters.update ΓÇ║ CouΓÇª
+  DELETE          api/secure/counters/{counter} counters.destroy ΓÇ║ CounΓÇª
+  POST            api/secure/dashboard/counting generated::dmQE55OsnLJUBRGd ΓÇ║ DashboardControΓÇª
+  GET|HEAD        api/secure/dashboard/subscriptions generated::ZLvss0NZzkVLlmll ΓÇ║ DashboardCΓÇª
+  GET|HEAD        api/secure/domains domains.index ΓÇ║ DomainControΓÇª
+  POST            api/secure/domains domains.store ΓÇ║ DomainControΓÇª
+  POST            api/secure/domains/import generated::e2pG7EkSSJaRNwaV ΓÇ║ DomainΓÇª
+  GET|HEAD        api/secure/domains/{domain} domains.show ΓÇ║ DoΓÇª
+  PUT|PATCH       api/secure/domains/{domain} domains.update ΓÇ║ DomaΓÇª
+  DELETE          api/secure/domains/{domain} domains.destroy ΓÇ║ DomaiΓÇª
+  GET|HEAD        api/secure/emails emails.index ΓÇ║ EmailControlΓÇª
+  POST            api/secure/emails emails.store ΓÇ║ EmailControlΓÇª
+  POST            api/secure/emails/import generated::DrCn0mlnQDuzLSs2 ΓÇ║ EmailCΓÇª
+  GET|HEAD        api/secure/emails/{email} emails.show ΓÇ║ EmaΓÇª
+  PUT|PATCH       api/secure/emails/{email} emails.update ΓÇ║ EmailΓÇª
+  DELETE          api/secure/emails/{email} emails.destroy ΓÇ║ EmailCΓÇª
+  GET|HEAD        api/secure/hostings hostings.index ΓÇ║ HostingContrΓÇª
+  POST            api/secure/hostings hostings.store ΓÇ║ HostingContrΓÇª
+  POST            api/secure/hostings/import generated::8GWU60JkILZR5mh6 ΓÇ║ HostinΓÇª
+  GET|HEAD        api/secure/hostings/{hosting} hostings.show ΓÇ║ HΓÇª
+  PUT|PATCH       api/secure/hostings/{hosting} hostings.update ΓÇ║ HosΓÇª
+  DELETE          api/secure/hostings/{hosting} hostings.destroy ΓÇ║ HostΓÇª
+  POST            api/secure/import-records generated::t60DeID4CR0jmrg9 ΓÇ║ ImportControlΓÇª
+  GET|HEAD        api/secure/migrate-legacy-data generated::YKrS5G6X96hQne5i ΓÇ║ LegacyMigraΓÇª
+  GET|HEAD        api/secure/ssl ssl.index ΓÇ║ SSLControllerΓÇª
+  POST            api/secure/ssl ssl.store ΓÇ║ SSLControllerΓÇª
+  POST            api/secure/ssl/import generated::fmzlf4aOGGSZ9XPP ΓÇ║ SSLContΓÇª
+  GET|HEAD        api/secure/ssl/{ssl} ssl.show ΓÇ║ SSLConΓÇª
+  PUT|PATCH       api/secure/ssl/{ssl} ssl.update ΓÇ║ SSLContrΓÇª
+  DELETE          api/secure/ssl/{ssl} ssl.destroy ΓÇ║ SSLControΓÇª
+  GET|HEAD        api/secure/subscription-models generated::GPfwJu64fk4Tvsov ΓÇ║ SubscriptioΓÇª
+  POST            api/secure/subscription-models generated::H2W1h6ciSc1Nl5w3 ΓÇ║ SubscriptioΓÇª
+  POST            api/secure/subscription-models/export-categories generated::M9LXD9c7sHAn3OΓÇª
+  POST            api/secure/subscription-models/import generated::UG5cDPjJbVBwd8WB ΓÇ║ SubscΓÇª
+  GET|HEAD        api/secure/subscriptions generated::sEoDy6cEpQTxuSRU ΓÇ║ SubscriptionΓÇª
+  POST            api/secure/subscriptions generated::W8MTvb9zY0AfTATh ΓÇ║ SubscriptionΓÇª
+  POST            api/secure/subscriptions/import generated::a2ELoWfMR8A5EG1F ΓÇ║ SubscrΓÇª
+  PUT             api/secure/subscriptions/{id} generated::KdZwoxdOmWtdb2ak ΓÇ║ SubscripΓÇª
+  DELETE          api/secure/subscriptions/{id} generated::U8iEUMnVR0W4xIBB ΓÇ║ SubscriptΓÇª
+  GET|HEAD        api/secure/tools tools.index ΓÇ║ ToolControllΓÇª
+  POST            api/secure/tools tools.store ΓÇ║ ToolControllΓÇª
+  GET|HEAD        api/secure/tools/{tool} tools.show ΓÇ║ ToolΓÇª
+  PUT|PATCH       api/secure/tools/{tool} tools.update ΓÇ║ ToolCoΓÇª
+  DELETE          api/secure/tools/{tool} tools.destroy ΓÇ║ ToolConΓÇª
+  GET|HEAD        api/secure/users-management users-management.index ΓÇ║ UserManagemΓÇª
+  POST            api/secure/users-management users-management.store ΓÇ║ UserManagemΓÇª
+  GET|HEAD        api/secure/users-management/{users_management} users-managemenΓÇª
+  PUT|PATCH       api/secure/users-management/{users_management} users-management.upΓÇª
+  DELETE          api/secure/users-management/{users_management} users-management.destΓÇª
+  GET|HEAD        api/user ΓÇª
+  GET|POST|HEAD   broadcasting/auth generated::u7hOC9x5avtjczSV ΓÇ║ Illuminate\Broadcasting ΓÇ║ BroadcastController@autΓÇª
+  GET|HEAD        sanctum/csrf-cookie sanctum.csrf-cookie ΓÇ║ Laravel\Sanctum ΓÇ║ CsrfCookieContΓÇª
+
+        Showing [114] routes
+
