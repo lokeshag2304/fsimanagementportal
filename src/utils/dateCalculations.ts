@@ -44,6 +44,18 @@ export const calculateDaysLeft = (renewalDateStr?: string | null): { days: numbe
     return { days: diffDays, error: null };
 };
 
+export const calculateDueDate = (renewalDateStr?: string | null, gracePeriod?: number | string | null): string | null => {
+    if (!renewalDateStr) return null;
+    const renewal = new Date(renewalDateStr);
+    if (isNaN(renewal.getTime())) return null;
+
+    const grace = Number(gracePeriod) || 0;
+    const dueDate = new Date(renewal);
+    dueDate.setDate(dueDate.getDate() + grace);
+
+    return dueDate.toISOString().split('T')[0]; // YYYY-MM-DD
+};
+
 export const getDaysToColor = (days: number | string | null | undefined): string => {
     if (days === null || days === undefined || days === "") return "text-gray-300";
     const numDays = Number(days);
@@ -89,6 +101,10 @@ export const handleDateChangeLogic = (
 
         const { days, error } = calculateDaysLeft(newRenewal);
         return { days_left: days };
+    }
+
+    if (field === "grace_period") {
+        return null; // Logic will be handled in the component for now or here if we pass more params
     }
 
     return null;

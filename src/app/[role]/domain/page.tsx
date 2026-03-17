@@ -35,6 +35,8 @@ interface Domain {
   amount: number
   status: number
   remarks: string
+  grace_period?: number
+  due_date?: string
   last_updated: string
   created_at: string
 }

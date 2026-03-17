@@ -42,7 +42,7 @@ import { apiService } from "@/common/services/apiService";
 import { normalizeEntityPayload } from "@/utils/normalizePayload";
 import { emitEntityChange } from "@/lib/entityBus";
 import { formatLastUpdated } from "@/utils/dateFormatter";
-import { handleDateChangeLogic, getDaysToColor } from "@/utils/dateCalculations";
+import { handleDateChangeLogic, getDaysToColor, calculateDueDate } from "@/utils/dateCalculations";
 import { getCurrencySymbol, currencySymbols } from "@/utils/currencies";
 
 interface DomainRecord {
@@ -73,6 +73,8 @@ interface DomainRecord {
   created_at: string;
   updated_at: string;
   deleted_at?: string;
+  grace_period?: number;
+  due_date?: string | null;
 }
 
 interface AddEditDomain {
@@ -90,6 +92,8 @@ interface AddEditDomain {
   deletion_date: string;
   amount: number;
   currency: string;
+  grace_period?: number;
+  due_date?: string;
 }
 
 const currencyOptions = [
@@ -133,6 +137,7 @@ export default function DomainsPage() {
     });
   };
   const [highlightedRecordId, setHighlightedRecordId] = useState<number | null>(null)
+  console.log("Current user role:", user?.role);
   
   const [newRecordData, setNewRecordData] = useState({
     name: "",
@@ -151,6 +156,8 @@ export default function DomainsPage() {
     amount: "" as string | number,
     currency: "INR",
     remarks: "",
+    grace_period: "0",
+    due_date: "",
   })
   
   const [editData, setEditData] = useState<Record<number, Partial<DomainRecord>>>({})
@@ -245,6 +252,8 @@ export default function DomainsPage() {
       amount: "",
       currency: "INR",
       remarks: "",
+      grace_period: "0",
+      due_date: "",
     })
   }
 
@@ -306,6 +315,8 @@ export default function DomainsPage() {
       amount: "",
       currency: "INR",
       remarks: "",
+      grace_period: "0",
+      due_date: "",
     })
   }
 
@@ -389,6 +400,8 @@ export default function DomainsPage() {
           amount: "",
           currency: "INR",
           remarks: "",
+          grace_period: "0",
+          due_date: "",
         })
       } else {
         toast({
@@ -552,14 +565,27 @@ export default function DomainsPage() {
       extraData = handleDateChangeLogic(field, value, currentRenewal, currentDeletion, toast) || {};
     }
 
-    setEditData(prev => ({
-      ...prev,
-      [id]: {
-        ...prev[id],
+    setEditData(prev => {
+      const currentEntry = prev[id] || {};
+      const actualRow = data.find((d) => d.id === id) || ({} as any);
+      
+      const newData = {
+        ...currentEntry,
         [field]: value,
         ...extraData
+      };
+
+      if (field === "renewal_date" || field === "grace_period") {
+        const renewalDate = field === "renewal_date" ? value : (newData.renewal_date ?? actualRow.renewal_date);
+        const gracePeriod = field === "grace_period" ? value : (newData.grace_period ?? actualRow.grace_period);
+        newData.due_date = calculateDueDate(renewalDate, gracePeriod) || "";
       }
-    }))
+
+      return {
+        ...prev,
+        [id]: newData
+      };
+    })
   }
 
   // Handle field change for new record
@@ -571,11 +597,13 @@ export default function DomainsPage() {
       extraData = handleDateChangeLogic(field, value, currentRenewal, currentDeletion, toast) || {};
     }
 
-    setNewRecordData(prev => ({
-      ...prev,
-      [field]: value,
-      ...extraData
-    }))
+    setNewRecordData(prev => {
+      const newData = { ...prev, [field]: value, ...extraData };
+      if (field === "renewal_date" || field === "grace_period") {
+        newData.due_date = calculateDueDate(newData.renewal_date, newData.grace_period) || "";
+      }
+      return newData;
+    })
   }
 
   // Handle Delete
@@ -808,7 +836,7 @@ export default function DomainsPage() {
               <table className={`w-full table-fixed ${isClient ? 'min-w-[1000px]' : 'min-w-[2000px]'}`}>
                 <thead>
                   <tr className="bg-white/5 border-b border-white/10">
-                    {!isClient && (
+                    {user?.role === "SuperAdmin" && (
                       <th className="py-3 px-4 text-left w-[50px]">
                         <input
                           type="checkbox"
@@ -827,17 +855,17 @@ export default function DomainsPage() {
                     <th className={`py-3 px-4 text-left text-sm font-medium text-gray-300 ${isClient ? 'w-[200px]' : 'w-[180px]'}`}>
                       Product
                     </th>
-                    {!isClient && (
+                    {user?.role === "SuperAdmin" && (
                       <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[180px]">
                         Client
                       </th>
                     )}
-                    {!isClient && (
+                    {user?.role === "SuperAdmin" && (
                       <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[150px]">
                         Vendor
                       </th>
                     )}
-                    {!isClient && (
+                    {user?.role === "SuperAdmin" && (
                       <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 w-[220px]">
                         Amount
                       </th>
@@ -848,38 +876,51 @@ export default function DomainsPage() {
                     <th className={`py-3 px-4 text-left text-sm font-medium text-gray-300 ${isClient ? 'w-[140px]' : 'w-[120px]'}`}>
                       Days to Expire
                     </th>
-                    {!isClient && (
+                    {user?.role === "SuperAdmin" && (
                       <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[140px]">
                         Deletion Date
                       </th>
                     )}
-                    {!isClient && (
+                    {user?.role === "SuperAdmin" && (
                       <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[120px]">
                         Days to Delete
                       </th>
                     )}
+                    {user?.role === "SuperAdmin" && (
+                      <>
+                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[140px]">
+                          Grace Period
+                        </th>
+                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[160px]">
+                          Due Date
+                        </th>
+                      </>
+                    )}
                     <th className={`py-3 px-4 text-center text-sm font-medium text-gray-300 ${isClient ? 'w-[120px]' : 'w-[140px]'}`}>
-                      Status
+                      Domain Protect
                     </th>
-                    {!isClient && (
+                    {user?.role === "SuperAdmin" && (
                       <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[200px]">
                         Remarks
                       </th>
                     )}
-                    {!isClient && (
+                    {user?.role === "SuperAdmin" && (
                       <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[180px]">
                         Last Updated
                       </th>
                     )}
-                    <th className={`py-3 px-4 text-right text-sm font-medium text-gray-300 ${isClient ? 'w-[100px]' : 'w-[140px]'}`}>
-                      Actions
-                    </th>
+                    {user?.role === "SuperAdmin" && (
+                      <th className="py-3 px-4 text-right text-sm font-medium text-gray-300 w-[120px]">
+                        Action
+                      </th>
+                    )}
+
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={isClient ? 7 : 14} className="py-8 text-center text-gray-400 font-medium text-sm">
+                      <td colSpan={isClient ? 6 : (user?.role === "SuperAdmin" ? 15 : 14)} className="py-8 text-center text-gray-400 font-medium text-sm">
                         <div className="flex flex-col items-center justify-center gap-2">
                          <DashboardLoader label="Loading domain records..." />
                         </div>
@@ -889,7 +930,7 @@ export default function DomainsPage() {
                       {/* Add New Row */}
                       {addingNew && (
                         <tr key="new-row" className="border-b border-white/5 bg-blue-500/5">
-                          {!isClient && <td className="py-3 px-4"></td>}
+                          {user?.role === "SuperAdmin" && <td className="py-3 px-4"></td>}
                           <td className="py-3 px-4 text-sm text-gray-300">
                             New
                           </td>
@@ -903,7 +944,7 @@ export default function DomainsPage() {
                               style={{ minHeight: "32px" }}
                             />
                           </td>
-                          {!isClient && (
+                          {user?.role === "SuperAdmin" && (
                             <td className="py-3 px-4">
                               <ApiDropdown
                                 endpoint="get-products"
@@ -930,7 +971,7 @@ export default function DomainsPage() {
                               />
                             </td>
                           )}
-                          {!isClient && (
+                          {user?.role === "SuperAdmin" && (
                             <td className="py-3 px-4">
                               <ApiDropdown
                                 endpoint="get-clients"
@@ -957,7 +998,7 @@ export default function DomainsPage() {
                               />
                             </td>
                           )}
-                          {!isClient && (
+                          {user?.role === "SuperAdmin" && (
                             <td className="py-3 px-4">
                               <ApiDropdown
                                 endpoint="get-venders"
@@ -984,7 +1025,7 @@ export default function DomainsPage() {
                               />
                             </td>
                           )}
-                          {!isClient && (
+                          {user?.role === "SuperAdmin" && (
                             <td className="py-3 px-4">
                               <CurrencyAmountInput
                                 currency={newRecordData.currency || "INR"}
@@ -1021,7 +1062,7 @@ export default function DomainsPage() {
                               style={{ minHeight: "32px" }}
                             />
                           </td>
-                          {!isClient && (
+                          {user?.role === "SuperAdmin" && (
                             <td className="py-2 px-4 whitespace-nowrap">
                               <input
                                 type="text"
@@ -1030,6 +1071,22 @@ export default function DomainsPage() {
                                 className={`w-20 px-3 py-1 bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] rounded text-sm outline-none focus:ring-0 cursor-not-allowed ${getDaysToColor(newRecordData.days_to_delete)}`}
                               />
                             </td>
+                          )}
+                          {user?.role === "SuperAdmin" && (
+                            <>
+                              <td className="py-3 px-4">
+                                <input
+                                  type="number"
+                                  value={newRecordData.grace_period}
+                                  onChange={(e) => handleNewRecordChange("grace_period", e.target.value)}
+                                  className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                  style={{ minHeight: "32px" }}
+                                />
+                              </td>
+                              <td className="py-3 px-4 text-sm text-gray-300">
+                                {formatDate(newRecordData.due_date)}
+                              </td>
+                            </>
                           )}
                           <td className="py-1 px-2">
                             <div className="w-40">
@@ -1050,7 +1107,7 @@ export default function DomainsPage() {
                               />
                             </div>
                           </td>
-                          {!isClient && (
+                          {user?.role === "SuperAdmin" && (
                             <td className="py-3 px-4">
                               <input
                                 type="text"
@@ -1064,42 +1121,45 @@ export default function DomainsPage() {
                               />
                             </td>
                           )}
-                          {!isClient && (
+                          {user?.role === "SuperAdmin" && (
                             <td className="py-3 px-4 text-sm text-gray-400">
                               - -
                             </td>
                           )}
-                          <td className="py-3 px-4">
-                            <div className="flex items-center justify-end gap-2">
-                              <GlassButton
-                                onClick={handleSaveNew}
-                                disabled={isSaving}
-                                className="p-1.5 min-w-0 bg-green-500/20 hover:bg-green-500/30"
-                                title="Save"
-                              >
-                                {isSaving ? (
-                                  <Loader2 className="w-4 h-4 animate-spin text-green-400" />
-                                ) : (
-                                  <Save className="w-4 h-4 text-green-400" />
-                                )}
-                              </GlassButton>
-                              <GlassButton
-                                onClick={handleCancelAdd}
-                                disabled={isSaving}
-                                className="p-1.5 min-w-0 bg-red-500/20 hover:bg-red-500/30"
-                                title="Cancel"
-                              >
-                                <X className="w-4 h-4 text-red-400" />
-                              </GlassButton>
-                            </div>
-                          </td>
+                          {user?.role === "SuperAdmin" && (
+                            <td className="py-3 px-4">
+                              <div className="flex items-center justify-end gap-2">
+                                <GlassButton
+                                  onClick={handleSaveNew}
+                                  disabled={isSaving}
+                                  className="p-1.5 min-w-0 bg-green-500/20 hover:bg-green-500/30"
+                                  title="Save"
+                                >
+                                  {isSaving ? (
+                                    <Loader2 className="w-4 h-4 animate-spin text-green-400" />
+                                  ) : (
+                                    <Save className="w-4 h-4 text-green-400" />
+                                  )}
+                                </GlassButton>
+                                <GlassButton
+                                  onClick={handleCancelAdd}
+                                  disabled={isSaving}
+                                  className="p-1.5 min-w-0 bg-red-500/20 hover:bg-red-500/30"
+                                  title="Cancel"
+                                >
+                                  <X className="w-4 h-4 text-red-400" />
+                                </GlassButton>
+                              </div>
+                            </td>
+                          )}
+
                         </tr>
                       )}
                       
                       {/* Existing Data Rows */}
                       {data.length === 0 ? (
                         <tr key="empty-row">
-                          <td colSpan={14} className="py-8 text-center">
+                          <td colSpan={isClient ? 6 : (user?.role === "SuperAdmin" ? 14 : 13)} className="py-8 text-center">
                             <div className="flex flex-col items-center justify-center gap-2">
                               <Globe className="w-12 h-12 text-gray-400" />
                               <span className="text-gray-400">No domain records found</span>
@@ -1127,7 +1187,7 @@ export default function DomainsPage() {
                                   : "hover:bg-white/[0.02]"
                             }`}
                           >
-                            {!isClient && (
+                            {user?.role === "SuperAdmin" && (
                               <td className="py-3 px-4">
                                 <input
                                   type="checkbox"
@@ -1176,7 +1236,7 @@ export default function DomainsPage() {
                                     className="min-h-[32px]"
                                   />
                                 </td>
-                                  {!isClient && (
+                                  {user?.role === "SuperAdmin" && (
                                     <td className="py-3 px-4">
                                       <ApiDropdown
                                         endpoint="get-clients"
@@ -1197,7 +1257,7 @@ export default function DomainsPage() {
                                       />
                                     </td>
                                   )}
-                                {!isClient && (
+                                {user?.role === "SuperAdmin" && (
                                   <td className="py-3 px-4">
                                     <ApiDropdown
                                       endpoint="get-venders"
@@ -1218,7 +1278,7 @@ export default function DomainsPage() {
                                     />
                                   </td>
                                 )}
-                                {!isClient && (
+                                {user?.role === "SuperAdmin" && (
                                   <td className="py-3 px-4">
                                     <CurrencyAmountInput
                                       currency={editData[item.id]?.currency || item.currency || "INR"}
@@ -1246,7 +1306,7 @@ export default function DomainsPage() {
                                     style={{ minHeight: '32px' }}
                                   />
                                 </td>
-                                {!isClient && (
+                                {user?.role === "SuperAdmin" && (
                                   <td className="py-3 px-4">
                                     <input
                                       type="date"
@@ -1257,7 +1317,7 @@ export default function DomainsPage() {
                                     />
                                   </td>
                                 )}
-                                {!isClient && (
+                                {user?.role === "SuperAdmin" && (
                                   <td className="py-2 px-4 whitespace-nowrap">
                                     <input
                                       type="text"
@@ -1266,6 +1326,22 @@ export default function DomainsPage() {
                                       className={`w-20 px-3 py-1 bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] rounded text-sm outline-none focus:ring-0 cursor-not-allowed ${getDaysToColor(editData[item.id]?.days_to_delete ?? item.days_to_delete)}`}
                                     />
                                   </td>
+                                )}
+                                {user?.role === "SuperAdmin" && (
+                                  <>
+                                    <td className="py-3 px-4">
+                                      <input
+                                        type="number"
+                                        value={editData[item.id]?.grace_period ?? item.grace_period ?? 0}
+                                        onChange={(e) => handleEditChange(item.id, "grace_period", e.target.value)}
+                                        className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                        style={{ minHeight: "32px" }}
+                                      />
+                                    </td>
+                                    <td className="py-3 px-4 text-sm text-gray-300">
+                                      {formatDate(editData[item.id]?.due_date || item.due_date || "")}
+                                    </td>
+                                  </>
                                 )}
                                 <td className="py-1 px-2">
                                   <div className="w-full">
@@ -1279,7 +1355,7 @@ export default function DomainsPage() {
                                     />
                                   </div>
                                 </td>
-                                {!isClient && (
+                                {user?.role === "SuperAdmin" && (
                                   <td className="py-3 px-4">
                                     <input
                                       type="text"
@@ -1290,7 +1366,7 @@ export default function DomainsPage() {
                                     />
                                   </td>
                                 )}
-                                {!isClient && (
+                                {user?.role === "SuperAdmin" && (
                                   <td className="py-3 px-4 text-sm text-gray-300 whitespace-nowrap">
                                     {(item as any).last_updated || formatLastUpdated(item.updated_at)}
                                   </td>
@@ -1314,17 +1390,17 @@ export default function DomainsPage() {
                                      </span>
                                    </div>
                                  </td>
-                                {!isClient && (
+                                {user?.role === "SuperAdmin" && (
                                   <td className="py-3 px-4 text-sm text-gray-300">
                                     {item.client_name || "--"}
                                   </td>
                                 )}
-                                {!isClient && (
+                                {user?.role === "SuperAdmin" && (
                                   <td className="py-3 px-4 text-sm text-gray-300">
                                     {item.vendor_name || "--"}
                                   </td>
                                 )}
-                                {!isClient && (
+                                {user?.role === "SuperAdmin" && (
                                   <td className="py-3 px-4 text-sm text-gray-300">
                                     <div className="flex items-center justify-center gap-1 font-medium text-white">
                                       <span className="text-[#BC8969]">{getCurrencySymbol(item.currency)}</span>
@@ -1340,17 +1416,27 @@ export default function DomainsPage() {
                                     {item.days_left ?? "--"}
                                   </div>
                                 </td>
-                                 {!isClient && (
+                                 {user?.role === "SuperAdmin" && (
                                    <td className="py-3 px-4 text-sm text-gray-300">
                                      {item.deletion_date ? formatDate(item.deletion_date) : "--"}
                                    </td>
                                  )}
-                                {!isClient && (
+                                {user?.role === "SuperAdmin" && (
                                   <td className="py-3 px-4 whitespace-nowrap">
                                     <span className={`text-sm ${getDaysToColor(item.days_to_delete)}`}>
                                       {item.days_to_delete ?? "--"}
                                     </span>
                                   </td>
+                                )}
+                                {user?.role === "SuperAdmin" && (
+                                  <>
+                                    <td className="py-3 px-4 text-sm text-gray-300">
+                                      {item.grace_period ?? 0} days
+                                    </td>
+                                    <td className="py-3 px-4 text-sm text-gray-300">
+                                      {formatDate(item.due_date as string)}
+                                    </td>
+                                  </>
                                 )}
                                  <td className="py-3 px-4 text-center">
                                    <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${
@@ -1359,7 +1445,7 @@ export default function DomainsPage() {
                                      {getDomainProtectText(item.domain_protected)}
                                    </div>
                                  </td>
-                                {!isClient && (
+                                {user?.role === "SuperAdmin" && (
                                   <td className="py-3 px-4">
                                     <div className="flex items-center justify-between gap-2 overflow-hidden">
                                       <span className="text-sm text-gray-300 truncate max-w-[150px]">
@@ -1381,75 +1467,74 @@ export default function DomainsPage() {
                                     </div>
                                   </td>
                                 )}
-                                {!isClient && (
+                                {user?.role === "SuperAdmin" && (
                                   <td className="py-3 px-4 text-sm text-gray-300 whitespace-nowrap">
                                     {(item as any).last_updated || formatLastUpdated(item.updated_at)}
                                   </td>
                                 )}
                               </>
                             )}
-                            
-                            <td className="py-3 px-4">
-                              <div className="flex items-center justify-end gap-2">
-                                {editingId === item.id ? (
-                                  <>
-                                    <GlassButton
-                                      onClick={() => handleSave(item.id)}
-                                      disabled={isSaving}
-                                      className="p-1.5 min-w-0 bg-green-500/20 hover:bg-green-500/30"
-                                      title="Save"
-                                    >
-                                      {isSaving ? (
-                                        <Loader2 className="w-4 h-4 animate-spin text-green-400" />
-                                      ) : (
-                                        <Save className="w-4 h-4 text-green-400" />
-                                      )}
-                                    </GlassButton>
-                                    <GlassButton
-                                      onClick={handleCancelEdit}
-                                      disabled={isSaving}
-                                      className="p-1.5 min-w-0 bg-red-500/20 hover:bg-red-500/30"
-                                      title="Cancel"
-                                    >
-                                      <X className="w-4 h-4 text-red-400" />
-                                    </GlassButton>
-                                  </>
-                                ) : (
-                                  <>
-                                   <GlassButton
-                                                                        onClick={() => handleViewDetails(item)}
-                                                                        className="p-1.5 min-w-0 hover:bg-blue-500/20"
-                                                                        title="View Details"
-                                                                      >
-                                                                        <Eye className="w-4 h-4 text-gray-300 hover:text-blue-400 transition-colors" />
-                                                                      </GlassButton>
-                                    {!isClient && (
-                                      <>
-                                        <GlassButton
-                                          onClick={() => handleEdit(item)}
-                                          className="p-1.5 min-w-0 hover:bg-white/10"
-                                          title="Edit"
-                                        >
-                                          <Edit className="w-4 h-4 text-gray-300 hover:text-blue-400 transition-colors" />
-                                        </GlassButton>
-                                        <GlassButton
-                                          onClick={() => handleDeleteClick(item.id)}
-                                          className="p-1.5 min-w-0 hover:bg-red-500/20"
-                                          title="Delete"
-                                        >
-                                          <Trash2 className="w-4 h-4 text-gray-300 hover:text-red-400 transition-colors" />
-                                        </GlassButton>
-                                      </>
-                                    )}
-                                  </>
-                                )}
-                               </div>
-                            </td>
+
+                            {user?.role === "SuperAdmin" && (
+                              <td className="py-3 px-4 text-right">
+                                <div className="flex items-center justify-end gap-2">
+                                  {editingId === item.id ? (
+                                    <>
+                                      <GlassButton
+                                        onClick={() => handleSave(item.id)}
+                                        disabled={isSaving}
+                                        className="p-1.5 min-w-0 bg-green-500/20 hover:bg-green-500/30"
+                                        title="Save"
+                                      >
+                                        {isSaving ? (
+                                          <Loader2 className="w-4 h-4 animate-spin text-green-400" />
+                                        ) : (
+                                          <Save className="w-4 h-4 text-green-400" />
+                                        )}
+                                      </GlassButton>
+                                      <GlassButton
+                                        onClick={handleCancelEdit}
+                                        disabled={isSaving}
+                                        className="p-1.5 min-w-0 bg-red-500/20 hover:bg-red-500/30"
+                                        title="Cancel"
+                                      >
+                                        <X className="w-4 h-4 text-red-400" />
+                                      </GlassButton>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <GlassButton
+                                        onClick={() => handleViewDetails(item)}
+                                        className="p-1.5 min-w-0 hover:bg-blue-500/20"
+                                        title="View Details"
+                                      >
+                                        <Eye className="w-4 h-4 text-gray-300 hover:text-blue-400 transition-colors" />
+                                      </GlassButton>
+                                      <GlassButton
+                                        onClick={() => handleEdit(item)}
+                                        className="p-1.5 min-w-0 hover:bg-white/10"
+                                        title="Edit"
+                                      >
+                                        <Edit className="w-4 h-4 text-white hover:text-blue-400 transition-colors" />
+                                      </GlassButton>
+                                      <GlassButton
+                                        onClick={() => handleDeleteClick(item.id)}
+                                        className="p-1.5 min-w-0 hover:bg-red-500/20"
+                                        title="Delete"
+                                      >
+                                        <Trash2 className="w-4 h-4 text-red-400 hover:text-red-300 transition-colors" />
+                                      </GlassButton>
+                                    </>
+                                  )}
+                                </div>
+                              </td>
+                            )}
+
                           </tr>
                           {/* Expansion Row for Details */}
                           {expandedRowId === item.id && (
                             <tr className="bg-white/5 animate-in fade-in slide-in-from-top-4 duration-300">
-                              <td colSpan={isClient ? 7 : 14} className="py-4 px-6">
+                              <td colSpan={isClient ? 6 : (user?.role === "SuperAdmin" ? 14 : 13)} className="py-4 px-6">
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6 bg-black/20 p-4 rounded-xl border border-white/5 shadow-inner">
                                   <div><span className="block text-xs text-gray-400 mb-1 text-left">Domain Name</span><span className="block text-sm text-gray-200 font-medium text-left">{item.domain_name || "--"}</span></div>
                                   <div><span className="block text-xs text-gray-400 mb-1 text-left">Client Name</span><span className="block text-sm text-gray-200 font-medium text-left">{item.client_name || "--"}</span></div>
@@ -1457,7 +1542,13 @@ export default function DomainsPage() {
                                   <div><span className="block text-xs text-gray-400 mb-1 text-left">Vendor</span><span className="block text-sm text-gray-200 font-medium text-left">{item.vendor_name || "--"}</span></div>
                                   <div><span className="block text-xs text-gray-400 mb-1 text-left">Amount</span><span className="block text-sm text-gray-200 font-medium text-left">{(item as any).amount !== undefined ? (item as any).amount : "--"}</span></div>
                                   <div><span className="block text-xs text-gray-400 mb-1 text-left">Renewal Date</span><span className="block text-sm text-gray-200 font-medium text-left">{formatDate((item as any).renewal_date)}</span></div>
-                                  <div><span className="block text-xs text-gray-400 mb-1 text-left">Deletion Date</span><span className="block text-sm text-gray-200 font-medium text-left">{formatDate((item as any).deletion_date)}</span></div>
+                                   <div><span className="block text-xs text-gray-400 mb-1 text-left">Deletion Date</span><span className="block text-sm text-gray-200 font-medium text-left">{formatDate((item as any).deletion_date)}</span></div>
+                                  {user?.role === "SuperAdmin" && (
+                                    <>
+                                      <div><span className="block text-xs text-gray-400 mb-1 text-left">Grace Period</span><span className="block text-sm text-gray-200 font-medium text-left">{item.grace_period ?? 0} days</span></div>
+                                      <div><span className="block text-xs text-gray-400 mb-1 text-left">Due Date</span><span className="block text-sm text-gray-200 font-medium text-left">{formatDate(item.due_date as string)}</span></div>
+                                    </>
+                                  )}
                                   <div><span className="block text-xs text-gray-400 mb-1 text-left">Remarks</span><span className="block text-sm text-gray-200 font-medium text-left">{(item as any).remarks || "--"}</span></div>
                                 </div>
                               </td>
@@ -1466,7 +1557,7 @@ export default function DomainsPage() {
                           {/* Expanded Remark History - Inline Stack Style */}
                           {expandedRemarks.has(item.id) && (
                             <tr key={`history-${item.id}`} className="bg-blue-500/5 animate-in fade-in slide-in-from-top-4 duration-500">
-                              <td colSpan={isClient ? 7 : 14} className="py-0 px-4">
+                              <td colSpan={isClient ? 6 : (user?.role === "SuperAdmin" ? 14 : 13)} className="py-0 px-4">
                                 <div className="border-t border-blue-500/20 py-4 pb-6 ml-12 mr-12">
                                   <RemarkHistory module="Domains" recordId={item.id} />
                                 </div>

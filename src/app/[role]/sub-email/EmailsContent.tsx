@@ -28,6 +28,7 @@ import {
   X,
   Eye,
   MessageSquare,
+  ChevronDown,
 } from "lucide-react";
 import { RemarkHistory } from "@/components/RemarkHistory";
 import { useAuth } from "@/contexts/AuthContext";
@@ -43,7 +44,7 @@ import { GlassSelect } from "@/components/glass/GlassSelect";
 import { normalizeEntityPayload } from "@/utils/normalizePayload";
 import { emitEntityChange } from "@/lib/entityBus";
 import { formatLastUpdated } from "@/utils/dateFormatter";
-import { handleDateChangeLogic, getDaysToColor } from "@/utils/dateCalculations";
+import { handleDateChangeLogic, getDaysToColor, calculateDueDate } from "@/utils/dateCalculations";
 
 interface EmailRecord {
   remark_id?: number | null;
@@ -70,10 +71,13 @@ interface EmailRecord {
   days_to_delete?: number | null;
   created_at: string;
   updated_at: string;
+  grace_period?: number;
+  due_date?: string;
   latest_remark?: {
     id: number;
     remark: string;
   };
+  has_remark_history?: boolean;
 }
 
 interface AddEditEmail {
@@ -94,11 +98,14 @@ interface AddEditEmail {
   remarks_id?: number;
   deletion_date?: string;
   days_to_delete?: number;
+  grace_period?: number;
+  due_date?: string;
 }
 
 export default function EmailsPage() {
   const { user, getToken } = useAuth();
   const token = getToken();
+  console.log("Current user role:", user?.role);
   const isClient = user?.role === "ClientAdmin" || user?.login_type === 3;
   const navigationTabs = getNavigationByRole(user?.role);
   const { toast } = useToast();
@@ -118,6 +125,7 @@ export default function EmailsPage() {
   const [itemToDelete, setItemToDelete] = useState<number | null>(null);
   const [expandedRemarks, setExpandedRemarks] = useState<Set<number>>(new Set());
   const [expandedRowId, setExpandedRowId] = useState<number | null>(null);
+  const [expandedRemarkId, setExpandedRemarkId] = useState<number | null>(null);
 
   const toggleRemarkHistory = (id: number) => {
     setExpandedRemarks(prev => {
@@ -146,6 +154,8 @@ export default function EmailsPage() {
     remarks: "",
     deletion_date: "",
     days_to_delete: "",
+    grace_period: "0",
+    due_date: "",
   });
 
   const [editData, setEditData] = useState<
@@ -240,8 +250,8 @@ export default function EmailsPage() {
     setNewRecordData({
       domain_id: null,
       domain_name: "",
-      client_id: null,
-      client_name: "",
+      client_id: isClient && user ? (user.id as any) : null,
+      client_name: isClient && user ? (user.name || "") : "",
       product_id: null,
       vendor_id: null,
       vendor_name: "",
@@ -254,6 +264,8 @@ export default function EmailsPage() {
       remarks: "",
       deletion_date: "",
       days_to_delete: "",
+      grace_period: "0",
+      due_date: "",
     });
   };
 
@@ -315,6 +327,8 @@ export default function EmailsPage() {
       remarks: "",
       deletion_date: "",
       days_to_delete: "",
+      grace_period: "0",
+      due_date: "",
     });
   };
 
@@ -325,7 +339,7 @@ export default function EmailsPage() {
 
       if (
         !newRecordData.domain_id ||
-        (!isClient && !newRecordData.client_id) ||
+        (user?.role === "SuperAdmin" && !newRecordData.client_id) ||
         !newRecordData.product_id ||
         !newRecordData.quantity ||
         !newRecordData.start_date ||
@@ -396,6 +410,8 @@ export default function EmailsPage() {
           remarks: "",
           deletion_date: "",
           days_to_delete: "",
+          grace_period: "0",
+          due_date: "",
         });
       } else {
         toast({
@@ -449,7 +465,7 @@ export default function EmailsPage() {
 
       if (
         !updatedData.domain_id ||
-        (!isClient && !updatedData.client_id) ||
+        (user?.role === "SuperAdmin" && !updatedData.client_id) ||
         !updatedData.product_id ||
         !updatedData.quantity ||
         !updatedData.start_date ||
@@ -558,6 +574,14 @@ export default function EmailsPage() {
       extraData = handleDateChangeLogic(field === "expiry_date" ? "renewal_date" : "deletion_date", value, currentRenewal, currentDeletion, toast) || {};
     }
 
+    if (field === "expiry_date" || field === "grace_period") {
+      const currentRenewal = field === "expiry_date" ? value : newRecordData.expiry_date;
+      const currentGrace = field === "grace_period" ? value : newRecordData.grace_period;
+      if (currentRenewal) {
+        (extraData as any).due_date = calculateDueDate(currentRenewal, currentGrace);
+      }
+    }
+
     setNewRecordData((prev) => ({
       ...prev,
       [field]: value,
@@ -579,6 +603,16 @@ export default function EmailsPage() {
       const currentDeletion = field === "deletion_date" ? value : (currentRow.deletion_date ?? actualRow.deletion_date);
 
       extraData = handleDateChangeLogic(field === "expiry_date" ? "renewal_date" : "deletion_date", value, currentRenewal, currentDeletion, toast) || {};
+    }
+
+    if (field === "expiry_date" || field === "grace_period") {
+      const currentRow = editData[id] || {};
+      const actualRow = data.find((d) => d.id === id) || ({} as any);
+      const currentRenewal = field === "expiry_date" ? value : (currentRow.expiry_date ?? actualRow.expiry_date);
+      const currentGrace = field === "grace_period" ? value : (currentRow.grace_period ?? actualRow.grace_period);
+      if (currentRenewal) {
+        (extraData as any).due_date = calculateDueDate(currentRenewal, currentGrace);
+      }
     }
 
     setEditData((prev) => ({
@@ -778,7 +812,7 @@ export default function EmailsPage() {
               </div>
 
               <div className="flex gap-2">
-                {selectedItems.length > 0 && !isClient && (
+                {selectedItems.length > 0 && user?.role === "SuperAdmin" && (
                   <GlassButton
                     variant="danger"
                     onClick={handleBulkDeleteClick}
@@ -794,7 +828,7 @@ export default function EmailsPage() {
                   </GlassButton>
                 )}
 
-                {!addingNew && !isClient && (
+                {!addingNew && user?.role === "SuperAdmin" && (
                   <GlassButton
                     variant="primary"
                     onClick={handleAddNew}
@@ -812,7 +846,7 @@ export default function EmailsPage() {
                 >
                   {exportLoading ? ("Exporting...") : (" Export")}
                 </GlassButton>
-                {!isClient && (
+                {user?.role === "SuperAdmin" && (
                   <>
                     <GlassButton
                       variant="primary"
@@ -844,7 +878,7 @@ export default function EmailsPage() {
               <table className={`w-full table-fixed ${isClient ? 'min-w-[1000px]' : 'min-w-[2000px]'}`}>
                 <thead>
                   <tr className="bg-white/5 border-b border-white/10">
-                    {!isClient && (
+                    {user?.role === "SuperAdmin" && (
                       <th className="py-3 px-4 text-left w-[50px]">
                         <input
                           type="checkbox"
@@ -858,9 +892,9 @@ export default function EmailsPage() {
                       S.NO
                     </th>
                     <th className={`py-3 px-4 text-left text-sm font-medium text-gray-300 ${isClient ? 'w-[220px]' : 'w-[200px]'}`}>
-                      Domain Name
+                      {isClient ? 'Domain' : 'Domain Name'}
                     </th>
-                    {!isClient && (
+                    {user?.role === "SuperAdmin" && (
                       <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[180px]">
                         Client
                       </th>
@@ -868,64 +902,75 @@ export default function EmailsPage() {
                     <th className={`py-3 px-4 text-left text-sm font-medium text-gray-300 ${isClient ? 'w-[200px]' : 'w-[180px]'}`}>
                       Product
                     </th>
-                    {!isClient && (
+                    {user?.role === "SuperAdmin" && (
                       <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[150px]">
                         Vendor
                       </th>
                     )}
-                    {!isClient && (
-                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[100px]">
-                        Quantity
-                      </th>
-                    )}
-                    {!isClient && (
-                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[140px]">
-                        Bill Type
-                      </th>
-                    )}
-                    {!isClient && (
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[100px]">
+                      Quantity
+                    </th>
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[140px]">
+                      Bill Type
+                    </th>
+                    {user?.role === "SuperAdmin" && (
                       <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[140px]">
                         Start Date
                       </th>
                     )}
                     <th className={`py-3 px-4 text-left text-sm font-medium text-gray-300 ${isClient ? 'w-[160px]' : 'w-[140px]'}`}>
-                      Renewal Date
+                      {isClient ? 'Renewal' : 'Renewal Date'}
                     </th>
-                    <th className={`py-3 px-4 text-left text-sm font-medium text-gray-300 ${isClient ? 'w-[140px]' : 'w-[120px]'}`}>
-                      Days to Expire
-                    </th>
-                    {!isClient && (
+                    {user?.role === "SuperAdmin" && (
+                      <th className={`py-3 px-4 text-left text-sm font-medium text-gray-300 ${isClient ? 'w-[140px]' : 'w-[120px]'}`}>
+                        Days to Expire
+                      </th>
+                    )}
+                    {user?.role === "SuperAdmin" && (
                       <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[140px]">
                         Deletion Date
                       </th>
                     )}
-                    {!isClient && (
+                    {user?.role === "SuperAdmin" && (
                       <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[120px]">
                         Days to Delete
+                      </th>
+                    )}
+                    {user?.role === "SuperAdmin" && (
+                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[120px]">
+                        Grace Period
+                      </th>
+                    )}
+                    {user?.role === "SuperAdmin" && (
+                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[140px]">
+                        Due Date
                       </th>
                     )}
                     <th className={`py-3 px-4 text-center text-sm font-medium text-gray-300 ${isClient ? 'w-[120px]' : 'w-[120px]'}`}>
                       Status
                     </th>
-                    {!isClient && (
+                    {user?.role === "SuperAdmin" && (
                       <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[200px]">
                         Remarks
                       </th>
                     )}
-                    {!isClient && (
+                    {user?.role === "SuperAdmin" && (
                       <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[180px]">
                         Last Updated
                       </th>
                     )}
-                    <th className={`py-3 px-4 text-right text-sm font-medium text-gray-300 ${isClient ? 'w-[100px]' : 'w-[140px]'}`}>
-                      Actions
-                    </th>
+                    {user?.role === "SuperAdmin" && (
+                      <th className="py-3 px-4 text-right text-sm font-medium text-gray-300 w-[120px]">
+                        Action
+                      </th>
+                    )}
+
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={isClient ? 7 : 17} className="py-8 text-center text-gray-400 font-medium text-sm">
+                      <td colSpan={isClient ? 6 : (user?.role === "SuperAdmin" ? 17 : 16)} className="py-8 text-center text-gray-400 font-medium text-sm">
                         <div className="flex flex-col items-center justify-center gap-2">
                           <DashboardLoader label="Loading email records..." />
                         </div>
@@ -935,7 +980,7 @@ export default function EmailsPage() {
                       {/* Add New Row */}
                       {addingNew && (
                         <tr key="new-row" className="border-b border-white/5 bg-blue-500/5">
-                          {!isClient && <td className="py-3 px-4"></td>}
+                          {user?.role === "SuperAdmin" && <td className="py-3 px-4"></td>}
                           <td className="py-3 px-4 text-sm text-gray-300">
                             New
                           </td>
@@ -964,7 +1009,7 @@ export default function EmailsPage() {
                               className="min-h-[32px]"
                             />
                           </td>
-                          {!isClient && (
+                          {user?.role === "SuperAdmin" && (
                             <td className="py-3 px-4">
                               <ApiDropdown
                                 endpoint="get-clients"
@@ -1016,7 +1061,7 @@ export default function EmailsPage() {
                               className="min-h-[32px]"
                             />
                           </td>
-                          {!isClient && (
+                          {user?.role === "SuperAdmin" && (
                             <td className="py-3 px-4">
                               <ApiDropdown
                                 endpoint="get-venders"
@@ -1080,7 +1125,7 @@ export default function EmailsPage() {
                               />
                             </div>
                           </td>
-                          {!isClient && (
+                          {user?.role === "SuperAdmin" && (
                             <td className="py-3 px-4">
                               <input
                                 type="date"
@@ -1110,7 +1155,7 @@ export default function EmailsPage() {
                               style={{ minHeight: "32px" }}
                             />
                           </td>
-                          {!isClient && (
+                          {user?.role === "SuperAdmin" && (
                             <td className="py-3 px-4">
                               <input
                                 type="number"
@@ -1121,7 +1166,7 @@ export default function EmailsPage() {
                               />
                             </td>
                           )}
-                          {!isClient && (
+                          {user?.role === "SuperAdmin" && (
                             <td className="py-3 px-4">
                               <input
                                 type="date"
@@ -1132,7 +1177,7 @@ export default function EmailsPage() {
                               />
                             </td>
                           )}
-                          {!isClient && (
+                          {user?.role === "SuperAdmin" && (
                             <td className="py-2 px-4 whitespace-nowrap">
                               <input
                                 type="number"
@@ -1142,7 +1187,25 @@ export default function EmailsPage() {
                               />
                             </td>
                           )}
-                          {!isClient && (
+                          {user?.role === "SuperAdmin" && (
+                            <td className="py-3 px-4">
+                              <input
+                                type="number"
+                                value={newRecordData.grace_period}
+                                onChange={(e) => handleNewRecordChange("grace_period", e.target.value)}
+                                className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                style={{ minHeight: "32px" }}
+                                min="0"
+                                placeholder="0"
+                              />
+                            </td>
+                          )}
+                          {user?.role === "SuperAdmin" && (
+                            <td className="py-3 px-4 text-sm text-gray-300">
+                              {formatDate(newRecordData.due_date) || '-'}
+                            </td>
+                          )}
+                          {user?.role === "SuperAdmin" && (
                             <td className="py-1 px-2">
                               <div className="w-40">
                                 <GlassSelect
@@ -1170,7 +1233,7 @@ export default function EmailsPage() {
                               </div>
                             </td>
                           )}
-                          {!isClient && (
+                          {user?.role === "SuperAdmin" && (
                             <td className="py-3 px-4">
                               <input
                                 type="text"
@@ -1184,42 +1247,45 @@ export default function EmailsPage() {
                               />
                             </td>
                           )}
-                          {!isClient && (
+                          {user?.role === "SuperAdmin" && (
                             <td className="py-3 px-4 text-sm text-gray-300">
                               {"- -"}
                             </td>
                           )}
-                          <td className="py-3 px-4">
-                            <div className="flex items-center justify-end gap-2">
-                              <GlassButton
-                                onClick={handleSaveNew}
-                                disabled={isSaving}
-                                className="p-1.5 min-w-0 bg-green-500/20 hover:bg-green-500/30"
-                                title="Save"
-                              >
-                                {isSaving ? (
-                                  <Loader2 className="w-4 h-4 animate-spin text-green-400" />
-                                ) : (
-                                  <Save className="w-4 h-4 text-green-400" />
-                                )}
-                              </GlassButton>
-                              <GlassButton
-                                onClick={handleCancelAdd}
-                                disabled={isSaving}
-                                className="p-1.5 min-w-0 bg-red-500/20 hover:bg-red-500/30"
-                                title="Cancel"
-                              >
-                                <X className="w-4 h-4 text-red-400" />
-                              </GlassButton>
-                            </div>
-                          </td>
+                          {user?.role === "SuperAdmin" && (
+                            <td className="py-3 px-4">
+                              <div className="flex items-center justify-end gap-2">
+                                <GlassButton
+                                  onClick={handleSaveNew}
+                                  disabled={isSaving}
+                                  className="p-1.5 min-w-0 bg-green-500/20 hover:bg-green-500/30"
+                                  title="Save"
+                                >
+                                  {isSaving ? (
+                                    <Loader2 className="w-4 h-4 animate-spin text-green-400" />
+                                  ) : (
+                                    <Save className="w-4 h-4 text-green-400" />
+                                  )}
+                                </GlassButton>
+                                <GlassButton
+                                  onClick={handleCancelAdd}
+                                  disabled={isSaving}
+                                  className="p-1.5 min-w-0 bg-red-500/20 hover:bg-red-500/30"
+                                  title="Cancel"
+                                >
+                                  <X className="w-4 h-4 text-red-400" />
+                                </GlassButton>
+                              </div>
+                            </td>
+                          )}
+
                         </tr>
                       )}
 
                       {/* Existing Data Rows */}
                       {data.length === 0 && !addingNew ? (
                         <tr key="empty-row">
-                          <td colSpan={isClient ? 7 : 17} className="py-8 text-center text-gray-400">
+                          <td colSpan={isClient ? 6 : (user?.role === "SuperAdmin" ? 17 : 16)} className="py-8 text-center text-gray-400">
                             <div className="flex flex-col items-center justify-center gap-2">
                               <Mail className="w-12 h-12 text-gray-400" />
                               <span>No email records found</span>
@@ -1245,7 +1311,7 @@ export default function EmailsPage() {
                                   : "hover:bg-white/[0.02]"
                                 }`}
                             >
-                            {!isClient && (
+                            {user?.role === "SuperAdmin" && (
                               <td className="py-3 px-4">
                                 <input
                                   type="checkbox"
@@ -1298,7 +1364,7 @@ export default function EmailsPage() {
                                     className="min-h-[32px]"
                                   />
                                 </td>
-                                {!isClient && (
+                                {user?.role === "SuperAdmin" && (
                                   <td className="py-3 px-4">
                                     <ApiDropdown
                                       endpoint="get-clients"
@@ -1360,7 +1426,7 @@ export default function EmailsPage() {
                                     className="min-h-[32px]"
                                   />
                                 </td>
-                                {!isClient && (
+                                {user?.role === "SuperAdmin" && (
                                   <td className="py-3 px-4">
                                     <ApiDropdown
                                       endpoint="get-venders"
@@ -1438,7 +1504,7 @@ export default function EmailsPage() {
                                     />
                                   </div>
                                 </td>
-                                {!isClient && (
+                                {user?.role === "SuperAdmin" && (
                                   <td className="py-3 px-4">
                                     <input
                                       type="date"
@@ -1478,7 +1544,7 @@ export default function EmailsPage() {
                                     style={{ minHeight: "32px" }}
                                   />
                                 </td>
-                                {!isClient && (
+                                {user?.role === "SuperAdmin" && (
                                   <td className="py-3 px-4">
                                     <input
                                       type="number"
@@ -1489,7 +1555,7 @@ export default function EmailsPage() {
                                     />
                                   </td>
                                 )}
-                                {!isClient && (
+                                {user?.role === "SuperAdmin" && (
                                   <td className="py-3 px-4">
                                     <input
                                       type="date"
@@ -1500,7 +1566,7 @@ export default function EmailsPage() {
                                     />
                                   </td>
                                 )}
-                                {!isClient && (
+                                {user?.role === "SuperAdmin" && (
                                   <td className="py-2 px-4 whitespace-nowrap">
                                     <input
                                       type="number"
@@ -1510,7 +1576,23 @@ export default function EmailsPage() {
                                     />
                                   </td>
                                 )}
-                                {!isClient && (
+                                {user?.role === "SuperAdmin" && (
+                                  <td className="py-3 px-4">
+                                    <input
+                                      type="number"
+                                      value={editData[item.id]?.grace_period ?? item.grace_period ?? "0"}
+                                      onChange={(e) => handleEditChange(item.id, "grace_period", e.target.value)}
+                                      className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                      style={{ minHeight: "32px" }}
+                                    />
+                                  </td>
+                                )}
+                                {user?.role === "SuperAdmin" && (
+                                  <td className="py-3 px-4 text-sm text-gray-300">
+                                    {formatDate(editData[item.id]?.due_date || item.due_date || "") || '-'}
+                                  </td>
+                                )}
+                                {user?.role === "SuperAdmin" && (
                                   <td className="py-1 px-2">
                                     <div className="w-40">
                                       <GlassSelect
@@ -1544,7 +1626,7 @@ export default function EmailsPage() {
                                     </div>
                                   </td>
                                 )}
-                                {!isClient && (
+                                {user?.role === "SuperAdmin" && (
                                   <td className="py-3 px-4">
                                     <input
                                       type="text"
@@ -1566,9 +1648,9 @@ export default function EmailsPage() {
                                     />
                                   </td>
                                 )}
-                                {!isClient && (
-                                  <td className="py-3 px-4 text-sm text-gray-300 whitespace-nowrap">
-                                    {(item as any).last_updated || formatLastUpdated(item.updated_at)}
+                                {user?.role === "SuperAdmin" && (
+                                  <td className="py-3 px-4 text-sm text-gray-300">
+                                    {"- -"}
                                   </td>
                                 )}
                               </>
@@ -1582,7 +1664,7 @@ export default function EmailsPage() {
                                     </span>
                                   </div>
                                 </td>
-                                {!isClient && (
+                                {user?.role === "SuperAdmin" && (
                                   <td className="py-3 px-4">
                                     <div className="flex items-center gap-2">
                                       <User className="w-4 h-4 text-gray-400 flex-shrink-0" />
@@ -1600,7 +1682,7 @@ export default function EmailsPage() {
                                     </span>
                                   </div>
                                 </td>
-                                {!isClient && (
+                                {user?.role === "SuperAdmin" && (
                                   <td className="py-3 px-4">
                                     <div className="flex items-center gap-2">
                                       <span className="text-sm text-white font-medium">
@@ -1609,35 +1691,31 @@ export default function EmailsPage() {
                                     </div>
                                   </td>
                                 )}
-                                {!isClient && (
-                                  <td className="py-3 px-4">
-                                    <div className="flex items-center gap-2">
-                                      <Hash className="w-4 h-4 text-gray-400" />
-                                      <span className="text-sm text-white font-medium">
-                                        {item.quantity}
-                                      </span>
-                                    </div>
-                                  </td>
-                                )}
-                                {!isClient && (
-                                  <td className="py-3 px-4">
-                                    <div
-                                      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${getBillTypeColor(item.bill_type)} ${item.bill_type?.toLowerCase() === "yearly"
-                                        ? "bg-blue-500/20 border-blue-500/20"
-                                        : item.bill_type?.toLowerCase() ===
-                                          "monthly"
-                                          ? "bg-purple-500/20 border-purple-500/20"
-                                          : item.bill_type?.toLowerCase() ===
-                                            "quarterly"
-                                            ? "bg-yellow-500/20 border-yellow-500/20"
-                                            : "bg-gray-500/20 border-gray-500/20"
-                                        }`}
-                                    >
-                                      {item.bill_type ? (item.bill_type.charAt(0).toUpperCase() + item.bill_type.slice(1)) : "N/A"}
-                                    </div>
-                                  </td>
-                                )}
-                                {!isClient && (
+                                 <td className="py-3 px-4">
+                                   <div className="flex items-center gap-2">
+                                     <Hash className="w-4 h-4 text-gray-400" />
+                                     <span className="text-sm text-white font-medium">
+                                       {item.quantity || 1}
+                                     </span>
+                                   </div>
+                                 </td>
+                                 <td className="py-3 px-4">
+                                   <div
+                                     className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${getBillTypeColor(item.bill_type || "Monthly")} ${item.bill_type?.toLowerCase() === "yearly"
+                                       ? "bg-blue-500/20 border-blue-500/20"
+                                       : (item.bill_type || "Monthly").toLowerCase() ===
+                                         "monthly"
+                                         ? "bg-purple-500/20 border-purple-500/20"
+                                         : item.bill_type?.toLowerCase() ===
+                                           "quarterly"
+                                           ? "bg-yellow-500/20 border-yellow-500/20"
+                                           : "bg-gray-500/20 border-gray-500/20"
+                                       }`}
+                                   >
+                                     {item.bill_type ? (item.bill_type.charAt(0).toUpperCase() + item.bill_type.slice(1)) : "Monthly"}
+                                   </div>
+                                 </td>
+                                {user?.role === "SuperAdmin" && (
                                   <td className="py-3 px-4 text-xs text-gray-300">
                                     <div className="flex items-center gap-2">
                                       <Calendar className="w-4 h-4 text-gray-400" />
@@ -1651,28 +1729,40 @@ export default function EmailsPage() {
                                     {formatDate(item.expiry_date)}
                                   </div>
                                 </td>
-                                <td className="py-3 px-4">
+                                                                 {user?.role === "SuperAdmin" && (
+                                   <td className="py-3 px-4">
                                   <div
                                     className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${calculateDays(item.expiry_date) < 0
                                       ? "bg-red-500/20 text-red-400 border-red-500/20"
                                       : calculateDays(item.expiry_date) <= 30
-                                        ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/20"
+                                                                                   ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/20"
                                         : "bg-green-500/20 text-green-400 border-green-500/20"
                                       }`}
                                   >
                                     {calculateDays(item.expiry_date)} days
                                   </div>
-                                </td>
-                                {!isClient && (
+                                                                 </td>
+                               )}
+                                {user?.role === "SuperAdmin" && (
                                   <td className="py-3 px-4 text-sm text-gray-300">
                                     {item.deletion_date ? formatDate(item.deletion_date) : "--"}
                                   </td>
                                 )}
-                                {!isClient && (
+                                {user?.role === "SuperAdmin" && (
                                   <td className="py-3 px-4 whitespace-nowrap">
                                     <span className={`text-sm ${getDaysToColor(item.days_to_delete)}`}>
                                       {item.days_to_delete !== null && item.days_to_delete !== undefined ? item.days_to_delete : "--"}
                                     </span>
+                                  </td>
+                                )}
+                                {user?.role === "SuperAdmin" && (
+                                  <td className="py-3 px-4 text-sm text-gray-300">
+                                    {item.grace_period ? `${item.grace_period} days` : "0 days"}
+                                  </td>
+                                )}
+                                {user?.role === "SuperAdmin" && (
+                                  <td className="py-3 px-4 text-sm text-gray-300">
+                                    {item.due_date ? formatDate(item.due_date) : "--"}
                                   </td>
                                 )}
                                 <td className="py-3 px-4 text-center">
@@ -1686,17 +1776,28 @@ export default function EmailsPage() {
                                     {getStatusText(item.status)}
                                   </div>
                                 </td>
-                                {!isClient && (
-                                  <td className="py-3 px-4">
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-sm text-gray-300 truncate max-w-[180px]">
-                                        {(item.latest_remark?.remark as string) ||
-                                          "No remarks"}
-                                      </span>
-                                    </div>
-                                  </td>
-                                )}
-                                {!isClient && (
+                                {user?.role === "SuperAdmin" && (
+                                   <td className="py-3 px-4">
+                                     <div className="flex items-center gap-2">
+                                       <span className="text-sm text-gray-300 truncate max-w-[150px]">
+                                         {item.remarks || "--"}
+                                       </span>
+                                       {item.has_remark_history && (
+                                         <button
+                                           onClick={() => setExpandedRemarkId(expandedRemarkId === item.id ? null : item.id)}
+                                           className={`p-1 rounded-full transition-all duration-300 flex-shrink-0 ml-1 ${expandedRemarkId === item.id
+                                             ? "bg-blue-500/30 text-blue-300 rotate-180"
+                                             : "hover:bg-blue-500/20 text-blue-400 hover:text-blue-300"
+                                             }`}
+                                           title="Remark History"
+                                         >
+                                           <History className="w-3.5 h-3.5" />
+                                         </button>
+                                       )}
+                                     </div>
+                                   </td>
+                                 )}
+                                {user?.role === "SuperAdmin" && (
                                   <td className="py-3 px-4 text-sm text-gray-300 whitespace-nowrap">
                                     {(item as any).last_updated || formatLastUpdated(item.updated_at)}
                                   </td>
@@ -1704,80 +1805,90 @@ export default function EmailsPage() {
                               </>
                             )}
 
-                            <td className="py-3 px-4 whitespace-nowrap">
-                              <div className="flex items-center justify-end gap-2">
-                                {editingId === item.id ? (
-                                  <>
-                                    <GlassButton
-                                      onClick={() => handleSave(item.id)}
-                                      disabled={isSaving}
-                                      className="p-1.5 min-w-0 bg-green-500/20 hover:bg-green-500/30"
-                                      title="Save"
-                                    >
-                                      {isSaving ? (
-                                        <Loader2 className="w-4 h-4 animate-spin text-green-400" />
-                                      ) : (
-                                        <Save className="w-4 h-4 text-green-400" />
-                                      )}
-                                    </GlassButton>
-                                    <GlassButton
-                                      onClick={handleCancelEdit}
-                                      disabled={isSaving}
-                                      className="p-1.5 min-w-0 bg-red-500/20 hover:bg-red-500/30"
-                                      title="Cancel"
-                                    >
-                                      <X className="w-4 h-4 text-red-400" />
-                                    </GlassButton>
-                                  </>
-                                ) : (
-                                  <>
-                                    <GlassButton
-                                      onClick={() => handleViewDetails(item)}
-                                      className="p-1.5 min-w-0 hover:bg-blue-500/20"
-                                      title="View Details"
-                                    >
-                                      <Eye className="w-4 h-4 text-gray-300 hover:text-blue-400 transition-colors" />
-                                    </GlassButton>
-                                    {!isClient && (
-                                      <>
-                                        <GlassButton
-                                          onClick={() => handleEdit(item)}
-                                          className="p-1.5 min-w-0 hover:bg-white/10"
-                                          title="Edit"
-                                        >
-                                          <Edit className="w-4 h-4 text-gray-300 hover:text-blue-400 transition-colors" />
-                                        </GlassButton>
-                                        <GlassButton
-                                          onClick={() => handleDeleteClick(item.id)}
-                                          className="p-1.5 min-w-0 hover:bg-red-500/20"
-                                          title="Delete"
-                                        >
-                                          <Trash2 className="w-4 h-4 text-gray-300 hover:text-red-400 transition-colors" />
-                                        </GlassButton>
-                                      </>
-                                    )}
-                                  </>
-                                )}
-                              </div>
-                            </td>
+                            {user?.role === "SuperAdmin" && (
+                              <td className="py-3 px-4">
+                                <div className="flex items-center justify-end gap-2">
+                                  {editingId === item.id ? (
+                                    <>
+                                      <GlassButton
+                                        onClick={() => handleSave(item.id)}
+                                        disabled={isSaving}
+                                        className="p-1.5 min-w-0 bg-green-500/20 hover:bg-green-500/30"
+                                        title="Save"
+                                      >
+                                        {isSaving ? (
+                                          <Loader2 className="w-4 h-4 animate-spin text-green-400" />
+                                        ) : (
+                                          <Save className="w-4 h-4 text-green-400" />
+                                        )}
+                                      </GlassButton>
+                                      <GlassButton
+                                        onClick={handleCancelEdit}
+                                        disabled={isSaving}
+                                        className="p-1.5 min-w-0 bg-red-500/20 hover:bg-red-500/30"
+                                        title="Cancel"
+                                      >
+                                        <X className="w-4 h-4 text-red-400" />
+                                      </GlassButton>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <GlassButton
+                                        onClick={() => handleViewDetails(item)}
+                                        className="p-1.5 min-w-0 hover:bg-blue-500/20"
+                                        title="View Details"
+                                      >
+                                        <Eye className="w-4 h-4 text-gray-300 hover:text-blue-400 transition-colors" />
+                                      </GlassButton>
+                                      <GlassButton
+                                        onClick={() => handleEdit(item)}
+                                        className="p-1.5 min-w-0 hover:bg-white/10"
+                                        title="Edit"
+                                      >
+                                        <Edit className="w-4 h-4 text-white hover:text-blue-400 transition-colors" />
+                                      </GlassButton>
+                                      <GlassButton
+                                        onClick={() => handleDeleteClick(item.id)}
+                                        className="p-1.5 min-w-0 hover:bg-red-500/20"
+                                        title="Delete"
+                                      >
+                                        <Trash2 className="w-4 h-4 text-red-400 hover:text-red-300 transition-colors" />
+                                      </GlassButton>
+                                    </>
+                                  )}
+                                </div>
+                              </td>
+                            )}
+
                           </tr>
                           {/* Expansion Row for Details */}
                           {expandedRowId === item.id && (
-                            <tr className="bg-white/5 animate-in fade-in slide-in-from-top-4 duration-300">
-                              <td colSpan={isClient ? 7 : 17} className="py-4 px-6">
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 bg-black/20 p-4 rounded-xl border border-white/5 shadow-inner">
-                                  <div><span className="block text-xs text-gray-400 mb-1 text-left">Domain Name</span><span className="block text-sm text-gray-200 font-medium text-left">{item.domain_name || "--"}</span></div>
-                                  <div><span className="block text-xs text-gray-400 mb-1 text-left">Client Name</span><span className="block text-sm text-gray-200 font-medium text-left">{item.client_name || "--"}</span></div>
-                                  <div><span className="block text-xs text-gray-400 mb-1 text-left">Product</span><span className="block text-sm text-gray-200 font-medium text-left">{item.product_name || "--"}</span></div>
-                                  <div><span className="block text-xs text-gray-400 mb-1 text-left">Vendor</span><span className="block text-sm text-gray-200 font-medium text-left">{item.vendor_name || "--"}</span></div>
-                                  <div><span className="block text-xs text-gray-400 mb-1 text-left">Quantity</span><span className="block text-sm text-gray-200 font-medium text-left">{(item as any).quantity !== undefined ? (item as any).quantity : "--"}</span></div>
-                                  <div><span className="block text-xs text-gray-400 mb-1 text-left">Renewal Date</span><span className="block text-sm text-gray-200 font-medium text-left">{formatDate((item as any).expiry_date)}</span></div>
-                                  <div><span className="block text-xs text-gray-400 mb-1 text-left">Deletion Date</span><span className="block text-sm text-gray-200 font-medium text-left">{formatDate((item as any).deletion_date)}</span></div>
-                                  <div><span className="block text-xs text-gray-400 mb-1 text-left">Remarks</span><span className="block text-sm text-gray-200 font-medium text-left">{(item as any).remarks || "--"}</span></div>
-                                </div>
-                              </td>
-                            </tr>
-                          )}
+                             <tr className="bg-white/5 animate-in fade-in slide-in-from-top-4 duration-300">
+                               <td colSpan={isClient ? 6 : (user?.role === "SuperAdmin" ? 17 : 16)} className="py-4 px-6">
+                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6 bg-black/20 p-4 rounded-xl border border-white/5 shadow-inner">
+                                   <div><span className="block text-xs text-gray-400 mb-1 text-left">Domain Name</span><span className="block text-sm text-gray-200 font-medium text-left">{item.domain_name || "--"}</span></div>
+                                   <div><span className="block text-xs text-gray-400 mb-1 text-left">Client Name</span><span className="block text-sm text-gray-200 font-medium text-left">{item.client_name || "--"}</span></div>
+                                   <div><span className="block text-xs text-gray-400 mb-1 text-left">Product</span><span className="block text-sm text-gray-200 font-medium text-left">{item.product_name || "--"}</span></div>
+                                   <div><span className="block text-xs text-gray-400 mb-1 text-left">Vendor</span><span className="block text-sm text-gray-200 font-medium text-left">{item.vendor_name || "--"}</span></div>
+                                   <div><span className="block text-xs text-gray-400 mb-1 text-left">Quantity</span><span className="block text-sm text-gray-200 font-medium text-left">{(item as any).quantity !== undefined ? (item as any).quantity : "--"}</span></div>
+                                   <div><span className="block text-xs text-gray-400 mb-1 text-left">Renewal Date</span><span className="block text-sm text-gray-200 font-medium text-left">{formatDate((item as any).expiry_date)}</span></div>
+                                   <div><span className="block text-xs text-gray-400 mb-1 text-left">Deletion Date</span><span className="block text-sm text-gray-200 font-medium text-left">{formatDate((item as any).deletion_date)}</span></div>
+                                   <div><span className="block text-xs text-gray-400 mb-1 text-left">Remarks</span><span className="block text-sm text-gray-200 font-medium text-left">{item.remarks || "--"}</span></div>
+                                 </div>
+                               </td>
+                             </tr>
+                           )}
+
+                           {/* Remark History Row */}
+                           {expandedRemarkId === item.id && (
+                             <tr key={`history-row-${item.id}`} className="bg-blue-500/5 animate-in fade-in slide-in-from-top-4 duration-500">
+                               <td colSpan={isClient ? 6 : (user?.role === "SuperAdmin" ? 17 : 16)} className="py-0 px-4">
+                                 <div className="border-t border-blue-500/20 py-4 pb-6 ml-12 mr-12">
+                                   <RemarkHistory key={`history-${item.id}-${item.updated_at}`} module="Email" recordId={item.id} />
+                                 </div>
+                               </td>
+                             </tr>
+                           )}
                         </React.Fragment>
                         ))
                       )}

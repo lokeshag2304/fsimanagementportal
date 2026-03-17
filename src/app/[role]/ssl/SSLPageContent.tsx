@@ -40,7 +40,7 @@ import { CurrencyAmountInput } from "@/common/CurrencyAmountInput";
 import { GlassSelect } from "@/components/glass/GlassSelect";
 import { formatLastUpdated } from "@/utils/dateFormatter";
 import { emitEntityChange } from "@/lib/entityBus";
-import { handleDateChangeLogic, getDaysToColor } from "@/utils/dateCalculations";
+import { handleDateChangeLogic, getDaysToColor, calculateDueDate } from "@/utils/dateCalculations";
 import { getCurrencySymbol, currencySymbols } from "@/utils/currencies";
 
 interface SSLRecord {
@@ -69,6 +69,8 @@ interface SSLRecord {
   remarks: string;
   remark_id: number | null;
   has_remark_history?: boolean;
+  grace_period?: number;
+  due_date?: string | null;
   last_updated?: string;
   updated_at_formatted?: string;
   latest_remark?: {
@@ -95,6 +97,8 @@ interface AddEditSSL {
   updated_at_custom: string;
   remarks: string;
   remark_id: number;
+  grace_period?: number;
+  due_date?: string;
 }
 
 const currencyOptions = [
@@ -132,6 +136,7 @@ export default function SSLPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
   const [highlightedRecordId, setHighlightedRecordId] = useState<number | null>(null);
+  console.log("Current user role:", user?.role);
   const isClient = user?.role === "ClientAdmin" || user?.login_type === 3;
 
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -159,6 +164,8 @@ export default function SSLPage() {
     expiry_date: "",
     deletion_date: "",
     days_to_delete: "",
+    grace_period: "0",
+    due_date: "",
     status: "1" as "1" | "0",
     remarks: "",
     updated_at_custom: new Date().toISOString().split("T")[0],
@@ -254,6 +261,8 @@ export default function SSLPage() {
       status: "1",
       remarks: "",
       updated_at_custom: new Date().toISOString().split("T")[0],
+      grace_period: "0",
+      due_date: "",
     });
   };
 
@@ -335,6 +344,8 @@ export default function SSLPage() {
         status: parseInt(newRecordData.status) as 0 | 1,
         remarks: newRecordData.remarks,
         updated_at_custom: newRecordData.updated_at_custom,
+        grace_period: newRecordData.grace_period,
+        due_date: newRecordData.due_date,
       };
 
       const response = await apiService.addRecord(payload as any, user, token);
@@ -366,6 +377,8 @@ export default function SSLPage() {
           status: "1",
           remarks: "",
           updated_at_custom: new Date().toISOString().split("T")[0],
+          grace_period: "0",
+          due_date: "",
         });
       } else {
         toast({
@@ -444,6 +457,8 @@ export default function SSLPage() {
         remarks: updatedData.remarks || "",
         remark_id: updatedData.remark_id || null,
         updated_at_custom: new Date().toISOString().split("T")[0], // Auto-update timestamp
+        grace_period: updatedData.grace_period,
+        due_date: updatedData.due_date,
       };
 
       const response = await apiService.editRecord(payload as any, user, token);
@@ -536,6 +551,14 @@ export default function SSLPage() {
       }
     }
 
+    if (field === "expiry_date" || field === "grace_period") {
+        const currentRow = editData[id] || {};
+        const actualRow = data.find((d) => d.id === id) || ({} as any);
+        const currentExpiry = field === "expiry_date" ? value : (currentRow.expiry_date ?? actualRow.expiry_date);
+        const currentGrace = field === "grace_period" ? value : (currentRow.grace_period ?? actualRow.grace_period ?? 0);
+        extraData.due_date = calculateDueDate(currentExpiry, currentGrace);
+    }
+
     setEditData((prev) => ({
       ...prev,
       [id]: {
@@ -561,6 +584,12 @@ export default function SSLPage() {
       if (field === "expiry_date") {
         extraData.renewal_date = value;
       }
+    }
+
+    if (field === "expiry_date" || field === "grace_period") {
+        const currentExpiry = field === "expiry_date" ? value : newRecordData.expiry_date;
+        const currentGrace = field === "grace_period" ? value : newRecordData.grace_period;
+        extraData.due_date = calculateDueDate(currentExpiry, currentGrace);
     }
 
     setNewRecordData((prev) => ({
@@ -836,7 +865,7 @@ export default function SSLPage() {
               <table className={`w-full table-fixed ${isClient ? 'min-w-[1000px]' : 'min-w-[2000px]'}`}>
                 <thead>
                   <tr className="bg-white/5 border-b border-white/10 uppercase tracking-wider">
-                    {!isClient && (
+                    {user?.role === "SuperAdmin" && (
                       <th className="py-3 px-4 text-left w-[50px]">
                         <input
                           type="checkbox"
@@ -852,7 +881,7 @@ export default function SSLPage() {
                     <th className={`py-3 px-4 text-left text-xs font-semibold text-gray-400 ${isClient ? 'w-[220px]' : 'w-[200px]'}`}>
                       Domain Name
                     </th>
-                    {!isClient && (
+                    {user?.role === "SuperAdmin" && (
                       <th className="py-3 px-4 text-left text-xs font-semibold text-gray-400 w-[180px]">
                         Client
                       </th>
@@ -860,12 +889,12 @@ export default function SSLPage() {
                     <th className={`py-3 px-4 text-left text-xs font-semibold text-gray-400 ${isClient ? 'w-[200px]' : 'w-[180px]'}`}>
                       Product
                     </th>
-                    {!isClient && (
+                    {user?.role === "SuperAdmin" && (
                       <th className="py-3 px-4 text-left text-xs font-semibold text-gray-400 w-[150px]">
                         Vendor
                       </th>
                     )}
-                    {!isClient && (
+                    {user?.role === "SuperAdmin" && (
                       <th className="py-3 px-4 text-center text-xs font-semibold text-gray-400 w-[220px]">
                         Amount
                       </th>
@@ -876,38 +905,51 @@ export default function SSLPage() {
                     <th className={`py-3 px-4 text-left text-xs font-semibold text-gray-400 ${isClient ? 'w-[140px]' : 'w-[120px]'}`}>
                       Days to Expire
                     </th>
-                    {!isClient && (
+                    {user?.role === "SuperAdmin" && (
                       <th className="py-3 px-4 text-left text-xs font-semibold text-gray-400 w-[140px]">
                         Deletion Date
                       </th>
                     )}
-                    {!isClient && (
+                    {user?.role === "SuperAdmin" && (
                       <th className="py-3 px-4 text-left text-xs font-semibold text-gray-400 w-[120px]">
                         Days to Delete
                       </th>
                     )}
+                    {user?.role === "SuperAdmin" && (
+                      <>
+                        <th className="py-3 px-4 text-left text-xs font-semibold text-gray-400 w-[140px]">
+                          Grace Period
+                        </th>
+                        <th className="py-3 px-4 text-left text-xs font-semibold text-gray-400 w-[160px]">
+                          Due Date
+                        </th>
+                      </>
+                    )}
                     <th className={`py-3 px-4 text-center text-xs font-semibold text-gray-400 ${isClient ? 'w-[120px]' : 'w-[150px]'}`}>
                       Status
                     </th>
-                    {!isClient && (
+                    {user?.role === "SuperAdmin" && (
                       <th className="py-3 px-4 text-left text-xs font-semibold text-gray-400 w-[200px]">
                         Remarks
                       </th>
                     )}
-                    {!isClient && (
+                    {user?.role === "SuperAdmin" && (
                       <th className="py-3 px-4 text-left text-xs font-semibold text-gray-400 w-[180px]">
                         Last Updated
                       </th>
                     )}
-                    <th className={`py-3 px-4 text-right text-xs font-semibold text-gray-400 ${isClient ? 'w-[100px]' : 'w-[140px]'}`}>
-                      Actions
-                    </th>
+                    {user?.role === "SuperAdmin" && (
+                      <th className="py-3 px-4 text-right text-xs font-semibold text-gray-400 w-[120px]">
+                        Action
+                      </th>
+                    )}
+
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={isClient ? 7 : 15} className="py-8 text-center text-gray-400 uppercase tracking-wider text-xs font-medium">
+                      <td colSpan={isClient ? 6 : (user?.role === "SuperAdmin" ? 15 : 14)} className="py-8 text-center text-gray-400 uppercase tracking-wider text-xs font-medium">
                         <div className="flex flex-col items-center justify-center gap-2">
                           <DashboardLoader label="Fetching SSL Certificates..." />
                         </div>
@@ -945,7 +987,7 @@ export default function SSLPage() {
                               className="min-h-[32px]"
                             />
                           </td>
-                          {!isClient && (
+                          {user?.role === "SuperAdmin" && (
                             <td className="py-3 px-4">
                               <ApiDropdown
                                 endpoint="get-clients"
@@ -1067,7 +1109,7 @@ export default function SSLPage() {
                               style={{ minHeight: "32px" }}
                             />
                           </td>
-                          {!isClient && (
+                          {user?.role === "SuperAdmin" && (
                             <td className="py-3 px-4">
                               <input
                                 type="date"
@@ -1083,7 +1125,7 @@ export default function SSLPage() {
                               />
                             </td>
                           )}
-                          {!isClient && (
+                          {user?.role === "SuperAdmin" && (
                             <td className="py-3 px-4">
                               <input
                                 type="number"
@@ -1093,6 +1135,22 @@ export default function SSLPage() {
                                 style={{ minHeight: "32px" }}
                               />
                             </td>
+                          )}
+                          {user?.role === "SuperAdmin" && (
+                            <>
+                              <td className="py-3 px-4">
+                                <input
+                                  type="number"
+                                  value={newRecordData.grace_period}
+                                  onChange={(e) => handleNewRecordChange("grace_period", e.target.value)}
+                                  className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                  style={{ minHeight: "32px" }}
+                                />
+                              </td>
+                              <td className="py-3 px-4 text-sm text-gray-300">
+                                {formatDate(newRecordData.due_date)}
+                              </td>
+                            </>
                           )}
                           <td className="py-3 px-4">
                             <div className="w-full">
@@ -1106,7 +1164,7 @@ export default function SSLPage() {
                               />
                             </div>
                           </td>
-                          {!isClient && (
+                          {user?.role === "SuperAdmin" && (
                             <td className="py-3 px-4">
                               <input
                                 type="text"
@@ -1120,42 +1178,45 @@ export default function SSLPage() {
                               />
                             </td>
                           )}
-                          {!isClient && (
+                          {user?.role === "SuperAdmin" && (
                             <td className="py-3 px-4 text-sm text-gray-300">
                               {newRecordData?.updated_at_custom
                                 ? newRecordData?.updated_at_custom
                                 : "--"}
                             </td>
                           )}
-                          <td className="py-3 px-4">
-                            <div className="flex items-center justify-end gap-2">
-                              <GlassButton
-                                onClick={handleSaveNew}
-                                disabled={isSaving}
-                                className="p-1.5 min-w-0 bg-green-500/20 hover:bg-green-500/30"
-                                title="Save"
-                              >
-                                {isSaving ? (
-                                  <Loader2 className="w-4 h-4 animate-spin text-green-400" />
-                                ) : (
-                                  <Save className="w-4 h-4 text-green-400" />
-                                )}
-                              </GlassButton>
-                              <GlassButton
-                                onClick={handleCancelAdd}
-                                disabled={isSaving}
-                                className="p-1.5 min-w-0 bg-red-500/20 hover:bg-red-500/30"
-                                title="Cancel"
-                              >
-                                <X className="w-4 h-4 text-red-400" />
-                              </GlassButton>
-                            </div>
-                          </td>
+                          {user?.role === "SuperAdmin" && (
+                            <td className="py-3 px-4">
+                              <div className="flex items-center justify-end gap-2">
+                                <GlassButton
+                                  onClick={handleSaveNew}
+                                  disabled={isSaving}
+                                  className="p-1.5 min-w-0 bg-green-500/20 hover:bg-green-500/30"
+                                  title="Save"
+                                >
+                                  {isSaving ? (
+                                    <Loader2 className="w-4 h-4 animate-spin text-green-400" />
+                                  ) : (
+                                    <Save className="w-4 h-4 text-green-400" />
+                                  )}
+                                </GlassButton>
+                                <GlassButton
+                                  onClick={handleCancelAdd}
+                                  disabled={isSaving}
+                                  className="p-1.5 min-w-0 bg-red-500/20 hover:bg-red-500/30"
+                                  title="Cancel"
+                                >
+                                  <X className="w-4 h-4 text-red-400" />
+                                </GlassButton>
+                              </div>
+                            </td>
+                          )}
+
                         </tr>
                       )}
                       {data.length === 0 ? (
                         <tr key="empty-row">
-                          <td colSpan={isClient ? 7 : 15} className="py-8 text-center text-gray-400">
+                          <td colSpan={isClient ? 6 : (user?.role === "SuperAdmin" ? 15 : 14)} className="py-8 text-center text-gray-400">
                             <div className="flex flex-col items-center justify-center gap-2">
                               <Shield className="w-12 h-12 text-gray-400" />
                               <span className="text-gray-400">
@@ -1179,7 +1240,7 @@ export default function SSLPage() {
                               className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors ${editingId === item.id ? "bg-blue-500/5" : ""
                                 }`}
                             >
-                              {!isClient && (
+                              {user?.role === "SuperAdmin" && (
                                 <td className="py-3 px-4">
                                   <input
                                     type="checkbox"
@@ -1231,7 +1292,7 @@ export default function SSLPage() {
                                   </td>
 
                                   {/* Client */}
-                                  {!isClient && (
+                                  {user?.role === "SuperAdmin" && (
                                     <td className="py-3 px-4">
                                       <ApiDropdown
                                         endpoint="get-clients"
@@ -1295,7 +1356,7 @@ export default function SSLPage() {
                                       className="min-h-[32px]"
                                     />
                                   </td>
-                                  {!isClient && (
+                                  {user?.role === "SuperAdmin" && (
                                     <td className="py-3 px-4">
                                       <ApiDropdown
                                         endpoint="get-venders"
@@ -1329,7 +1390,7 @@ export default function SSLPage() {
                                   )}
 
                                   {/* Amount */}
-                                  {!isClient && (
+                                  {user?.role === "SuperAdmin" && (
                                     <td className="py-3 px-4">
                                       <CurrencyAmountInput
                                         currency={editData[item.id]?.currency || item.currency || "INR"}
@@ -1403,7 +1464,7 @@ export default function SSLPage() {
                                   </td>
 
                                   {/* Deletion Date */}
-                                  {!isClient && (
+                                  {user?.role === "SuperAdmin" && (
                                     <td className="py-3 px-4">
                                       <input
                                         type="date"
@@ -1425,7 +1486,7 @@ export default function SSLPage() {
                                   )}
 
                                   {/* Days to Delete */}
-                                  {!isClient && (
+                                  {user?.role === "SuperAdmin" && (
                                     <td className="py-3 px-4">
                                       <input
                                         type="number"
@@ -1437,6 +1498,22 @@ export default function SSLPage() {
                                         style={{ minHeight: "32px" }}
                                       />
                                     </td>
+                                  )}
+                                  {user?.role === "SuperAdmin" && (
+                                    <>
+                                      <td className="py-3 px-4">
+                                        <input
+                                          type="number"
+                                          value={editData[item.id]?.grace_period ?? item.grace_period ?? 0}
+                                          onChange={(e) => handleEditChange(item.id, "grace_period", e.target.value)}
+                                          className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                          style={{ minHeight: "32px" }}
+                                        />
+                                      </td>
+                                      <td className="py-3 px-4 text-sm text-gray-300">
+                                        {formatDate(editData[item.id]?.due_date || item.due_date || "")}
+                                      </td>
+                                    </>
                                   )}
 
                                   {/* Status */}
@@ -1461,13 +1538,13 @@ export default function SSLPage() {
                                   </td>
 
                                   {/* Remarks */}
-                                  {!isClient && (
+                                  {user?.role === "SuperAdmin" && (
                                     <td className="py-3 px-4">
                                       <input
                                         type="text"
                                         value={
                                           editData[item.id]?.remarks ||
-                                          item?.latest_remark?.remark ||
+                                          item?.remarks ||
                                           ""
                                         }
                                         onChange={(e) =>
@@ -1484,7 +1561,7 @@ export default function SSLPage() {
                                   )}
 
                                   {/* Last Updated (Read-only) */}
-                                  {!isClient && (
+                                  {user?.role === "SuperAdmin" && (
                                     <td className="py-3 px-4 text-sm text-gray-300">
                                       {item.last_updated || formatLastUpdated(item.updated_at)}
                                     </td>
@@ -1503,7 +1580,7 @@ export default function SSLPage() {
                                   </td>
 
                                   {/* Client */}
-                                  {!isClient && (
+                                  {user?.role === "SuperAdmin" && (
                                     <td className="py-3 px-4">
                                       <div className="flex items-center gap-2">
                                         <User className="w-4 h-4 text-gray-400 flex-shrink-0" />
@@ -1524,7 +1601,7 @@ export default function SSLPage() {
                                     </div>
                                   </td>
 
-                                  {!isClient && (
+                                  {user?.role === "SuperAdmin" && (
                                     <td className="py-3 px-4">
                                       <div className="flex items-center gap-2">
                                         <Package className="w-4 h-4 text-gray-400 flex-shrink-0" />
@@ -1536,7 +1613,7 @@ export default function SSLPage() {
                                   )}
 
                                   {/* Amount */}
-                                  {!isClient && (
+                                  {user?.role === "SuperAdmin" && (
                                     <td className="py-3 px-4 text-xs text-gray-300">
                                       <div className="flex items-center justify-center gap-1 font-medium text-white">
                                         <span className="text-[#BC8969]">{getCurrencySymbol(item.currency)}</span>
@@ -1576,7 +1653,7 @@ export default function SSLPage() {
                                   </td>
 
                                   {/* Deletion Date */}
-                                  {!isClient && (
+                                  {user?.role === "SuperAdmin" && (
                                     <td className="py-3 px-4 text-sm text-gray-300">
                                       <div className="flex items-center gap-2">
                                         {item.deletion_date ? formatDate(item.deletion_date) : "--"}
@@ -1585,7 +1662,7 @@ export default function SSLPage() {
                                   )}
 
                                   {/* Days to Delete */}
-                                  {!isClient && (
+                                  {user?.role === "SuperAdmin" && (
                                     <td className="py-3 px-4">
                                       {item.deletion_date ? (
                                         <div className={`px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-gray-500/10 border-gray-500/20 ${getDaysToColor(item.days_to_delete)}`}>
@@ -1595,6 +1672,16 @@ export default function SSLPage() {
                                         <span className="text-gray-500">--</span>
                                       )}
                                     </td>
+                                  )}
+                                  {user?.role === "SuperAdmin" && (
+                                    <>
+                                      <td className="py-3 px-4 text-sm text-gray-300">
+                                        {item.grace_period ?? 0} days
+                                      </td>
+                                      <td className="py-3 px-4 text-sm text-gray-300">
+                                        {formatDate(item.due_date as string)}
+                                      </td>
+                                    </>
                                   )}
 
                                   {/* Status */}
@@ -1611,7 +1698,7 @@ export default function SSLPage() {
                                   </td>
 
                                   {/* Remarks */}
-                                  {!isClient && (
+                                  {user?.role === "SuperAdmin" && (
                                     <td className="py-3 px-4">
                                       <div className="flex items-center gap-2">
                                         <span className="text-sm text-gray-300 truncate max-w-[150px]">
@@ -1620,7 +1707,7 @@ export default function SSLPage() {
                                         {item.has_remark_history && (
                                           <button
                                             onClick={() => setExpandedRemarkId(expandedRemarkId === item.id ? null : item.id)}
-                                            className={`p-1 rounded-full transition-all duration-300 ${expandedRemarkId === item.id
+                                            className={`p-1 rounded-full transition-all duration-300 flex-shrink-0 ml-1 ${expandedRemarkId === item.id
                                               ? "bg-blue-500/30 text-blue-300 rotate-180"
                                               : "hover:bg-blue-500/20 text-blue-400 hover:text-blue-300"
                                               }`}
@@ -1634,7 +1721,7 @@ export default function SSLPage() {
                                   )}
 
                                   {/* Last Updated */}
-                                  {!isClient && (
+                                  {user?.role === "SuperAdmin" && (
                                     <td className="py-3 px-4 text-sm text-gray-300">
                                       {item.last_updated || formatLastUpdated(item.updated_at)}
                                     </td>
@@ -1642,68 +1729,60 @@ export default function SSLPage() {
                                 </>
                               )}
 
-                              {/* Actions */}
-                              <td className="py-3 px-4 whitespace-nowrap">
-                                <div className="flex items-center justify-end gap-2">
-                                  {editingId === item.id ? (
-                                    <>
-                                      <GlassButton
-                                        onClick={() => handleSave(item.id)}
-                                        disabled={isSaving}
-                                        className="p-1.5 min-w-0 bg-green-500/20 hover:bg-green-500/30"
-                                        title="Save"
-                                      >
-                                        {isSaving ? (
-                                          <Loader2 className="w-4 h-4 animate-spin text-green-400" />
-                                        ) : (
-                                          <Save className="w-4 h-4 text-green-400" />
-                                        )}
-                                      </GlassButton>
-                                      <GlassButton
-                                        onClick={handleCancelEdit}
-                                        disabled={isSaving}
-                                        className="p-1.5 min-w-0 bg-red-500/20 hover:bg-red-500/30"
-                                        title="Cancel"
-                                      >
-                                        <X className="w-4 h-4 text-red-400" />
-                                      </GlassButton>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <GlassButton
-                                        onClick={() => handleViewDetails(item)}
-                                        className="p-1.5 min-w-0 hover:bg-blue-500/20"
-                                        title="View Details"
-                                      >
-                                        <Eye className="w-4 h-4 text-gray-300 hover:text-blue-400 transition-colors" />
-                                      </GlassButton>
-                                      {!isClient && (
-                                        <>
-                                          <GlassButton
-                                            onClick={() => handleEdit(item)}
-                                            className="p-1.5 min-w-0 hover:bg-white/10"
-                                            title="Edit"
-                                          >
-                                            <Edit className="w-4 h-4 text-gray-300 hover:text-blue-400 transition-colors" />
-                                          </GlassButton>
-                                          <GlassButton
-                                            onClick={() => handleDeleteClick(item.id)}
-                                            className="p-1.5 min-w-0 hover:bg-red-500/20"
-                                            title="Delete"
-                                          >
-                                            <Trash2 className="w-4 h-4 text-gray-300 hover:text-red-400 transition-colors" />
-                                          </GlassButton>
-                                        </>
-                                      )}
-                                    </>
-                                  )}
-                                </div>
-                              </td>
+                              {user?.role === "SuperAdmin" && (
+                                <td className="py-3 px-4">
+                                  <div className="flex items-center justify-end gap-2">
+                                    {editingId === item.id ? (
+                                      <>
+                                        <GlassButton
+                                          onClick={() => handleSave(item.id)}
+                                          disabled={isSaving}
+                                          className="p-1.5 min-w-0 bg-green-500/20 hover:bg-green-500/30"
+                                          title="Save"
+                                        >
+                                          {isSaving ? (
+                                            <Loader2 className="w-4 h-4 animate-spin text-green-400" />
+                                          ) : (
+                                            <Save className="w-4 h-4 text-green-400" />
+                                          )}
+                                        </GlassButton>
+                                        <GlassButton
+                                          onClick={handleCancelEdit}
+                                          disabled={isSaving}
+                                          className="p-1.5 min-w-0 bg-red-500/20 hover:bg-red-500/30"
+                                          title="Cancel"
+                                        >
+                                          <X className="w-4 h-4 text-red-400" />
+                                        </GlassButton>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <GlassButton
+                                          onClick={() => handleEdit(item)}
+                                          className="p-1.5 min-w-0 hover:bg-white/10"
+                                          title="Edit"
+                                        >
+                                          <Edit className="w-4 h-4 text-white hover:text-blue-400 transition-colors" />
+                                        </GlassButton>
+                                        <GlassButton
+                                          onClick={() => handleDeleteClick(item.id)}
+                                          className="p-1.5 min-w-0 hover:bg-red-500/20"
+                                          title="Delete"
+                                        >
+                                          <Trash2 className="w-4 h-4 text-red-400 hover:text-red-300 transition-colors" />
+                                        </GlassButton>
+                                      </>
+                                    )}
+                                  </div>
+                                </td>
+                              )}
+
+
                             </tr>
                             {/* Expansion Row for Details */}
                             {expandedRowId === item.id && (
                               <tr className="bg-white/5 animate-in fade-in slide-in-from-top-4 duration-300">
-                                <td colSpan={isClient ? 7 : 15} className="py-4 px-6">
+                                <td colSpan={isClient ? 6 : 14} className="py-4 px-6">
                                   <div className="grid grid-cols-2 md:grid-cols-4 gap-6 bg-black/20 p-4 rounded-xl border border-white/5 shadow-inner">
                                     <div><span className="block text-xs text-gray-400 mb-1 text-left">Domain Name</span><span className="block text-sm text-gray-200 font-medium text-left">{item.domain_name || "--"}</span></div>
                                     <div><span className="block text-xs text-gray-400 mb-1 text-left">Client Name</span><span className="block text-sm text-gray-200 font-medium text-left">{item.client_name || "--"}</span></div>
@@ -1721,7 +1800,7 @@ export default function SSLPage() {
                             {/* Expansion Row for Remark History */}
                             {expandedRemarkId === item.id && (
                               <tr key={`history-row-${item.id}`} className="bg-blue-500/5 animate-in fade-in slide-in-from-top-4 duration-500">
-                                <td colSpan={isClient ? 7 : 15} className="py-0 px-4">
+                                <td colSpan={isClient ? 6 : 14} className="py-0 px-4">
                                   <div className="border-t border-blue-500/20 py-4 pb-6 ml-12 mr-12">
                                     <RemarkHistory key={`history-${item.id}-${item.updated_at}`} module="SSL" recordId={item.id} />
                                   </div>

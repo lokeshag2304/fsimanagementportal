@@ -97,6 +97,8 @@ export interface SubscriptionItem {
   status: number;
   remarks: string | null;
   updated_at: string | null;
+  grace_period?: number;
+  due_date?: string | null;
 }
 
 interface PaginationState {
@@ -442,6 +444,12 @@ export default function Dashboard() {
                     <th className="py-3 px-4 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Client</th>
                     <th className="py-3 px-4 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Amount</th>
                     <th className="py-3 px-4 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Renewal Date</th>
+                    {user?.role !== 'ClientAdmin' && user?.role !== 'Client' && user?.role !== 'client' && (
+                      <>
+                        <th className="py-3 px-4 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Grace Period</th>
+                        <th className="py-3 px-4 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Due Date</th>
+                      </>
+                    )}
                     <th className="py-3 px-4 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Status</th>
                     <th className="py-3 px-4 text-left text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider whitespace-nowrap">Last Updated</th>
                   </tr>
@@ -458,6 +466,12 @@ export default function Dashboard() {
                            {item.amount ? Number(item.amount).toFixed(2) : "0.00"}
                          </td>
                         <td className="py-3 px-4 text-sm text-[var(--text-muted)]">{formatDateForDisplay(item.renewal_date || "")}</td>
+                        {user?.role !== 'ClientAdmin' && user?.role !== 'Client' && user?.role !== 'client' && (
+                          <>
+                            <td className="py-3 px-4 text-sm text-[var(--text-muted)]">{item.grace_period ?? 0} days</td>
+                            <td className="py-3 px-4 text-sm text-[var(--text-muted)]">{formatDateForDisplay(item.due_date || "")}</td>
+                          </>
+                        )}
                         <td className="py-3 px-4">
                           <Badge variant={item.status === 1 ? "success" : "secondary"}>
                             {item.status === 1 ? "Active" : "Inactive"}
@@ -468,7 +482,7 @@ export default function Dashboard() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={7} className="py-8 text-center text-[var(--text-muted)]">No data available</td>
+                      <td colSpan={user?.role !== 'ClientAdmin' && user?.role !== 'Client' && user?.role !== 'client' ? 9 : 7} className="py-8 text-center text-[var(--text-muted)]">No data available</td>
                     </tr>
                   )}
                 </tbody>

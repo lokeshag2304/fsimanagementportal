@@ -51,6 +51,8 @@ interface Category {
   today_date: string;
   created_at: string;
   updated_at: string;
+  grace_period?: number;
+  due_date?: string;
 }
 
 interface CategoryDetailsData {
@@ -328,6 +330,32 @@ export default function DynamicDetailsPage({ recordType: propRecordType, recordI
                   <div>
                     <h4 className="text-sm font-medium text-gray-400">Last Updated</h4>
                     <p className="text-white font-medium mt-1">{formatDate(category.updated_at)}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Grace Period */}
+              <div className="p-4 rounded-lg bg-white/5 border border-white/10">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-pink-500/20 rounded-lg">
+                    <Clock className="w-4 h-4 text-pink-400" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-400">Grace Period</h4>
+                    <p className="text-white font-medium mt-1">{category.grace_period !== undefined ? `${category.grace_period} days` : '0 days'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Due Date */}
+              <div className="p-4 rounded-lg bg-white/5 border border-white/10">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 bg-red-500/20 rounded-lg">
+                    <Calendar className="w-4 h-4 text-red-400" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-400">Due Date</h4>
+                    <p className="text-white font-medium mt-1">{category.due_date ? formatSimpleDate(category.due_date) : '-'}</p>
                   </div>
                 </div>
               </div>

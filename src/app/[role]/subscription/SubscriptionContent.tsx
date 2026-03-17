@@ -40,7 +40,7 @@ import { getNavigationByRole } from "@/lib/getNavigationByRole";
 import { ApiDropdown, glassSelectStyles } from "@/common/DynamicDropdown";
 import { CurrencyAmountInput } from "@/common/CurrencyAmountInput";
 import { GlassSelect } from "@/components/glass/GlassSelect";
-import { handleDateChangeLogic, getDaysToColor } from "@/utils/dateCalculations";
+import { handleDateChangeLogic, getDaysToColor, calculateDueDate } from "@/utils/dateCalculations";
 import { normalizeEntityPayload } from "@/utils/normalizePayload";
 import { emitEntityChange } from "@/lib/entityBus";
 import { formatLastUpdated } from "@/utils/dateFormatter";
@@ -72,6 +72,8 @@ interface Subscription {
   updated_at: string;
   remarks: string;
   has_remark_history?: boolean;
+  grace_period?: number;
+  due_date?: string | null;
 }
 
 interface AddEditSubscription {
@@ -92,6 +94,8 @@ interface AddEditSubscription {
   product_name: string;
   vendor_name: string;
   remark_id: number;
+  grace_period?: number;
+  due_date?: string;
 }
 
 const currencyOptions = [
@@ -322,6 +326,22 @@ const SubscriptionRow = React.memo(({
                 className={`w-20 px-3 py-1 bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] rounded text-sm outline-none focus:ring-0 cursor-not-allowed ${getDaysToColor(editData[item.id]?.days_to_delete ?? item.days_to_delete)}`}
               />
             </td>
+            {!isClient && (
+              <>
+                <td className="py-3 px-4">
+                  <input
+                    type="number"
+                    value={editData[item.id]?.grace_period ?? item.grace_period ?? 0}
+                    onChange={(e) => handleEditChange(item.id, "grace_period", e.target.value)}
+                    className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                    style={{ minHeight: "32px" }}
+                  />
+                </td>
+                <td className="py-3 px-4 text-sm text-gray-300">
+                  {formatDate(editData[item.id]?.due_date ?? item.due_date)}
+                </td>
+              </>
+            )}
           </>
         ) : (
           <>
@@ -364,6 +384,16 @@ const SubscriptionRow = React.memo(({
                 {item.days_to_delete ?? '--'}
               </span>
             </td>
+            {!isClient && (
+              <>
+                <td className="py-3 px-4 text-sm text-gray-300">
+                  {item.grace_period ?? 0} days
+                </td>
+                <td className="py-3 px-4 text-sm text-gray-300">
+                  {formatDate(item.due_date)}
+                </td>
+              </>
+            )}
           </>
         )}
 
@@ -425,7 +455,7 @@ const SubscriptionRow = React.memo(({
                   {item.has_remark_history && (
                     <button
                       onClick={() => setIsHistoryExpanded(!isHistoryExpanded)}
-                      className={`p-1 rounded-full transition-all duration-300 ${isHistoryExpanded
+                      className={`p-1 rounded-full transition-all duration-300 flex-shrink-0 ml-1 ${isHistoryExpanded
                         ? "bg-blue-500/30 text-blue-300 rotate-180"
                         : "hover:bg-blue-500/20 text-blue-400 hover:text-blue-300"
                         }`}
@@ -516,6 +546,12 @@ const SubscriptionRow = React.memo(({
               <div><span className="block text-xs text-gray-400 mb-1 text-left">Amount</span><span className="block text-sm text-gray-200 font-medium text-left">{getCurrencySymbol(item.currency)}{item.amount !== undefined ? item.amount : "--"}</span></div>
               <div><span className="block text-xs text-gray-400 mb-1 text-left">Renewal Date</span><span className="block text-sm text-gray-200 font-medium text-left">{formatDate((item as any).renewal_date)}</span></div>
               <div><span className="block text-xs text-gray-400 mb-1 text-left">Deletion Date</span><span className="block text-sm text-gray-200 font-medium text-left">{formatDate((item as any).deletion_date)}</span></div>
+              {!isClient && (
+                <>
+                  <div><span className="block text-xs text-gray-400 mb-1 text-left">Grace Period</span><span className="block text-sm text-gray-200 font-medium text-left">{item.grace_period ?? 0} days</span></div>
+                  <div><span className="block text-xs text-gray-400 mb-1 text-left">Due Date</span><span className="block text-sm text-gray-200 font-medium text-left">{formatDate(item.due_date)}</span></div>
+                </>
+              )}
               <div><span className="block text-xs text-gray-400 mb-1 text-left">Remarks</span><span className="block text-sm text-gray-200 font-medium text-left">{item.remarks || "--"}</span></div>
             </div>
           </td>
@@ -575,6 +611,8 @@ export default function SubscriptionsPage() {
     days_to_delete_preview: "" as string | number,
     status: "1" as "1" | "0",
     remarks: "",
+    grace_period: "0",
+    due_date: "",
   });
 
   const [editData, setEditData] = useState<
@@ -715,6 +753,8 @@ export default function SubscriptionsPage() {
       days_to_delete_preview: "",
       status: "1",
       remarks: "",
+      grace_period: "0",
+      due_date: "",
     });
   };
 
@@ -812,6 +852,8 @@ export default function SubscriptionsPage() {
         days_to_delete_preview: "",
         status: "1",
         remarks: "",
+        grace_period: "0",
+        due_date: "",
       });
     } catch (error: any) {
       console.error("Save error:", error);
@@ -964,11 +1006,13 @@ export default function SubscriptionsPage() {
       extra = handleDateChangeLogic(field, value, currentRenewal, currentDeletion, toast) || {};
     }
 
-    setNewRecordData((prev) => ({
-      ...prev,
-      [field]: value,
-      ...extra,
-    }));
+    setNewRecordData((prev) => {
+        const newData = { ...prev, [field]: value, ...extra };
+        if (field === "renewal_date" || field === "grace_period") {
+           newData.due_date = calculateDueDate(newData.renewal_date, newData.grace_period) || "";
+        }
+        return newData;
+    });
   };
 
   // Handle field change for editing
@@ -990,6 +1034,10 @@ export default function SubscriptionsPage() {
         const currentDeletion = field === "deletion_date" ? value : (currentRow.deletion_date ?? actualRow.deletion_date);
         const extra = handleDateChangeLogic(field, value, currentRenewal, currentDeletion, toast) || {};
         Object.assign(updatedItem, extra);
+      }
+
+      if (field === "renewal_date" || field === "grace_period") {
+        updatedItem.due_date = calculateDueDate(updatedItem.renewal_date ?? actualRow.renewal_date, updatedItem.grace_period ?? actualRow.grace_period);
       }
 
       return {
@@ -1342,6 +1390,16 @@ export default function SubscriptionsPage() {
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[140px]">
                       Days to Delete
                     </th>
+                    {!isClient && (
+                      <>
+                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[140px]">
+                          Grace Period
+                        </th>
+                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[160px]">
+                          Due Date
+                        </th>
+                      </>
+                    )}
 
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[140px]">
                       Status
@@ -1505,6 +1563,23 @@ export default function SubscriptionsPage() {
                             className={`w-20 px-3 py-1.5 bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] rounded text-sm outline-none focus:ring-0 cursor-not-allowed ${getDaysToColor((newRecordData as any).days_to_delete)}`}
                           />
                         </td>
+                        {!isClient && (
+                          <>
+                            <td className="py-3 px-4">
+                              <input
+                                type="number"
+                                value={newRecordData.grace_period}
+                                onChange={(e) => handleNewRecordChange("grace_period", e.target.value)}
+                                className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                style={{ minHeight: "32px" }}
+                                placeholder="0"
+                              />
+                            </td>
+                            <td className="py-3 px-4 text-sm text-gray-300">
+                              {formatDate(newRecordData.due_date)}
+                            </td>
+                          </>
+                        )}
                         <td className="py-3 px-4">
                           <div className="w-full">
                             <GlassSelect

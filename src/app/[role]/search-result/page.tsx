@@ -31,6 +31,8 @@ interface SearchResult {
   vendor_name: string | null
   amount: string | null
   status: number
+  grace_period?: number
+  due_date?: string
 }
 
 interface PaginationState {
@@ -234,6 +236,12 @@ export default function SearchResultsPage({ query, onSearchChange }: { query?: s
                   <th className="text-left py-3 px-4 text-xs font-medium text-[var(--text-tertiary)]">
                     Status
                   </th>
+                  <th className="text-left py-3 px-4 text-xs font-medium text-[var(--text-tertiary)]">
+                    Grace Period
+                  </th>
+                  <th className="text-left py-3 px-4 text-xs font-medium text-[var(--text-tertiary)]">
+                    Due Date
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -286,6 +294,12 @@ export default function SearchResultsPage({ query, onSearchChange }: { query?: s
                           Inactive
                         </span>
                       )}
+                    </td>
+                    <td className="py-3 px-4 text-sm text-[var(--text-secondary)]">
+                      {item.grace_period !== undefined ? `${item.grace_period} days` : '-'}
+                    </td>
+                    <td className="py-3 px-4 text-sm text-[var(--text-secondary)]">
+                      {item.due_date ? formatLastUpdated(item.due_date) : '-'}
                     </td>
                   </tr>
                 ))

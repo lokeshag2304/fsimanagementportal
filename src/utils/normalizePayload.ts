@@ -20,5 +20,7 @@ export const normalizeEntityPayload = (row: any) => ({
     deletion_date: row.deletion_date,
     status: row.status,
     remarks: row.remarks,
-    domain_protected: row.domain_protected
+    domain_protected: row.domain_protected,
+    grace_period: row.grace_period,
+    due_date: row.due_date
 });

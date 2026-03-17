@@ -1,0 +1,108 @@
+--- Table: user_management ---
+id | bigint(20) unsigned
+name | varchar(255)
+client_name | varchar(255)
+amount | decimal(10,2)
+start_date | date
+expiry_date | date
+status | tinyint(1)
+remarks | text
+created_at | timestamp
+updated_at | timestamp
+
+--- Table: emails ---
+id | bigint(20) unsigned
+product_id | int(10) unsigned
+domain_id | int(11)
+client_id | bigint(20) unsigned
+vendor_id | int(10) unsigned
+quantity | int(11)
+bill_type | varchar(50)
+start_date | date
+amount | decimal(10,2)
+renewal_date | date
+days_left | int(11)
+deletion_date | date
+days_to_delete | int(11)
+grace_period | int(11)
+due_date | datetime
+status | tinyint(1)
+remarks | text
+created_at | timestamp
+updated_at | timestamp
+
+--- Table: subscriptions ---
+id | bigint(20) unsigned
+product_id | int(10) unsigned
+client_id | bigint(20) unsigned
+vendor_id | int(10) unsigned
+amount | decimal(10,2)
+currency | varchar(10)
+renewal_date | date
+days_left | int(11)
+deletion_date | date
+days_to_delete | int(11)
+grace_period | int(11)
+due_date | datetime
+status | tinyint(1)
+remarks | text
+created_at | timestamp
+updated_at | timestamp
+
+--- Table: s_s_l_s ---
+id | bigint(20) unsigned
+domain_id | bigint(20) unsigned
+product_id | int(10) unsigned
+client_id | bigint(20) unsigned
+vendor_id | int(10) unsigned
+amount | decimal(10,2)
+renewal_date | date
+days_left | int(11)
+deletion_date | date
+days_to_delete | int(11)
+grace_period | int(11)
+due_date | datetime
+status | tinyint(1)
+remarks | text
+created_at | timestamp
+updated_at | timestamp
+
+--- Table: domains ---
+id | bigint(20) unsigned
+name | varchar(255)
+product_id | bigint(20) unsigned
+client_id | bigint(20) unsigned
+vendor_id | bigint(20) unsigned
+amount | decimal(10,2)
+renewal_date | date
+days_left | int(11)
+deletion_date | date
+days_to_delete | int(11)
+grace_period | int(11)
+due_date | datetime
+status | tinyint(1)
+remarks | text
+domain_protected | tinyint(1)
+created_at | timestamp
+updated_at | timestamp
+
+--- Table: hostings ---
+id | bigint(20) unsigned
+product_id | int(10) unsigned
+domain_id | int(11)
+client_id | bigint(20) unsigned
+vendor_id | int(10) unsigned
+amount | decimal(10,2)
+bill_type | varchar(50)
+start_date | date
+renewal_date | date
+days_left | int(11)
+deletion_date | date
+days_to_delete | int(11)
+grace_period | int(11)
+due_date | datetime
+status | tinyint(1)
+remarks | text
+created_at | timestamp
+updated_at | timestamp
+

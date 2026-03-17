@@ -37,6 +37,9 @@ interface RecentCategory {
   status: string;
   created_at: string;
   days_to_expired: number;
+  product_name: string;
+  grace_period?: number;
+  due_date?: string;
 }
 
 // Client Details Interface
@@ -389,6 +392,8 @@ export default function DynamicDetailsPage({
                         <th className="py-4 px-6 text-left text-sm font-medium text-gray-300">Service Type</th>
                         <th className="py-4 px-6 text-left text-sm font-medium text-gray-300">Products</th>
                         <th className="py-4 px-6 text-left text-sm font-medium text-gray-300">Status</th>
+                        <th className="py-4 px-6 text-left text-sm font-medium text-gray-300">Grace Period</th>
+                        <th className="py-4 px-6 text-left text-sm font-medium text-gray-300">Due Date</th>
                         <th className="py-4 px-6 text-left text-sm font-medium text-gray-300">Created Date</th>
                         <th className="py-4 px-6 text-left text-sm font-medium text-gray-300">Days Left</th>
                       </tr>
@@ -427,6 +432,12 @@ export default function DynamicDetailsPage({
                             <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(item.status, item.days_to_expired)}`}>
                               {item.status}
                             </span>
+                          </td>
+                          <td className="py-4 px-6">
+                            <span className="text-sm text-gray-300">{item.grace_period !== undefined ? `${item.grace_period} days` : '0 days'}</span>
+                          </td>
+                          <td className="py-4 px-6">
+                            <span className="text-sm text-gray-300">{item.due_date ? new Date(item.due_date).toLocaleDateString() : '-'}</span>
                           </td>
                           <td className="py-4 px-6">
                             <div className="flex items-center gap-2">
