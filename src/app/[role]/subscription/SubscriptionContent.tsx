@@ -40,7 +40,7 @@ import { getNavigationByRole } from "@/lib/getNavigationByRole";
 import { ApiDropdown, glassSelectStyles } from "@/common/DynamicDropdown";
 import { CurrencyAmountInput } from "@/common/CurrencyAmountInput";
 import { GlassSelect } from "@/components/glass/GlassSelect";
-import { handleDateChangeLogic, getDaysToColor, calculateDueDate } from "@/utils/dateCalculations";
+import { handleDateChangeLogic, getDaysToColor, calculateDueDate, calculateGraceDaysFromDate } from "@/utils/dateCalculations";
 import { normalizeEntityPayload } from "@/utils/normalizePayload";
 import { emitEntityChange } from "@/lib/entityBus";
 import { formatLastUpdated } from "@/utils/dateFormatter";
@@ -328,17 +328,29 @@ const SubscriptionRow = React.memo(({
             </td>
             {!isClient && (
               <>
+                {/* Grace End Date — identical to Deletion Date picker */}
                 <td className="py-3 px-4">
                   <input
-                    type="number"
-                    value={editData[item.id]?.grace_period ?? item.grace_period ?? 0}
-                    onChange={(e) => handleEditChange(item.id, "grace_period", e.target.value)}
+                    type="date"
+                    value={(editData[item.id] as any)?.grace_end_date || ""}
+                    onChange={(e) => handleEditChange(item.id, "grace_end_date" as any, e.target.value)}
+                    min={editData[item.id]?.renewal_date || item.renewal_date || undefined}
                     className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
                     style={{ minHeight: "32px" }}
                   />
                 </td>
-                <td className="py-3 px-4 text-sm text-gray-300">
-                  {formatDate(editData[item.id]?.due_date ?? item.due_date)}
+                {/* Due Date → X days pill */}
+                <td className="py-3 px-4">
+                  {(() => {
+                    const gp = editData[item.id]?.grace_period ?? item.grace_period ?? 0;
+                    return Number(gp) > 0 ? (
+                      <div className={`px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(gp)}`}>
+                        {gp} days
+                      </div>
+                    ) : (
+                      <span className="text-gray-500 text-xs">--</span>
+                    );
+                  })()}
                 </td>
               </>
             )}
@@ -386,11 +398,25 @@ const SubscriptionRow = React.memo(({
             </td>
             {!isClient && (
               <>
+                {/* Grace Period view — show derived end date */}
                 <td className="py-3 px-4 text-sm text-gray-300">
-                  {item.grace_period ?? 0} days
+                  {(() => {
+                    if (!item.grace_period || !item.renewal_date) return <span className="text-gray-500">--</span>;
+                    const rd = new Date(item.renewal_date);
+                    if (isNaN(rd.getTime())) return <span className="text-gray-500">--</span>;
+                    rd.setDate(rd.getDate() + Number(item.grace_period));
+                    return formatDate(rd.toISOString().split("T")[0]);
+                  })()}
                 </td>
-                <td className="py-3 px-4 text-sm text-gray-300">
-                  {formatDate(item.due_date)}
+                {/* Due Date → X days pill */}
+                <td className="py-3 px-4">
+                  {item.grace_period && Number(item.grace_period) > 0 ? (
+                    <div className={`px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(item.grace_period)}`}>
+                      {item.grace_period} days
+                    </div>
+                  ) : (
+                    <span className="text-gray-500">--</span>
+                  )}
                 </td>
               </>
             )}
@@ -612,6 +638,7 @@ export default function SubscriptionsPage() {
     status: "1" as "1" | "0",
     remarks: "",
     grace_period: "0",
+    grace_end_date: "",
     due_date: "",
   });
 
@@ -754,6 +781,7 @@ export default function SubscriptionsPage() {
       status: "1",
       remarks: "",
       grace_period: "0",
+      grace_end_date: "",
       due_date: "",
     });
   };
@@ -853,6 +881,7 @@ export default function SubscriptionsPage() {
         status: "1",
         remarks: "",
         grace_period: "0",
+        grace_end_date: "",
         due_date: "",
       });
     } catch (error: any) {
@@ -908,6 +937,15 @@ export default function SubscriptionsPage() {
   // Handle Edit - Clear previous edit data
   const handleEdit = (subscription: Subscription) => {
     console.log(subscription);
+    // Derive grace_end_date from grace_period + renewal_date for backward compat
+    let graceEndDate = "";
+    if (subscription.grace_period && subscription.renewal_date) {
+      const rd = new Date(subscription.renewal_date);
+      if (!isNaN(rd.getTime())) {
+        rd.setDate(rd.getDate() + Number(subscription.grace_period));
+        graceEndDate = rd.toISOString().split("T")[0];
+      }
+    }
     setEditingId(subscription.id);
     setEditData({
       [subscription.id]: {
@@ -922,7 +960,8 @@ export default function SubscriptionsPage() {
         amount: subscription.amount || 0,
         currency: subscription.currency || "INR",
         remark_id: null,
-      },
+        grace_end_date: graceEndDate,
+      } as any,
     });
   };
 
@@ -995,7 +1034,7 @@ export default function SubscriptionsPage() {
 
   // Handle field change for new record
   const handleNewRecordChange = (
-    field: keyof typeof newRecordData,
+    field: keyof typeof newRecordData | "grace_end_date",
     value: any
   ) => {
     let extra: any = {};
@@ -1004,21 +1043,35 @@ export default function SubscriptionsPage() {
       const currentRenewal = field === "renewal_date" ? value : newRecordData.renewal_date;
       const currentDeletion = field === "deletion_date" ? value : newRecordData.deletion_date;
       extra = handleDateChangeLogic(field, value, currentRenewal, currentDeletion, toast) || {};
+      // Recompute grace days when renewal_date changes and grace_end_date is set
+      if (field === "renewal_date" && newRecordData.grace_end_date) {
+        const graceDays = calculateGraceDaysFromDate(newRecordData.grace_end_date, value);
+        extra.grace_period = String(graceDays);
+        extra.due_date = calculateDueDate(value, graceDays) || "";
+      }
     }
 
-    setNewRecordData((prev) => {
-        const newData = { ...prev, [field]: value, ...extra };
-        if (field === "renewal_date" || field === "grace_period") {
-           newData.due_date = calculateDueDate(newData.renewal_date, newData.grace_period) || "";
-        }
-        return newData;
-    });
+    // Grace end date picker → compute grace_period days
+    if (field === "grace_end_date") {
+      const graceDays = calculateGraceDaysFromDate(value, newRecordData.renewal_date);
+      if (value && newRecordData.renewal_date && graceDays === 0 && value < newRecordData.renewal_date) {
+        toast({ title: "Validation", description: "Grace End Date must be on or after Renewal Date.", variant: "destructive" });
+      }
+      extra.grace_period = String(graceDays);
+      extra.due_date = calculateDueDate(newRecordData.renewal_date, graceDays) || "";
+    }
+
+    setNewRecordData((prev) => ({
+      ...prev,
+      [field]: value,
+      ...extra,
+    } as any));
   };
 
   // Handle field change for editing
   const handleEditChange = (
     id: number,
-    field: keyof Subscription,
+    field: keyof Subscription | "grace_end_date",
     value: any
   ) => {
     setEditData((prev) => {
@@ -1034,10 +1087,25 @@ export default function SubscriptionsPage() {
         const currentDeletion = field === "deletion_date" ? value : (currentRow.deletion_date ?? actualRow.deletion_date);
         const extra = handleDateChangeLogic(field, value, currentRenewal, currentDeletion, toast) || {};
         Object.assign(updatedItem, extra);
+        // Recompute grace days when renewal_date changes and grace_end_date is set
+        if (field === "renewal_date") {
+          const existingGraceEnd = (currentRow as any).grace_end_date ?? "";
+          if (existingGraceEnd) {
+            const newGraceDays = calculateGraceDaysFromDate(existingGraceEnd, value);
+            updatedItem.grace_period = newGraceDays;
+            updatedItem.due_date = calculateDueDate(value, newGraceDays);
+          } else {
+            updatedItem.due_date = calculateDueDate(value, updatedItem.grace_period ?? actualRow.grace_period);
+          }
+        }
       }
 
-      if (field === "renewal_date" || field === "grace_period") {
-        updatedItem.due_date = calculateDueDate(updatedItem.renewal_date ?? actualRow.renewal_date, updatedItem.grace_period ?? actualRow.grace_period);
+      // Grace end date picker → compute grace_period days
+      if (field === "grace_end_date") {
+        const renewalDate = (currentRow as any).renewal_date ?? actualRow.renewal_date ?? "";
+        const graceDays = calculateGraceDaysFromDate(value, renewalDate);
+        updatedItem.grace_period = graceDays;
+        updatedItem.due_date = calculateDueDate(renewalDate, graceDays);
       }
 
       return {
@@ -1565,18 +1633,26 @@ export default function SubscriptionsPage() {
                         </td>
                         {!isClient && (
                           <>
+                            {/* Grace End Date — identical to Deletion Date picker */}
                             <td className="py-3 px-4">
                               <input
-                                type="number"
-                                value={newRecordData.grace_period}
-                                onChange={(e) => handleNewRecordChange("grace_period", e.target.value)}
+                                type="date"
+                                value={(newRecordData as any).grace_end_date || ""}
+                                onChange={(e) => handleNewRecordChange("grace_end_date" as any, e.target.value)}
+                                min={newRecordData.renewal_date || undefined}
                                 className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
                                 style={{ minHeight: "32px" }}
-                                placeholder="0"
                               />
                             </td>
-                            <td className="py-3 px-4 text-sm text-gray-300">
-                              {formatDate(newRecordData.due_date)}
+                            {/* Due Date → X days pill */}
+                            <td className="py-3 px-4">
+                              {newRecordData.grace_period && Number(newRecordData.grace_period) > 0 ? (
+                                <div className={`px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(newRecordData.grace_period)}`}>
+                                  {newRecordData.grace_period} days
+                                </div>
+                              ) : (
+                                <span className="text-gray-500 text-xs">--</span>
+                              )}
                             </td>
                           </>
                         )}

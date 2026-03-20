@@ -186,12 +186,19 @@ export default function ProductsPage() {
 
   // Handle error
   const handleError = (error: any, defaultMessage: string) => {
+    console.error("API Error Detail:", error);
     console.warn("API Request Failed:", error?.response?.data?.message || error?.message)
 
     if (error.response?.status === 401) {
       toast({
         title: "Session Expired",
         description: "Please login again",
+        variant: "destructive"
+      })
+    } else if (error.response?.status === 409) {
+      toast({
+        title: "Conflict",
+        description: error.response?.data?.message || "Product already exists",
         variant: "destructive"
       })
     } else {
@@ -204,7 +211,8 @@ export default function ProductsPage() {
   }
 
   const handleAdd = async () => {
-    if (!editValue.trim()) {
+    const trimmedValue = editValue.trim();
+    if (!trimmedValue) {
       toast({
         title: "Error",
         description: "Please enter a product name",
@@ -226,10 +234,12 @@ export default function ProductsPage() {
         return
       }
 
+      console.log("Add Product Request:", { url: `secure/Products/add-products`, payload: { name: trimmedValue } });
+
       const response = await api.post<ApiResponse>(
         `secure/Products/add-products`,
         {
-          name: editValue,
+          name: trimmedValue,
           s_id: user?.id || 6
         },
         {
@@ -239,6 +249,8 @@ export default function ProductsPage() {
           }
         }
       )
+
+      console.log("Add Product Response:", response.data);
 
       if (response.data.success || response.data.status) {
         handleSuccess(response.data.message || "Product added successfully")
@@ -257,7 +269,8 @@ export default function ProductsPage() {
   }
 
   const handleSave = async (id: number) => {
-    if (!editValue.trim()) {
+    const trimmedValue = editValue.trim();
+    if (!trimmedValue) {
       toast({
         title: "Error",
         description: "Please enter a product name",
@@ -279,11 +292,13 @@ export default function ProductsPage() {
         return
       }
 
-      const response = await api.post<ApiResponse>(
+      console.log("Update Product Request:", { url: `secure/Products/update-products`, payload: { id, name: trimmedValue } });
+
+      const response = await api.put<ApiResponse>(
         `secure/Products/update-products`,
         {
           id: id,
-          name: editValue,
+          name: trimmedValue,
           s_id: user?.id || 6
         },
         {
@@ -293,6 +308,8 @@ export default function ProductsPage() {
           }
         }
       )
+
+      console.log("Update Product Response:", response.data);
 
       if (response.data.success || response.data.status) {
         handleSuccess(response.data.message || "Product updated successfully")

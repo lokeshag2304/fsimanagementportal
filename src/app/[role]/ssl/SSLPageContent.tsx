@@ -40,7 +40,7 @@ import { CurrencyAmountInput } from "@/common/CurrencyAmountInput";
 import { GlassSelect } from "@/components/glass/GlassSelect";
 import { formatLastUpdated } from "@/utils/dateFormatter";
 import { emitEntityChange } from "@/lib/entityBus";
-import { handleDateChangeLogic, getDaysToColor, calculateDueDate } from "@/utils/dateCalculations";
+import { handleDateChangeLogic, getDaysToColor, calculateDueDate, calculateGraceDaysFromDate } from "@/utils/dateCalculations";
 import { getCurrencySymbol, currencySymbols } from "@/utils/currencies";
 
 interface SSLRecord {
@@ -165,6 +165,7 @@ export default function SSLPage() {
     deletion_date: "",
     days_to_delete: "",
     grace_period: "0",
+    grace_end_date: "",
     due_date: "",
     status: "1" as "1" | "0",
     remarks: "",
@@ -246,8 +247,8 @@ export default function SSLPage() {
     setNewRecordData({
       domain_id: null,
       domain_name: "",
-      client_id: isClient && user ? user.id : null, // Autofill client_id if isClient
-      client_name: isClient && user ? user.name || "" : "", // Autofill client_name if isClient
+      client_id: isClient && user ? user.id : null,
+      client_name: isClient && user ? user.name || "" : "",
       product_id: null,
       vendor_id: null,
       vendor_name: "",
@@ -262,6 +263,7 @@ export default function SSLPage() {
       remarks: "",
       updated_at_custom: new Date().toISOString().split("T")[0],
       grace_period: "0",
+      grace_end_date: "",
       due_date: "",
     });
   };
@@ -378,6 +380,7 @@ export default function SSLPage() {
           remarks: "",
           updated_at_custom: new Date().toISOString().split("T")[0],
           grace_period: "0",
+          grace_end_date: "",
           due_date: "",
         });
       } else {
@@ -402,6 +405,15 @@ export default function SSLPage() {
   // Handle Edit
   const handleEdit = (record: SSLRecord) => {
     setEditingId(record.id);
+    // Derive grace_end_date from grace_period + renewal_date for backward compat
+    let graceEndDate = "";
+    if (record.grace_period && record.renewal_date) {
+      const renewal = new Date(record.renewal_date);
+      if (!isNaN(renewal.getTime())) {
+        renewal.setDate(renewal.getDate() + Number(record.grace_period));
+        graceEndDate = renewal.toISOString().split("T")[0];
+      }
+    }
     setEditData({
       [record.id]: {
         ...record,
@@ -411,7 +423,8 @@ export default function SSLPage() {
         deletion_date: record.deletion_date || null,
         days_to_delete: record.days_to_delete ?? null,
         remark_id: record?.latest_remark?.id || null,
-      },
+        grace_end_date: graceEndDate,
+      } as any,
     });
   };
 
@@ -535,7 +548,7 @@ export default function SSLPage() {
   };
 
   // Handle field change for editing
-  const handleEditChange = (id: number, field: keyof SSLRecord, value: any) => {
+  const handleEditChange = (id: number, field: keyof SSLRecord | "grace_end_date", value: any) => {
     let extraData: any = {};
     if (field === "expiry_date" || field === "deletion_date") {
       const currentRow = editData[id] || {};
@@ -548,15 +561,32 @@ export default function SSLPage() {
       // Sync renewal_date with expiry_date for SSL
       if (field === "expiry_date") {
         extraData.renewal_date = value;
+        // Recalculate grace_period days when expiry_date changes
+        const currentRow2 = editData[id] || {};
+        const actualRow2 = data.find((d) => d.id === id) || ({} as any);
+        const existingGraceEnd = (currentRow2 as any).grace_end_date ?? "";
+        if (existingGraceEnd) {
+          const newGraceDays = calculateGraceDaysFromDate(existingGraceEnd, value);
+          extraData.grace_period = newGraceDays;
+          extraData.due_date = calculateDueDate(value, newGraceDays);
+        } else {
+          const graceVal = currentRow2.grace_period ?? (actualRow2 as any).grace_period ?? 0;
+          extraData.due_date = calculateDueDate(value, graceVal);
+        }
       }
     }
 
-    if (field === "expiry_date" || field === "grace_period") {
-        const currentRow = editData[id] || {};
-        const actualRow = data.find((d) => d.id === id) || ({} as any);
-        const currentExpiry = field === "expiry_date" ? value : (currentRow.expiry_date ?? actualRow.expiry_date);
-        const currentGrace = field === "grace_period" ? value : (currentRow.grace_period ?? actualRow.grace_period ?? 0);
-        extraData.due_date = calculateDueDate(currentExpiry, currentGrace);
+    // When the grace end date picker changes, compute grace_period days
+    if (field === "grace_end_date") {
+      const currentRow = editData[id] || {};
+      const actualRow = data.find((d) => d.id === id) || ({} as any);
+      const renewalDateForGrace = (currentRow as any).renewal_date ?? actualRow.renewal_date ?? "";
+      const graceDays = calculateGraceDaysFromDate(value, renewalDateForGrace);
+      if (value && renewalDateForGrace && graceDays === 0 && value < renewalDateForGrace) {
+        toast({ title: "Validation", description: "Grace End Date must be on or after Renewal Date. Days set to 0.", variant: "destructive" });
+      }
+      extraData.grace_period = graceDays;
+      extraData.due_date = calculateDueDate(renewalDateForGrace, graceDays);
     }
 
     setEditData((prev) => ({
@@ -571,7 +601,7 @@ export default function SSLPage() {
 
   // Handle field change for new record
   const handleNewRecordChange = (
-    field: keyof typeof newRecordData,
+    field: keyof typeof newRecordData | "grace_end_date",
     value: any,
   ) => {
     let extraData: any = {};
@@ -583,20 +613,33 @@ export default function SSLPage() {
       // Sync renewal_date with expiry_date for SSL
       if (field === "expiry_date") {
         extraData.renewal_date = value;
+        // Recalculate grace days when expiry_date changes
+        if (newRecordData.grace_end_date) {
+          const newGraceDays = calculateGraceDaysFromDate(newRecordData.grace_end_date, value);
+          extraData.grace_period = String(newGraceDays);
+          extraData.due_date = calculateDueDate(value, newGraceDays);
+        } else {
+          extraData.due_date = calculateDueDate(value, newRecordData.grace_period);
+        }
       }
     }
 
-    if (field === "expiry_date" || field === "grace_period") {
-        const currentExpiry = field === "expiry_date" ? value : newRecordData.expiry_date;
-        const currentGrace = field === "grace_period" ? value : newRecordData.grace_period;
-        extraData.due_date = calculateDueDate(currentExpiry, currentGrace);
+    // When the grace end date picker changes, compute grace_period days
+    if (field === "grace_end_date") {
+      const renewalForGrace = newRecordData.expiry_date; // SSL uses expiry_date as renewal_date
+      const graceDays = calculateGraceDaysFromDate(value, renewalForGrace);
+      if (value && renewalForGrace && graceDays === 0 && value < renewalForGrace) {
+        toast({ title: "Validation", description: "Grace End Date must be on or after Renewal Date. Days set to 0.", variant: "destructive" });
+      }
+      extraData.grace_period = String(graceDays);
+      extraData.due_date = calculateDueDate(renewalForGrace, graceDays);
     }
 
     setNewRecordData((prev) => ({
       ...prev,
       [field]: value,
       ...extraData
-    }));
+    } as any));
   };
 
 
@@ -1138,17 +1181,26 @@ export default function SSLPage() {
                           )}
                           {user?.role === "SuperAdmin" && (
                             <>
+                              {/* Grace End Date Picker */}
                               <td className="py-3 px-4">
                                 <input
-                                  type="number"
-                                  value={newRecordData.grace_period}
-                                  onChange={(e) => handleNewRecordChange("grace_period", e.target.value)}
+                                  type="date"
+                                  value={(newRecordData as any).grace_end_date || ""}
+                                  onChange={(e) => handleNewRecordChange("grace_end_date" as any, e.target.value)}
+                                  min={newRecordData.expiry_date || undefined}
                                   className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
                                   style={{ minHeight: "32px" }}
                                 />
                               </td>
-                              <td className="py-3 px-4 text-sm text-gray-300">
-                                {formatDate(newRecordData.due_date)}
+                              {/* Due Date — shows computed days */}
+                              <td className="py-3 px-4">
+                                {newRecordData.grace_period && Number(newRecordData.grace_period) > 0 ? (
+                                  <div className={`px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 text-blue-300`}>
+                                    {newRecordData.grace_period} days
+                                  </div>
+                                ) : (
+                                  <span className="text-gray-500 text-xs">--</span>
+                                )}
                               </td>
                             </>
                           )}
@@ -1501,17 +1553,29 @@ export default function SSLPage() {
                                   )}
                                   {user?.role === "SuperAdmin" && (
                                     <>
+                                      {/* Grace End Date Picker */}
                                       <td className="py-3 px-4">
                                         <input
-                                          type="number"
-                                          value={editData[item.id]?.grace_period ?? item.grace_period ?? 0}
-                                          onChange={(e) => handleEditChange(item.id, "grace_period", e.target.value)}
+                                          type="date"
+                                          value={(editData[item.id] as any)?.grace_end_date || ""}
+                                          onChange={(e) => handleEditChange(item.id, "grace_end_date" as any, e.target.value)}
+                                          min={editData[item.id]?.expiry_date || item.expiry_date || undefined}
                                           className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
                                           style={{ minHeight: "32px" }}
                                         />
                                       </td>
-                                      <td className="py-3 px-4 text-sm text-gray-300">
-                                        {formatDate(editData[item.id]?.due_date || item.due_date || "")}
+                                      {/* Due Date — shows computed days */}
+                                      <td className="py-3 px-4">
+                                        {(() => {
+                                          const graceDays = editData[item.id]?.grace_period ?? item.grace_period ?? 0;
+                                          return Number(graceDays) > 0 ? (
+                                            <div className="px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 text-blue-300">
+                                              {graceDays} days
+                                            </div>
+                                          ) : (
+                                            <span className="text-gray-500 text-xs">--</span>
+                                          );
+                                        })()}
                                       </td>
                                     </>
                                   )}
@@ -1675,11 +1739,25 @@ export default function SSLPage() {
                                   )}
                                   {user?.role === "SuperAdmin" && (
                                     <>
+                                      {/* Grace Period view — show end date derived from grace_period + renewal_date */}
                                       <td className="py-3 px-4 text-sm text-gray-300">
-                                        {item.grace_period ?? 0} days
+                                        {(() => {
+                                          if (!item.grace_period || !item.renewal_date) return <span className="text-gray-500">--</span>;
+                                          const rDate = new Date(item.renewal_date);
+                                          if (isNaN(rDate.getTime())) return <span className="text-gray-500">--</span>;
+                                          rDate.setDate(rDate.getDate() + Number(item.grace_period));
+                                          return formatDate(rDate.toISOString().split("T")[0]);
+                                        })()}
                                       </td>
-                                      <td className="py-3 px-4 text-sm text-gray-300">
-                                        {formatDate(item.due_date as string)}
+                                      {/* Due Date → display as X days */}
+                                      <td className="py-3 px-4">
+                                        {item.grace_period && Number(item.grace_period) > 0 ? (
+                                          <div className={`px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(item.grace_period)}`}>
+                                            {item.grace_period} days
+                                          </div>
+                                        ) : (
+                                          <span className="text-gray-500">--</span>
+                                        )}
                                       </td>
                                     </>
                                   )}

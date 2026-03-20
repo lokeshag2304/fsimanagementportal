@@ -56,6 +56,31 @@ export const calculateDueDate = (renewalDateStr?: string | null, gracePeriod?: n
     return dueDate.toISOString().split('T')[0]; // YYYY-MM-DD
 };
 
+/**
+ * Calculate grace period days from a grace end date and a renewal/expiry date.
+ * Formula: ceil((graceEndDate - renewalDate) / ms_per_day)
+ * Returns 0 if graceEndDate is before renewalDate or either date is invalid.
+ */
+export const calculateGraceDaysFromDate = (
+    graceEndDateStr?: string | null,
+    renewalDateStr?: string | null
+): number => {
+    if (!graceEndDateStr || !renewalDateStr) return 0;
+
+    const graceEnd = new Date(graceEndDateStr);
+    const renewal = new Date(renewalDateStr);
+
+    if (isNaN(graceEnd.getTime()) || isNaN(renewal.getTime())) return 0;
+
+    graceEnd.setHours(0, 0, 0, 0);
+    renewal.setHours(0, 0, 0, 0);
+
+    const diffMs = graceEnd.getTime() - renewal.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+    return Math.max(0, diffDays);
+};
+
 export const getDaysToColor = (days: number | string | null | undefined): string => {
     if (days === null || days === undefined || days === "") return "text-gray-300";
     const numDays = Number(days);

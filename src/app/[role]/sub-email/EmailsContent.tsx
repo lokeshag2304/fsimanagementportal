@@ -44,7 +44,7 @@ import { GlassSelect } from "@/components/glass/GlassSelect";
 import { normalizeEntityPayload } from "@/utils/normalizePayload";
 import { emitEntityChange } from "@/lib/entityBus";
 import { formatLastUpdated } from "@/utils/dateFormatter";
-import { handleDateChangeLogic, getDaysToColor, calculateDueDate } from "@/utils/dateCalculations";
+import { handleDateChangeLogic, getDaysToColor, calculateDueDate, calculateGraceDaysFromDate } from "@/utils/dateCalculations";
 
 interface EmailRecord {
   remark_id?: number | null;
@@ -155,6 +155,7 @@ export default function EmailsPage() {
     deletion_date: "",
     days_to_delete: "",
     grace_period: "0",
+    grace_end_date: "",
     due_date: "",
   });
 
@@ -265,6 +266,7 @@ export default function EmailsPage() {
       deletion_date: "",
       days_to_delete: "",
       grace_period: "0",
+      grace_end_date: "",
       due_date: "",
     });
   };
@@ -328,6 +330,7 @@ export default function EmailsPage() {
       deletion_date: "",
       days_to_delete: "",
       grace_period: "0",
+      grace_end_date: "",
       due_date: "",
     });
   };
@@ -411,6 +414,7 @@ export default function EmailsPage() {
           deletion_date: "",
           days_to_delete: "",
           grace_period: "0",
+          grace_end_date: "",
           due_date: "",
         });
       } else {
@@ -434,6 +438,15 @@ export default function EmailsPage() {
 
   // Handle Edit
   const handleEdit = (record: EmailRecord) => {
+    // Derive grace_end_date from grace_period + expiry_date for backward compat
+    let graceEndDate = "";
+    if (record.grace_period && record.expiry_date) {
+      const rd = new Date(record.expiry_date);
+      if (!isNaN(rd.getTime())) {
+        rd.setDate(rd.getDate() + Number(record.grace_period));
+        graceEndDate = rd.toISOString().split("T")[0];
+      }
+    }
     setEditingId(record.id);
     setEditData({
       [record.id]: {
@@ -450,8 +463,9 @@ export default function EmailsPage() {
         status: record.status,
         deletion_date: record.deletion_date || "",
         days_to_delete: record.days_to_delete ?? undefined,
-        remark_id: record?.latest_remark?.id || null
-      }
+        remark_id: record?.latest_remark?.id || null,
+        grace_end_date: graceEndDate,
+      } as any
     });
   };
 
@@ -564,55 +578,66 @@ export default function EmailsPage() {
 
   // Handle field change for new record
   const handleNewRecordChange = (
-    field: keyof typeof newRecordData,
+    field: keyof typeof newRecordData | "grace_end_date",
     value: any,
   ) => {
-    let extraData = {};
+    let extraData: any = {};
     if (field === "expiry_date" || field === "deletion_date") {
       const currentRenewal = field === "expiry_date" ? value : newRecordData.expiry_date;
       const currentDeletion = field === "deletion_date" ? value : newRecordData.deletion_date;
       extraData = handleDateChangeLogic(field === "expiry_date" ? "renewal_date" : "deletion_date", value, currentRenewal, currentDeletion, toast) || {};
+      // Recompute grace if grace_end_date already set
+      if (field === "expiry_date" && (newRecordData as any).grace_end_date) {
+        const graceDays = calculateGraceDaysFromDate((newRecordData as any).grace_end_date, value);
+        extraData.grace_period = String(graceDays);
+        extraData.due_date = calculateDueDate(value, graceDays);
+      }
     }
 
-    if (field === "expiry_date" || field === "grace_period") {
-      const currentRenewal = field === "expiry_date" ? value : newRecordData.expiry_date;
-      const currentGrace = field === "grace_period" ? value : newRecordData.grace_period;
-      if (currentRenewal) {
-        (extraData as any).due_date = calculateDueDate(currentRenewal, currentGrace);
-      }
+    if (field === "grace_end_date") {
+      const graceDays = calculateGraceDaysFromDate(value, newRecordData.expiry_date);
+      extraData.grace_period = String(graceDays);
+      extraData.due_date = calculateDueDate(newRecordData.expiry_date, graceDays);
     }
 
     setNewRecordData((prev) => ({
       ...prev,
       [field]: value,
       ...extraData,
-    }));
+    } as any));
   };
 
   // Handle field change for editing
   const handleEditChange = (
     id: number,
-    field: keyof EmailRecord,
+    field: keyof EmailRecord | "grace_end_date",
     value: any,
   ) => {
-    let extraData = {};
+    let extraData: any = {};
     if (field === "expiry_date" || field === "deletion_date") {
       const currentRow = editData[id] || {};
       const actualRow = data.find((d) => d.id === id) || ({} as any);
       const currentRenewal = field === "expiry_date" ? value : (currentRow.expiry_date ?? actualRow.expiry_date);
       const currentDeletion = field === "deletion_date" ? value : (currentRow.deletion_date ?? actualRow.deletion_date);
-
       extraData = handleDateChangeLogic(field === "expiry_date" ? "renewal_date" : "deletion_date", value, currentRenewal, currentDeletion, toast) || {};
+      // Recompute grace when expiry changes
+      if (field === "expiry_date") {
+        const existingGraceEnd = (currentRow as any).grace_end_date ?? "";
+        if (existingGraceEnd) {
+          const graceDays = calculateGraceDaysFromDate(existingGraceEnd, value);
+          extraData.grace_period = graceDays;
+          extraData.due_date = calculateDueDate(value, graceDays);
+        }
+      }
     }
 
-    if (field === "expiry_date" || field === "grace_period") {
+    if (field === "grace_end_date") {
       const currentRow = editData[id] || {};
       const actualRow = data.find((d) => d.id === id) || ({} as any);
-      const currentRenewal = field === "expiry_date" ? value : (currentRow.expiry_date ?? actualRow.expiry_date);
-      const currentGrace = field === "grace_period" ? value : (currentRow.grace_period ?? actualRow.grace_period);
-      if (currentRenewal) {
-        (extraData as any).due_date = calculateDueDate(currentRenewal, currentGrace);
-      }
+      const expiryDate = (currentRow as any).expiry_date ?? actualRow.expiry_date ?? "";
+      const graceDays = calculateGraceDaysFromDate(value, expiryDate);
+      extraData.grace_period = graceDays;
+      extraData.due_date = calculateDueDate(expiryDate, graceDays);
     }
 
     setEditData((prev) => ({
@@ -1189,20 +1214,27 @@ export default function EmailsPage() {
                           )}
                           {user?.role === "SuperAdmin" && (
                             <td className="py-3 px-4">
+                              {/* Grace End Date — identical to Deletion Date picker */}
                               <input
-                                type="number"
-                                value={newRecordData.grace_period}
-                                onChange={(e) => handleNewRecordChange("grace_period", e.target.value)}
+                                type="date"
+                                value={(newRecordData as any).grace_end_date || ""}
+                                onChange={(e) => handleNewRecordChange("grace_end_date" as any, e.target.value)}
+                                min={newRecordData.expiry_date || undefined}
                                 className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
                                 style={{ minHeight: "32px" }}
-                                min="0"
-                                placeholder="0"
                               />
                             </td>
                           )}
                           {user?.role === "SuperAdmin" && (
-                            <td className="py-3 px-4 text-sm text-gray-300">
-                              {formatDate(newRecordData.due_date) || '-'}
+                            <td className="py-3 px-4">
+                              {/* Due Date → X days pill */}
+                              {newRecordData.grace_period && Number(newRecordData.grace_period) > 0 ? (
+                                <div className={`px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(newRecordData.grace_period)}`}>
+                                  {newRecordData.grace_period} days
+                                </div>
+                              ) : (
+                                <span className="text-gray-500 text-xs">--</span>
+                              )}
                             </td>
                           )}
                           {user?.role === "SuperAdmin" && (
@@ -1576,15 +1608,32 @@ export default function EmailsPage() {
                                     />
                                   </td>
                                 )}
+                                 {user?.role === "SuperAdmin" && (
+                                   <td className="py-3 px-4">
+                                     {/* Grace End Date - identical to Deletion Date picker */}
+                                     <input
+                                       type="date"
+                                       value={(editData[item.id] as any)?.grace_end_date || ""}
+                                       onChange={(e) => handleEditChange(item.id, "grace_end_date" as any, e.target.value)}
+                                       min={editData[item.id]?.expiry_date || item.expiry_date || undefined}
+                                       className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
+                                       style={{ minHeight: "32px" }}
+                                     />
+                                   </td>
+                                 )}
                                 {user?.role === "SuperAdmin" && (
                                   <td className="py-3 px-4">
-                                    <input
-                                      type="number"
-                                      value={editData[item.id]?.grace_period ?? item.grace_period ?? "0"}
-                                      onChange={(e) => handleEditChange(item.id, "grace_period", e.target.value)}
-                                      className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
-                                      style={{ minHeight: "32px" }}
-                                    />
+                                    {/* Due Date → X days pill */}
+                                    {(() => {
+                                      const gp = editData[item.id]?.grace_period ?? item.grace_period ?? 0;
+                                      return Number(gp) > 0 ? (
+                                        <div className={`px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(gp)}`}>
+                                          {gp} days
+                                        </div>
+                                      ) : (
+                                        <span className="text-gray-500 text-xs">--</span>
+                                      );
+                                    })()}
                                   </td>
                                 )}
                                 {user?.role === "SuperAdmin" && (
@@ -1758,6 +1807,18 @@ export default function EmailsPage() {
                                 {user?.role === "SuperAdmin" && (
                                   <td className="py-3 px-4 text-sm text-gray-300">
                                     {item.grace_period ? `${item.grace_period} days` : "0 days"}
+                                  </td>
+                                )}
+                                {user?.role === "SuperAdmin" && (
+                                  <td className="py-3 px-4 text-sm text-gray-300">
+                                    {/* Grace End Date view */}
+                                    {(() => {
+                                      if (!item.grace_period || !item.expiry_date) return <span className="text-gray-500">--</span>;
+                                      const rd = new Date(item.expiry_date);
+                                      if (isNaN(rd.getTime())) return <span className="text-gray-500">--</span>;
+                                      rd.setDate(rd.getDate() + Number(item.grace_period));
+                                      return formatDate(rd.toISOString().split("T")[0]);
+                                    })()}
                                   </td>
                                 )}
                                 {user?.role === "SuperAdmin" && (

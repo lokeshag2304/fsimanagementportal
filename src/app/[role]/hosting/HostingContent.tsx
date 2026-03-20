@@ -6,7 +6,7 @@ import { GlassCard, GlassButton } from "@/components/glass"
 import { normalizeEntityPayload } from "@/utils/normalizePayload";
 import { emitEntityChange } from "@/lib/entityBus";
 import { formatLastUpdated } from "@/utils/dateFormatter";
-import { handleDateChangeLogic, getDaysToColor, calculateDueDate } from "@/utils/dateCalculations";
+import { handleDateChangeLogic, getDaysToColor, calculateDueDate, calculateGraceDaysFromDate } from "@/utils/dateCalculations";
 import { DeleteConfirmationModal } from "@/common/services/DeleteConfirmationModal"
 import { getCurrencySymbol, currencySymbols } from "@/utils/currencies";
 import {
@@ -143,6 +143,7 @@ export default function HostingPage() {
     deletion_date: "",
     days_to_delete: "",
     grace_period: "0",
+    grace_end_date: "",
     due_date: ""
   })
 
@@ -243,6 +244,7 @@ export default function HostingPage() {
       deletion_date: "",
       days_to_delete: "",
       grace_period: "0",
+      grace_end_date: "",
       due_date: ""
     })
   }
@@ -430,6 +432,15 @@ export default function HostingPage() {
 
   // Handle Edit
   const handleEdit = (record: HostingRecord) => {
+    // Derive grace_end_date from grace_period + expiry_date for backward compat
+    let graceEndDate = "";
+    if (record.grace_period && record.expiry_date) {
+      const rd = new Date(record.expiry_date);
+      if (!isNaN(rd.getTime())) {
+        rd.setDate(rd.getDate() + Number(record.grace_period));
+        graceEndDate = rd.toISOString().split("T")[0];
+      }
+    }
     setEditingId(record.id)
     setEditData({
       [record.id]: {
@@ -446,8 +457,9 @@ export default function HostingPage() {
         days_to_delete: record.days_to_delete ?? null,
         grace_period: record.grace_period ?? 0,
         due_date: record.due_date ?? null,
-        remark_id: record?.latest_remark?.id || null
-      }
+        remark_id: record?.latest_remark?.id || null,
+        grace_end_date: graceEndDate,
+      } as any
     })
   }
 
@@ -528,7 +540,7 @@ export default function HostingPage() {
   }
 
   // Handle field change for editing
-  const handleEditChange = (id: number, field: keyof HostingRecord, value: any) => {
+  const handleEditChange = (id: number, field: keyof HostingRecord | "grace_end_date", value: any) => {
     setEditData(prev => {
       const currentRow = prev[id] || {};
       const actualRow = data.find((d) => d.id === id) || ({} as any);
@@ -537,8 +549,22 @@ export default function HostingPage() {
         [field]: value,
       };
 
-      if (field === "expiry_date" || field === "grace_period") {
-        updatedItem.due_date = calculateDueDate(updatedItem.expiry_date ?? actualRow.expiry_date, updatedItem.grace_period ?? actualRow.grace_period);
+      if (field === "expiry_date") {
+        const existingGraceEnd = (currentRow as any).grace_end_date ?? "";
+        if (existingGraceEnd) {
+          const graceDays = calculateGraceDaysFromDate(existingGraceEnd, value);
+          updatedItem.grace_period = graceDays;
+          updatedItem.due_date = calculateDueDate(value, graceDays);
+        } else {
+          updatedItem.due_date = calculateDueDate(value, updatedItem.grace_period ?? actualRow.grace_period);
+        }
+      }
+
+      if (field === "grace_end_date") {
+        const expiryDate = (currentRow as any).expiry_date ?? actualRow.expiry_date ?? "";
+        const graceDays = calculateGraceDaysFromDate(value, expiryDate);
+        updatedItem.grace_period = graceDays;
+        updatedItem.due_date = calculateDueDate(expiryDate, graceDays);
       }
 
       return {
@@ -549,13 +575,25 @@ export default function HostingPage() {
   }
 
   // Handle field change for new record
-  const handleNewRecordChange = (field: keyof typeof newRecordData, value: any) => {
+  const handleNewRecordChange = (field: keyof typeof newRecordData | "grace_end_date", value: any) => {
     setNewRecordData(prev => {
-        const newData = { ...prev, [field]: value };
-        if (field === "expiry_date" || field === "grace_period") {
-           newData.due_date = calculateDueDate(newData.expiry_date, newData.grace_period) || "";
+      const newData: any = { ...prev, [field]: value };
+      if (field === "expiry_date") {
+        // Recompute if grace_end_date already set
+        if (newData.grace_end_date) {
+          const graceDays = calculateGraceDaysFromDate(newData.grace_end_date, value);
+          newData.grace_period = String(graceDays);
+          newData.due_date = calculateDueDate(value, graceDays) || "";
+        } else {
+          newData.due_date = calculateDueDate(value, newData.grace_period) || "";
         }
-        return newData;
+      }
+      if (field === "grace_end_date") {
+        const graceDays = calculateGraceDaysFromDate(value, newData.expiry_date);
+        newData.grace_period = String(graceDays);
+        newData.due_date = calculateDueDate(newData.expiry_date, graceDays) || "";
+      }
+      return newData;
     })
   }
 
@@ -1017,17 +1055,26 @@ export default function HostingPage() {
                           )}
                           {user?.role === "SuperAdmin" && (
                             <>
+                              {/* Grace End Date — identical to Deletion Date picker */}
                               <td className="py-3 px-4">
                                 <input
-                                  type="number"
-                                  value={newRecordData.grace_period}
-                                  onChange={(e) => handleNewRecordChange("grace_period", e.target.value)}
+                                  type="date"
+                                  value={(newRecordData as any).grace_end_date || ""}
+                                  onChange={(e) => handleNewRecordChange("grace_end_date" as any, e.target.value)}
+                                  min={newRecordData.expiry_date || undefined}
                                   className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
                                   style={{ minHeight: "32px" }}
                                 />
                               </td>
-                              <td className="py-3 px-4 text-sm text-gray-300">
-                                {formatDate(newRecordData.due_date)}
+                              {/* Due Date → X days pill */}
+                              <td className="py-3 px-4">
+                                {newRecordData.grace_period && Number(newRecordData.grace_period) > 0 ? (
+                                  <div className={`px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(newRecordData.grace_period)}`}>
+                                    {newRecordData.grace_period} days
+                                  </div>
+                                ) : (
+                                  <span className="text-gray-500 text-xs">--</span>
+                                )}
                               </td>
                             </>
                           )}
@@ -1301,17 +1348,29 @@ export default function HostingPage() {
                                 </td>
                                 {user?.role === "SuperAdmin" && (
                                   <>
+                                    {/* Grace End Date — identical to Deletion Date picker */}
                                     <td className="py-3 px-4">
                                       <input
-                                        type="number"
-                                        value={editData[item.id]?.grace_period ?? item.grace_period ?? 0}
-                                        onChange={(e) => handleEditChange(item.id, "grace_period", e.target.value)}
+                                        type="date"
+                                        value={(editData[item.id] as any)?.grace_end_date || ""}
+                                        onChange={(e) => handleEditChange(item.id, "grace_end_date" as any, e.target.value)}
+                                        min={editData[item.id]?.expiry_date || item.expiry_date || undefined}
                                         className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
                                         style={{ minHeight: "32px" }}
                                       />
                                     </td>
-                                    <td className="py-3 px-4 text-sm text-gray-300">
-                                      {formatDate(editData[item.id]?.due_date || item.due_date || "")}
+                                    {/* Due Date → X days pill */}
+                                    <td className="py-3 px-4">
+                                      {(() => {
+                                        const gp = editData[item.id]?.grace_period ?? item.grace_period ?? 0;
+                                        return Number(gp) > 0 ? (
+                                          <div className={`px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(gp)}`}>
+                                            {gp} days
+                                          </div>
+                                        ) : (
+                                          <span className="text-gray-500 text-xs">--</span>
+                                        );
+                                      })()}
                                     </td>
                                   </>
                                 )}
@@ -1446,11 +1505,25 @@ export default function HostingPage() {
                                 )}
                                 {user?.role === "SuperAdmin" && (
                                   <>
+                                    {/* Grace Period view — show derived end date */}
                                     <td className="py-3 px-4 text-sm text-gray-300">
-                                      {item.grace_period ?? 0} days
+                                      {(() => {
+                                        if (!item.grace_period || !item.expiry_date) return <span className="text-gray-500">--</span>;
+                                        const rd = new Date(item.expiry_date);
+                                        if (isNaN(rd.getTime())) return <span className="text-gray-500">--</span>;
+                                        rd.setDate(rd.getDate() + Number(item.grace_period));
+                                        return formatDate(rd.toISOString().split("T")[0]);
+                                      })()}
                                     </td>
-                                    <td className="py-3 px-4 text-sm text-gray-300">
-                                      {formatDate(item.due_date as string)}
+                                    {/* Due Date → X days pill */}
+                                    <td className="py-3 px-4">
+                                      {item.grace_period && Number(item.grace_period) > 0 ? (
+                                        <div className={`px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(item.grace_period)}`}>
+                                          {item.grace_period} days
+                                        </div>
+                                      ) : (
+                                        <span className="text-gray-500">--</span>
+                                      )}
                                     </td>
                                   </>
                                 )}

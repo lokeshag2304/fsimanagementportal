@@ -42,7 +42,7 @@ import { apiService } from "@/common/services/apiService";
 import { normalizeEntityPayload } from "@/utils/normalizePayload";
 import { emitEntityChange } from "@/lib/entityBus";
 import { formatLastUpdated } from "@/utils/dateFormatter";
-import { handleDateChangeLogic, getDaysToColor, calculateDueDate } from "@/utils/dateCalculations";
+import { handleDateChangeLogic, getDaysToColor, calculateDueDate, calculateGraceDaysFromDate } from "@/utils/dateCalculations";
 import { getCurrencySymbol, currencySymbols } from "@/utils/currencies";
 
 interface DomainRecord {
@@ -157,6 +157,7 @@ export default function DomainsPage() {
     currency: "INR",
     remarks: "",
     grace_period: "0",
+    grace_end_date: "",
     due_date: "",
   })
   
@@ -253,6 +254,7 @@ export default function DomainsPage() {
       currency: "INR",
       remarks: "",
       grace_period: "0",
+      grace_end_date: "",
       due_date: "",
     })
   }
@@ -316,6 +318,7 @@ export default function DomainsPage() {
       currency: "INR",
       remarks: "",
       grace_period: "0",
+      grace_end_date: "",
       due_date: "",
     })
   }
@@ -401,6 +404,7 @@ export default function DomainsPage() {
           currency: "INR",
           remarks: "",
           grace_period: "0",
+          grace_end_date: "",
           due_date: "",
         })
       } else {
@@ -425,6 +429,15 @@ export default function DomainsPage() {
 
   // Handle Edit
   const handleEdit = (record: DomainRecord) => {
+    let graceEndDate = "";
+    if (record.grace_period && record.renewal_date) {
+      const date = new Date(record.renewal_date);
+      if (!isNaN(date.getTime())) {
+        date.setDate(date.getDate() + Number(record.grace_period));
+        graceEndDate = date.toISOString().split('T')[0];
+      }
+    }
+
     setEditingId(record.id)
     setEditData({
       [record.id]: { 
@@ -439,7 +452,8 @@ export default function DomainsPage() {
         deletion_date: record.deletion_date || null,
         days_to_delete: record.days_to_delete ?? null,
         amount: record.amount ?? 0,
-        currency: record.currency || "INR"
+        currency: record.currency || "INR",
+        ...(graceEndDate ? { grace_end_date: graceEndDate } : {}) as any
       }
     })
   }
@@ -462,26 +476,41 @@ export default function DomainsPage() {
         return
       }
 
+      const originalRecord = data.find(item => item.id === id);
+      
+      // Calculate which fields actually changed
+      const changedFields: any = {};
+      Object.keys(updatedData).forEach(key => {
+        const k = key as keyof DomainRecord;
+        if (updatedData[k] !== originalRecord?.[k]) {
+          changedFields[k] = updatedData[k];
+        }
+      });
+
       const payload: any = {
-        ...normalizeEntityPayload(updatedData),
-        record_type: 4,
         id,
         s_id: user?.id || 0,
-        domain_protected: parseInt(
-          updatedData.domain_protected as "0" | "1"
-        ) as 0 | 1,
-        status: parseInt(
-          updatedData.status as "0" | "1" || "1"
-        ) as 0 | 1,
-        remark_id: updatedData.remark_id || null,
-        deletion_date: updatedData.deletion_date || null,
-        days_left: updatedData.days_left || null,
-        days_to_delete: updatedData.days_to_delete || null,
-        amount: updatedData.amount ?? data.find((item) => item.id === id)?.amount ?? 0,
-        currency: updatedData.currency || data.find((item) => item.id === id)?.currency || "INR",
+        record_type: 4,
+        ...normalizeEntityPayload(changedFields),
       }
 
+      // Ensure essential fields for the backend logic are present if they were changed or are needed
+      if (updatedData.domain_protected !== undefined) {
+          payload.domain_protected = parseInt(updatedData.domain_protected as any) as 0 | 1;
+      }
+      if (updatedData.status !== undefined) {
+          payload.status = parseInt(updatedData.status as any) as 0 | 1;
+      }
+      if (updatedData.amount !== undefined) payload.amount = updatedData.amount;
+      if (updatedData.currency !== undefined) payload.currency = updatedData.currency;
+      if (updatedData.renewal_date !== undefined) payload.renewal_date = updatedData.renewal_date;
+
+      console.log("Domain Update Request (Changed Fields Only):", { url: `domains/${id}`, payload });
+
       const response = await api.put(`domains/${id}`, payload, { headers: { Authorization: `Bearer ${token}` } })
+      
+      console.log("Domain Update Response:", response.data);
+
       if (response.status === 200 || response.status === 201 || response.data?.status === true) {
         toast({
           title: "Success",
@@ -499,10 +528,11 @@ export default function DomainsPage() {
         })
       }
     } catch (error: any) {
+      console.error("Domain Update API Error:", error);
       console.warn("Backend Error:", error?.response?.data?.message || error?.message)
       toast({
         title: "Error",
-        description: "Failed to update domain record",
+        description: error?.response?.data?.message || "Failed to update domain record",
         variant: "destructive"
       })
     } finally {
@@ -554,15 +584,15 @@ export default function DomainsPage() {
   };
 
   // Handle field change for editing
-  const handleEditChange = (id: number, field: keyof DomainRecord, value: any) => {
-    let extraData = {};
+  const handleEditChange = (id: number, field: keyof DomainRecord | "grace_end_date", value: any) => {
+    let extraData: any = {};
     if (field === "renewal_date" || field === "deletion_date") {
       const currentRow = editData[id] || {};
       const actualRow = data.find((d) => d.id === id) || ({} as any);
       const currentRenewal = field === "renewal_date" ? value : (currentRow.renewal_date ?? actualRow.renewal_date);
       const currentDeletion = field === "deletion_date" ? value : (currentRow.deletion_date ?? actualRow.deletion_date);
       
-      extraData = handleDateChangeLogic(field, value, currentRenewal, currentDeletion, toast) || {};
+      extraData = handleDateChangeLogic(field as any, value, currentRenewal, currentDeletion, toast) || {};
     }
 
     setEditData(prev => {
@@ -575,10 +605,12 @@ export default function DomainsPage() {
         ...extraData
       };
 
-      if (field === "renewal_date" || field === "grace_period") {
+      if (field === "renewal_date" || field === "grace_end_date") {
         const renewalDate = field === "renewal_date" ? value : (newData.renewal_date ?? actualRow.renewal_date);
-        const gracePeriod = field === "grace_period" ? value : (newData.grace_period ?? actualRow.grace_period);
-        newData.due_date = calculateDueDate(renewalDate, gracePeriod) || "";
+        const graceEnd = field === "grace_end_date" ? value : (newData as any).grace_end_date;
+        const gp = calculateGraceDaysFromDate(renewalDate, graceEnd);
+        newData.grace_period = gp;
+        newData.due_date = calculateDueDate(renewalDate, gp) || "";
       }
 
       return {
@@ -589,18 +621,21 @@ export default function DomainsPage() {
   }
 
   // Handle field change for new record
-  const handleNewRecordChange = (field: keyof typeof newRecordData, value: any) => {
-    let extraData = {};
+  const handleNewRecordChange = (field: keyof typeof newRecordData | "grace_end_date", value: any) => {
+    let extraData: any = {};
     if (field === "renewal_date" || field === "deletion_date") {
       const currentRenewal = field === "renewal_date" ? value : newRecordData.renewal_date;
       const currentDeletion = field === "deletion_date" ? value : newRecordData.deletion_date;
-      extraData = handleDateChangeLogic(field, value, currentRenewal, currentDeletion, toast) || {};
+      extraData = handleDateChangeLogic(field as any, value, currentRenewal, currentDeletion, toast) || {};
     }
 
     setNewRecordData(prev => {
       const newData = { ...prev, [field]: value, ...extraData };
-      if (field === "renewal_date" || field === "grace_period") {
-        newData.due_date = calculateDueDate(newData.renewal_date, newData.grace_period) || "";
+      if (field === "renewal_date" || field === "grace_end_date") {
+        const currentGraceEnd = field === "grace_end_date" ? value : (newData as any).grace_end_date;
+        const gp = calculateGraceDaysFromDate(newData.renewal_date, currentGraceEnd);
+        newData.grace_period = String(gp);
+        newData.due_date = calculateDueDate(newData.renewal_date, gp) || "";
       }
       return newData;
     })
@@ -1076,15 +1111,22 @@ export default function DomainsPage() {
                             <>
                               <td className="py-3 px-4">
                                 <input
-                                  type="number"
-                                  value={newRecordData.grace_period}
-                                  onChange={(e) => handleNewRecordChange("grace_period", e.target.value)}
+                                  type="date"
+                                  value={(newRecordData as any).grace_end_date || ""}
+                                  onChange={(e) => handleNewRecordChange("grace_end_date" as any, e.target.value)}
+                                  min={newRecordData.renewal_date || undefined}
                                   className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
                                   style={{ minHeight: "32px" }}
                                 />
                               </td>
-                              <td className="py-3 px-4 text-sm text-gray-300">
-                                {formatDate(newRecordData.due_date)}
+                              <td className="py-3 px-4">
+                                {newRecordData.grace_period && Number(newRecordData.grace_period) > 0 ? (
+                                  <div className={`px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(newRecordData.grace_period)}`}>
+                                    {newRecordData.grace_period} days
+                                  </div>
+                                ) : (
+                                  <span className="text-gray-500 text-xs">--</span>
+                                )}
                               </td>
                             </>
                           )}
@@ -1331,15 +1373,25 @@ export default function DomainsPage() {
                                   <>
                                     <td className="py-3 px-4">
                                       <input
-                                        type="number"
-                                        value={editData[item.id]?.grace_period ?? item.grace_period ?? 0}
-                                        onChange={(e) => handleEditChange(item.id, "grace_period", e.target.value)}
+                                        type="date"
+                                        value={(editData[item.id] as any)?.grace_end_date || ""}
+                                        onChange={(e) => handleEditChange(item.id, "grace_end_date" as any, e.target.value)}
+                                        min={editData[item.id]?.renewal_date || item.renewal_date || undefined}
                                         className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
                                         style={{ minHeight: "32px" }}
                                       />
                                     </td>
-                                    <td className="py-3 px-4 text-sm text-gray-300">
-                                      {formatDate(editData[item.id]?.due_date || item.due_date || "")}
+                                    <td className="py-3 px-4">
+                                      {(() => {
+                                        const gp = editData[item.id]?.grace_period ?? item.grace_period ?? 0;
+                                        return Number(gp) > 0 ? (
+                                          <div className={`px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(gp)}`}>
+                                            {gp} days
+                                          </div>
+                                        ) : (
+                                          <span className="text-gray-500 text-xs">--</span>
+                                        );
+                                      })()}
                                     </td>
                                   </>
                                 )}
@@ -1431,10 +1483,22 @@ export default function DomainsPage() {
                                 {user?.role === "SuperAdmin" && (
                                   <>
                                     <td className="py-3 px-4 text-sm text-gray-300">
-                                      {item.grace_period ?? 0} days
+                                      {(() => {
+                                        if (!item.renewal_date || !item.grace_period) return "--";
+                                        const date = new Date(item.renewal_date);
+                                        if (isNaN(date.getTime())) return "--";
+                                        date.setDate(date.getDate() + Number(item.grace_period));
+                                        return formatDate(date.toISOString().split('T')[0]);
+                                      })()}
                                     </td>
-                                    <td className="py-3 px-4 text-sm text-gray-300">
-                                      {formatDate(item.due_date as string)}
+                                    <td className="py-3 px-4">
+                                      {item.grace_period && Number(item.grace_period) > 0 ? (
+                                        <div className={`px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(item.grace_period)}`}>
+                                          {item.grace_period} days
+                                        </div>
+                                      ) : (
+                                        <span className="text-gray-500 text-xs">--</span>
+                                      )}
                                     </td>
                                   </>
                                 )}
@@ -1545,8 +1609,24 @@ export default function DomainsPage() {
                                    <div><span className="block text-xs text-gray-400 mb-1 text-left">Deletion Date</span><span className="block text-sm text-gray-200 font-medium text-left">{formatDate((item as any).deletion_date)}</span></div>
                                   {user?.role === "SuperAdmin" && (
                                     <>
-                                      <div><span className="block text-xs text-gray-400 mb-1 text-left">Grace Period</span><span className="block text-sm text-gray-200 font-medium text-left">{item.grace_period ?? 0} days</span></div>
-                                      <div><span className="block text-xs text-gray-400 mb-1 text-left">Due Date</span><span className="block text-sm text-gray-200 font-medium text-left">{formatDate(item.due_date as string)}</span></div>
+                                      <div><span className="block text-xs text-gray-400 mb-1 text-left">Grace Period</span><span className="block text-sm text-gray-200 font-medium text-left">
+                                        {item.grace_period && Number(item.grace_period) > 0 ? (
+                                          <div className={`px-2 py-1 mt-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(item.grace_period)}`}>
+                                            {item.grace_period} days
+                                          </div>
+                                        ) : (
+                                          <span className="text-gray-500 text-xs">--</span>
+                                        )}
+                                      </span></div>
+                                      <div><span className="block text-xs text-gray-400 mb-1 text-left">Due Date</span><span className="block text-sm text-gray-200 font-medium text-left">
+                                        {(() => {
+                                          if (!item.renewal_date || !item.grace_period) return "--";
+                                          const date = new Date(item.renewal_date);
+                                          if (isNaN(date.getTime())) return "--";
+                                          date.setDate(date.getDate() + Number(item.grace_period));
+                                          return formatDate(date.toISOString());
+                                        })()}
+                                      </span></div>
                                     </>
                                   )}
                                   <div><span className="block text-xs text-gray-400 mb-1 text-left">Remarks</span><span className="block text-sm text-gray-200 font-medium text-left">{(item as any).remarks || "--"}</span></div>

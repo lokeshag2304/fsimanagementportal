@@ -44,7 +44,7 @@ import { apiService } from "@/common/services/apiService";
 import { normalizeEntityPayload } from "@/utils/normalizePayload";
 import { subscribeEntity, emitEntityChange } from "@/lib/entityBus";
 import { formatLastUpdated } from "@/utils/dateFormatter";
-import { getDaysToColor, calculateDueDate } from "@/utils/dateCalculations";
+import { getDaysToColor, calculateDueDate, calculateGraceDaysFromDate } from "@/utils/dateCalculations";
 
 interface CounterRecord {
   remark_id?: number | null;
@@ -131,6 +131,7 @@ export default function CounterPage() {
     status: "1" as "1" | "0",
     remarks: "",
     grace_period: "0",
+    grace_end_date: "",
     due_date: "",
   });
 
@@ -337,6 +338,9 @@ export default function CounterPage() {
       valid_till: today,
       status: "1",
       remarks: "",
+      grace_period: "0",
+      grace_end_date: "",
+      due_date: "",
     });
   };
 
@@ -392,6 +396,9 @@ export default function CounterPage() {
       valid_till: "",
       status: "1",
       remarks: "",
+      grace_period: "0",
+      grace_end_date: "",
+      due_date: "",
     });
   };
 
@@ -448,6 +455,9 @@ export default function CounterPage() {
           valid_till: new Date().toISOString().split("T")[0],
           status: "1",
           remarks: "",
+          grace_period: "0",
+          grace_end_date: "",
+          due_date: "",
         });
       } else {
         toast({
@@ -471,6 +481,15 @@ export default function CounterPage() {
 
   // Handle Edit
   const handleEdit = (record: CounterRecord) => {
+    let graceEndDate = "";
+    if (record.grace_period && (record.valid_till || (record as any).renewal_date || (record as any).expiry_date)) {
+      const date = new Date(record.valid_till || (record as any).renewal_date || (record as any).expiry_date);
+      if (!isNaN(date.getTime())) {
+        date.setDate(date.getDate() + Number(record.grace_period));
+        graceEndDate = date.toISOString().split('T')[0];
+      }
+    }
+
     setEditingId(record.id);
     setEditData({
       [record.id]: {
@@ -483,6 +502,7 @@ export default function CounterPage() {
         remarks: record.remarks || "",
         remark_id: (record.latest_remark?.id || null) as any,
         status: record.status ?? 1,
+        ...(graceEndDate ? { grace_end_date: graceEndDate } : {}) as any,
       },
     });
   };
@@ -599,17 +619,20 @@ export default function CounterPage() {
   // Handle field change for editing
   const handleEditChange = (
     id: number,
-    field: keyof CounterRecord,
+    field: keyof CounterRecord | "grace_end_date",
     value: any,
   ) => {
     const extraData: any = {};
-    if (field === "valid_till" || field === "grace_period") {
+    if (field === "valid_till" || field === "grace_end_date") {
       const currentRow = editData[id] || {};
       const actualRow = data.find((d) => d.id === id) || ({} as any);
       const currentRenewal = field === "valid_till" ? value : (currentRow.valid_till ?? actualRow.valid_till);
-      const currentGrace = field === "grace_period" ? value : (currentRow.grace_period ?? actualRow.grace_period);
+      const currentGraceEnd = field === "grace_end_date" ? value : (currentRow as any).grace_end_date;
+      
+      const graceDays = calculateGraceDaysFromDate(currentRenewal, currentGraceEnd);
+      extraData.grace_period = graceDays;
       if (currentRenewal) {
-        extraData.due_date = calculateDueDate(currentRenewal, currentGrace);
+        extraData.due_date = calculateDueDate(currentRenewal, graceDays);
       }
     }
 
@@ -625,15 +648,18 @@ export default function CounterPage() {
 
   // Handle field change for new record
   const handleNewRecordChange = (
-    field: keyof typeof newRecordData,
+    field: keyof typeof newRecordData | "grace_end_date",
     value: any,
   ) => {
     const extraData: any = {};
-    if (field === "valid_till" || field === "grace_period") {
+    if (field === "valid_till" || field === "grace_end_date") {
       const currentRenewal = field === "valid_till" ? value : newRecordData.valid_till;
-      const currentGrace = field === "grace_period" ? value : newRecordData.grace_period;
+      const currentGraceEnd = field === "grace_end_date" ? value : (newRecordData as any).grace_end_date;
+      
+      const graceDays = calculateGraceDaysFromDate(currentRenewal, currentGraceEnd);
+      extraData.grace_period = String(graceDays);
       if (currentRenewal) {
-        extraData.due_date = calculateDueDate(currentRenewal, currentGrace);
+        extraData.due_date = calculateDueDate(currentRenewal, graceDays);
       }
     }
 
@@ -1118,19 +1144,24 @@ export default function CounterPage() {
                           {!isClient && (
                             <td className="py-3 px-4">
                               <input
-                                type="number"
-                                value={newRecordData.grace_period}
-                                onChange={(e) => handleNewRecordChange("grace_period", e.target.value)}
+                                type="date"
+                                value={(newRecordData as any).grace_end_date || ""}
+                                onChange={(e) => handleNewRecordChange("grace_end_date" as any, e.target.value)}
+                                min={newRecordData.valid_till || undefined}
                                 className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
                                 style={{ minHeight: "32px" }}
-                                min="0"
-                                placeholder="0"
                               />
                             </td>
                           )}
                           {!isClient && (
-                            <td className="py-3 px-4 text-sm text-gray-300">
-                              {formatDate(newRecordData.due_date) || '-'}
+                            <td className="py-3 px-4">
+                              {newRecordData.grace_period && Number(newRecordData.grace_period) > 0 ? (
+                                <div className={`px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(newRecordData.grace_period)}`}>
+                                  {newRecordData.grace_period} days
+                                </div>
+                              ) : (
+                                <span className="text-gray-500 text-xs">--</span>
+                              )}
                             </td>
                           )}
                           <td className="py-3 px-4">
@@ -1392,17 +1423,27 @@ export default function CounterPage() {
                                   {!isClient && (
                                     <td className="py-3 px-4">
                                       <input
-                                        type="number"
-                                        value={editData[item.id]?.grace_period ?? item.grace_period ?? "0"}
-                                        onChange={(e) => handleEditChange(item.id, "grace_period", e.target.value)}
+                                        type="date"
+                                        value={(editData[item.id] as any)?.grace_end_date || ""}
+                                        onChange={(e) => handleEditChange(item.id, "grace_end_date" as any, e.target.value)}
+                                        min={editData[item.id]?.valid_till || item.valid_till || undefined}
                                         className="w-full px-2 py-1 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm"
                                         style={{ minHeight: "32px" }}
                                       />
                                     </td>
                                   )}
                                   {!isClient && (
-                                    <td className="py-3 px-4 text-sm text-gray-300">
-                                      {formatDate(editData[item.id]?.due_date || item.due_date || "") || '-'}
+                                    <td className="py-3 px-4">
+                                      {(() => {
+                                        const gp = editData[item.id]?.grace_period ?? item.grace_period ?? 0;
+                                        return Number(gp) > 0 ? (
+                                          <div className={`px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(gp)}`}>
+                                            {gp} days
+                                          </div>
+                                        ) : (
+                                          <span className="text-gray-500 text-xs">--</span>
+                                        );
+                                      })()}
                                     </td>
                                   )}
                                   <td className="py-3 px-4">
@@ -1494,12 +1535,24 @@ export default function CounterPage() {
                                   </td>
                                   {!isClient && (
                                     <td className="py-3 px-4 text-sm text-gray-300">
-                                      {item.grace_period ? `${item.grace_period} days` : "0 days"}
+                                      {(() => {
+                                        if (!item.valid_till || !item.grace_period) return "--";
+                                        const date = new Date(item.valid_till);
+                                        if (isNaN(date.getTime())) return "--";
+                                        date.setDate(date.getDate() + Number(item.grace_period));
+                                        return formatDate(date.toISOString().split('T')[0]);
+                                      })()}
                                     </td>
                                   )}
                                   {!isClient && (
-                                    <td className="py-3 px-4 text-sm text-gray-300">
-                                      {item.due_date ? formatDate(item.due_date) : "--"}
+                                    <td className="py-3 px-4">
+                                      {item.grace_period && Number(item.grace_period) > 0 ? (
+                                        <div className={`px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(item.grace_period)}`}>
+                                          {item.grace_period} days
+                                        </div>
+                                      ) : (
+                                        <span className="text-gray-500 text-xs">--</span>
+                                      )}
                                     </td>
                                   )}
                                   <td className="py-3 px-4">
