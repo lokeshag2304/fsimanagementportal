@@ -1044,3 +1044,21 @@ input[type="number"] {
   text-overflow: ellipsis;
   max-width: 250px;
 }
+
+
+.react-select-container {
+  min-width: 180px;
+}
+
+.react-select-container .react-select__value-container {
+  white-space: nowrap;
+  overflow: hidden;
+  flex-wrap: nowrap;
+}
+
+.react-select-container .react-select__single-value {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 250px;
+}
