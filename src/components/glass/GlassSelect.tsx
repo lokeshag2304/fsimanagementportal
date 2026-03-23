@@ -130,19 +130,18 @@ const glassSelectStyles = {
     ...base,
     color: isDarkMode() ? "#ffffff" : "#111827",
     fontWeight: 500,
-    whiteSpace: "normal",
-    wordBreak: "break-word",
+    whiteSpace: "nowrap",
     position: "relative" as any,
-    overflow: "visible",
-    textOverflow: "clip",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
     transform: "none",
   }),
 
   valueContainer: (base: any) => ({
     ...base,
-    overflow: "visible",
-    textOverflow: "clip",
-    whiteSpace: "normal",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
   }),
 
   placeholder: (base: any) => ({

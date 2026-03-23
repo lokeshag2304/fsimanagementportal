@@ -1027,3 +1027,20 @@ input[type="number"]::-webkit-outer-spin-button {
 input[type="number"] {
   -moz-appearance: textfield;
 }
+
+.react-select-container {
+  min-width: 180px;
+}
+
+.react-select-container .react-select__value-container {
+  white-space: nowrap;
+  overflow: hidden;
+  flex-wrap: nowrap;
+}
+
+.react-select-container .react-select__single-value {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 250px;
+}
