@@ -913,61 +913,61 @@ export default function EmailsPage() {
                         />
                       </th>
                     )}
-                    <th className={`py-3 px-4 text-left text-sm font-medium text-gray-300 ${isClient ? 'w-[80px]' : 'w-[70px]'}`}>
+                    <th className={`py-3 px-4 text-center text-sm font-medium text-gray-300 ${isClient ? 'w-[80px]' : 'w-[70px]'}`}>
                       S.NO
                     </th>
-                    <th className={`py-3 px-4 text-left text-sm font-medium text-gray-300 ${isClient ? 'w-[220px]' : 'w-[200px]'}`}>
+                    <th className={`py-3 px-4 text-left text-sm font-medium text-gray-300 ${isClient ? 'w-[300px]' : 'w-[300px]'}`}>
                       {isClient ? 'Domain' : 'Domain Name'}
                     </th>
                     {user?.role === "SuperAdmin" && (
-                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[180px]">
-                        Client
-                      </th>
+                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[250px]">
+                          Client
+                        </th>
                     )}
-                    <th className={`py-3 px-4 text-left text-sm font-medium text-gray-300 ${isClient ? 'w-[200px]' : 'w-[180px]'}`}>
+                    <th className={`py-3 px-4 text-left text-sm font-medium text-gray-300 ${isClient ? 'w-[300px]' : 'w-[300px]'}`}>
                       Product
                     </th>
                     {user?.role === "SuperAdmin" && (
-                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[150px]">
-                        Vendor
-                      </th>
+                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[220px]">
+                          Vendor
+                        </th>
                     )}
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[100px]">
+                    <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 w-[100px]">
                       Quantity
                     </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[140px]">
                       Bill Type
                     </th>
                     {user?.role === "SuperAdmin" && (
-                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[140px]">
+                      <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 w-[140px]">
                         Start Date
                       </th>
                     )}
-                    <th className={`py-3 px-4 text-left text-sm font-medium text-gray-300 ${isClient ? 'w-[160px]' : 'w-[140px]'}`}>
+                    <th className={`py-3 px-4 text-center text-sm font-medium text-gray-300 ${isClient ? 'w-[160px]' : 'w-[140px]'}`}>
                       {isClient ? 'Renewal' : 'Renewal Date'}
                     </th>
                     {user?.role === "SuperAdmin" && (
-                      <th className={`py-3 px-4 text-left text-sm font-medium text-gray-300 ${isClient ? 'w-[140px]' : 'w-[120px]'}`}>
+                      <th className={`py-3 px-4 text-center text-sm font-medium text-gray-300 ${isClient ? 'w-[140px]' : 'w-[120px]'}`}>
                         Days to Expire
                       </th>
                     )}
                     {user?.role === "SuperAdmin" && (
-                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[140px]">
+                      <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 w-[140px]">
                         Deletion Date
                       </th>
                     )}
                     {user?.role === "SuperAdmin" && (
-                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[120px]">
+                      <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 w-[120px]">
                         Days to Delete
                       </th>
                     )}
                     {user?.role === "SuperAdmin" && (
-                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[120px]">
+                      <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 w-[120px]">
                         Grace Period
                       </th>
                     )}
                     {user?.role === "SuperAdmin" && (
-                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[140px]">
+                      <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 w-[140px]">
                         Due Date
                       </th>
                     )}
@@ -980,7 +980,7 @@ export default function EmailsPage() {
                       </th>
                     )}
                     {user?.role === "SuperAdmin" && (
-                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[180px]">
+                      <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 w-[180px]">
                         Last Updated
                       </th>
                     )}
@@ -1005,11 +1005,11 @@ export default function EmailsPage() {
                       {/* Add New Row */}
                       {addingNew && (
                         <tr key="new-row" className="border-b border-white/5 bg-blue-500/5">
-                          {user?.role === "SuperAdmin" && <td className="py-3 px-4"></td>}
+                          {user?.role === "SuperAdmin" && <td className="py-3 px-4 overflow-hidden"></td>}
                           <td className="py-3 px-4 text-sm text-gray-300">
                             New
                           </td>
-                          <td className="py-3 px-4">
+                          <td className="py-3 px-4 overflow-hidden">
                             <ApiDropdown
                               endpoint="get-domains"
                               value={
@@ -1035,7 +1035,7 @@ export default function EmailsPage() {
                             />
                           </td>
                           {user?.role === "SuperAdmin" && (
-                            <td className="py-3 px-4">
+                            <td className="py-3 px-4 overflow-hidden">
                               <ApiDropdown
                                 endpoint="get-clients"
                                 value={
@@ -1061,7 +1061,7 @@ export default function EmailsPage() {
                               />
                             </td>
                           )}
-                          <td className="py-3 px-4">
+                          <td className="py-3 px-4 overflow-hidden">
                             <ApiDropdown
                               endpoint="get-products"
                               value={
@@ -1087,7 +1087,7 @@ export default function EmailsPage() {
                             />
                           </td>
                           {user?.role === "SuperAdmin" && (
-                            <td className="py-3 px-4">
+                            <td className="py-3 px-4 overflow-hidden">
                               <ApiDropdown
                                 endpoint="get-venders"
                                 value={
@@ -1113,7 +1113,7 @@ export default function EmailsPage() {
                               />
                             </td>
                           )}
-                          <td className="py-3 px-4">
+                          <td className="py-3 px-4 overflow-hidden">
                             <input
                               type="number"
                               value={newRecordData.quantity}
@@ -1229,7 +1229,7 @@ export default function EmailsPage() {
                             <td className="py-3 px-4">
                               {/* Due Date → X days pill */}
                               {newRecordData.grace_period && Number(newRecordData.grace_period) > 0 ? (
-                                <div className={`px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(newRecordData.grace_period)}`}>
+                                <div className={`px-[10px] py-[6px] min-w-[110px] rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(newRecordData.grace_period)}`}>
                                   {newRecordData.grace_period} days
                                 </div>
                               ) : (
@@ -1355,7 +1355,7 @@ export default function EmailsPage() {
                                 />
                               </td>
                             )}
-                            <td className="py-3 px-4 text-sm text-gray-300 whitespace-nowrap">
+                            <td className="py-3 px-4 text-center text-sm text-gray-300 whitespace-nowrap">
                               {startItem + index}
                               {(item as any).isNewRecord && (
                                 <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
@@ -1740,8 +1740,8 @@ export default function EmailsPage() {
                                     </div>
                                   </td>
                                 )}
-                                 <td className="py-3 px-4">
-                                   <div className="flex items-center gap-2">
+                                 <td className="py-3 px-4 text-right">
+                                   <div className="flex items-center justify-end gap-2">
                                      <Hash className="w-4 h-4 text-gray-400" />
                                      <span className="text-sm text-white font-medium">
                                        {item.quantity || 1}
@@ -1750,7 +1750,7 @@ export default function EmailsPage() {
                                  </td>
                                  <td className="py-3 px-4">
                                    <div
-                                     className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${getBillTypeColor(item.bill_type || "Monthly")} ${item.bill_type?.toLowerCase() === "yearly"
+                                     className={`inline-flex items-center justify-center px-[10px] py-[6px] min-w-[110px] rounded-full text-xs font-medium backdrop-blur-sm border ${getBillTypeColor(item.bill_type || "Monthly")} ${item.bill_type?.toLowerCase() === "yearly"
                                        ? "bg-blue-500/20 border-blue-500/20"
                                        : (item.bill_type || "Monthly").toLowerCase() ===
                                          "monthly"
@@ -1765,23 +1765,23 @@ export default function EmailsPage() {
                                    </div>
                                  </td>
                                 {user?.role === "SuperAdmin" && (
-                                  <td className="py-3 px-4 text-xs text-gray-300">
-                                    <div className="flex items-center gap-2">
+                                  <td className="py-3 px-4 text-center text-xs text-gray-300">
+                                    <div className="flex items-center justify-center gap-2">
                                       <Calendar className="w-4 h-4 text-gray-400" />
                                       {formatDate(item.start_date)}
                                     </div>
                                   </td>
                                 )}
-                                <td className="py-3 px-4 text-xs text-gray-300">
-                                  <div className="flex items-center gap-2">
+                                <td className="py-3 px-4 text-center text-xs text-gray-300">
+                                  <div className="flex items-center justify-center gap-2">
                                     <Calendar className="w-4 h-4 text-gray-400" />
                                     {formatDate(item.expiry_date)}
                                   </div>
                                 </td>
                                                                  {user?.role === "SuperAdmin" && (
-                                   <td className="py-3 px-4">
+                                   <td className="py-3 px-4 text-center">
                                   <div
-                                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${calculateDays(item.expiry_date) < 0
+                                    className={`inline-flex items-center justify-center px-[10px] py-[6px] min-w-[110px] rounded-full text-xs font-medium backdrop-blur-sm border ${calculateDays(item.expiry_date) < 0
                                       ? "bg-red-500/20 text-red-400 border-red-500/20"
                                       : calculateDays(item.expiry_date) <= 30
                                                                                    ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/20"
@@ -1793,24 +1793,24 @@ export default function EmailsPage() {
                                                                  </td>
                                )}
                                 {user?.role === "SuperAdmin" && (
-                                  <td className="py-3 px-4 text-sm text-gray-300">
+                                  <td className="py-3 px-4 text-center text-sm text-gray-300">
                                     {item.deletion_date ? formatDate(item.deletion_date) : "--"}
                                   </td>
                                 )}
                                 {user?.role === "SuperAdmin" && (
-                                  <td className="py-3 px-4 whitespace-nowrap">
+                                  <td className="py-3 px-4 text-center whitespace-nowrap">
                                     <span className={`text-sm ${getDaysToColor(item.days_to_delete)}`}>
                                       {item.days_to_delete !== null && item.days_to_delete !== undefined ? item.days_to_delete : "--"}
                                     </span>
                                   </td>
                                 )}
                                 {user?.role === "SuperAdmin" && (
-                                  <td className="py-3 px-4 text-sm text-gray-300">
+                                  <td className="py-3 px-4 text-center text-sm text-gray-300">
                                     {item.grace_period ? `${item.grace_period} days` : "0 days"}
                                   </td>
                                 )}
                                 {user?.role === "SuperAdmin" && (
-                                  <td className="py-3 px-4 text-sm text-gray-300">
+                                  <td className="py-3 px-4 text-center text-sm text-gray-300">
                                     {/* Grace End Date view */}
                                     {(() => {
                                       if (!item.grace_period || !item.expiry_date) return <span className="text-gray-500">--</span>;
@@ -1822,13 +1822,13 @@ export default function EmailsPage() {
                                   </td>
                                 )}
                                 {user?.role === "SuperAdmin" && (
-                                  <td className="py-3 px-4 text-sm text-gray-300">
+                                  <td className="py-3 px-4 text-center text-sm text-gray-300">
                                     {item.due_date ? formatDate(item.due_date) : "--"}
                                   </td>
                                 )}
                                 <td className="py-3 px-4 text-center">
                                   <div
-                                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${getStatusColor(item.status)} ${item.status === 1
+                                    className={`inline-flex items-center justify-center px-[10px] py-[6px] min-w-[110px] rounded-full text-xs font-medium backdrop-blur-sm border ${getStatusColor(item.status)} ${item.status === 1
                                       ? "bg-green-500/20 border-green-500/20"
                                       : "bg-red-500/20 border-red-500/20"
                                       }`}

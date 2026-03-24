@@ -146,7 +146,7 @@ const SubscriptionRow = React.memo(({
             className="w-4 h-4 rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500/50 cursor-pointer"
           />
         </td>
-        <td className="py-3 px-4 text-sm text-gray-300 whitespace-nowrap">
+        <td className="py-3 px-4 text-center text-sm text-gray-300 whitespace-nowrap">
           {startItem + index}
           {(item as any).isNewRecord && (
             <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
@@ -265,7 +265,7 @@ const SubscriptionRow = React.memo(({
                 placeholder="Vendor"
               />
             </td>
-            <td className="py-3 px-4">
+            <td className="py-3 px-4 min-w-[200px] w-[200px]">
               <CurrencyAmountInput
                 currency={editData[item.id]?.currency || item.currency || "INR"}
                 amount={editData[item.id]?.amount || item.amount || ""}
@@ -301,7 +301,7 @@ const SubscriptionRow = React.memo(({
                 style={{ minHeight: '32px' }}
               />
             </td>
-            <td className="py-3 px-4">
+            <td className="py-3 px-4 text-center">
               <input
                 type="date"
                 value={
@@ -314,7 +314,7 @@ const SubscriptionRow = React.memo(({
                 style={{ minHeight: "32px" }}
               />
             </td>
-            <td className="py-3 px-4">
+            <td className="py-3 px-4 text-center">
               <input
                 type="number"
                 value={
@@ -328,8 +328,7 @@ const SubscriptionRow = React.memo(({
             </td>
             {!isClient && (
               <>
-                {/* Grace End Date — identical to Deletion Date picker */}
-                <td className="py-3 px-4">
+                <td className="py-3 px-4 text-center">
                   <input
                     type="date"
                     value={(editData[item.id] as any)?.grace_end_date || ""}
@@ -339,8 +338,7 @@ const SubscriptionRow = React.memo(({
                     style={{ minHeight: "32px" }}
                   />
                 </td>
-                {/* Due Date → X days pill */}
-                <td className="py-3 px-4">
+                <td className="py-3 px-4 text-center grace-period-column">
                   {(() => {
                     const gp = editData[item.id]?.grace_period ?? item.grace_period ?? 0;
                     return Number(gp) > 0 ? (
@@ -360,7 +358,7 @@ const SubscriptionRow = React.memo(({
             <td className="py-3 px-4">
               <div className="flex items-center gap-2">
                 <Package className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                <span className="text-sm text-white font-medium">
+                <span className="text-sm text-white font-medium whitespace-nowrap">
                   {item.product_name}
                 </span>
               </div>
@@ -374,24 +372,24 @@ const SubscriptionRow = React.memo(({
             <td className="py-3 px-4 text-sm text-gray-300">
               {item.vendor_name || "--"}
             </td>
-            <td className="py-3 px-4 text-sm text-gray-300">
-              <div className="flex items-center justify-center gap-1 font-medium text-white">
+            <td className="py-3 px-4 text-center text-sm text-gray-300">
+              <div className="inline-flex items-center justify-center gap-[6px] font-medium text-white">
                 <span className="text-[#BC8969]">{getCurrencySymbol(item.currency)}</span>
                 {item.amount || "0.00"}
               </div>
             </td>
-            <td className="py-3 px-4 text-sm text-gray-300">
+            <td className="py-3 px-4 text-center text-sm text-gray-300 whitespace-nowrap">
               {item.renewal_date ? new Date(item.renewal_date).toLocaleDateString() : "--"}
             </td>
-            <td className="py-3 px-4">
-              <div className="inline-flex items-center whitespace-nowrap gap-1 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm bg-gray-500/20 text-gray-400 border border-gray-500/20">
+            <td className="py-3 px-4 text-center">
+              <div className="inline-flex items-center justify-center whitespace-nowrap gap-1 px-3 py-1 min-w-[110px] rounded-full text-xs font-medium backdrop-blur-sm bg-gray-500/20 text-gray-400 border border-gray-500/20">
                 {(item as any).days_left ?? 'N/A'}
               </div>
             </td>
-            <td className="py-3 px-4 text-sm text-gray-300">
+            <td className="py-3 px-4 text-center text-sm text-gray-300 whitespace-nowrap">
               {item.deletion_date ? new Date(item.deletion_date).toLocaleDateString() : "--"}
             </td>
-            <td className="py-3 px-4 whitespace-nowrap">
+            <td className="py-3 px-4 text-center whitespace-nowrap">
               <span className="text-sm">
                 {item.days_to_delete ?? '--'}
               </span>
@@ -399,7 +397,7 @@ const SubscriptionRow = React.memo(({
             {!isClient && (
               <>
                 {/* Grace Period view — show derived end date */}
-                <td className="py-3 px-4 text-sm text-gray-300">
+                <td className="py-3 px-4 text-center text-sm text-gray-300 whitespace-nowrap">
                   {(() => {
                     if (!item.grace_period || !item.renewal_date) return <span className="text-gray-500">--</span>;
                     const rd = new Date(item.renewal_date);
@@ -409,7 +407,7 @@ const SubscriptionRow = React.memo(({
                   })()}
                 </td>
                 {/* Due Date → X days pill */}
-                <td className="py-3 px-4">
+                <td className="py-3 px-4 text-center grace-period-column">
                   {item.grace_period && Number(item.grace_period) > 0 ? (
                     <div className={`px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(item.grace_period)}`}>
                       {item.grace_period} days
@@ -425,7 +423,7 @@ const SubscriptionRow = React.memo(({
 
 
         {editingId === item.id ? (
-          <td className="py-3 px-4">
+          <td className="py-3 px-4 text-center">
             <div className="w-full">
               <GlassSelect
                 options={statusOptions}
@@ -437,9 +435,9 @@ const SubscriptionRow = React.memo(({
             </div>
           </td>
         ) : (
-          <td className="py-3 px-4">
+          <td className="py-3 px-4 text-center">
             <div
-              className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${Number(item.status) === 1
+              className={`inline-flex items-center justify-center px-[10px] py-[6px] min-w-[110px] rounded-full text-xs font-medium backdrop-blur-sm border ${Number(item.status) === 1
                 ? "bg-green-500/20 text-green-400 border-green-500/20"
                 : "bg-red-500/20 text-red-400 border-red-500/20"
                 }`}
@@ -470,12 +468,12 @@ const SubscriptionRow = React.memo(({
             />
           </td>
         ) : (
-          <td className="py-3 px-4">
+          <td className="py-3 px-4 remarks-column">
             <div className="flex items-center gap-2 group">
               <MessageSquare className="w-4 h-4 text-gray-400 flex-shrink-0" />
               <div className="flex flex-col gap-1 w-full overflow-hidden">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-300 truncate max-w-[150px]">
+                  <span className="text-sm text-gray-300">
                     {item.remarks || "--"}
                   </span>
                   {item.has_remark_history && (
@@ -496,7 +494,7 @@ const SubscriptionRow = React.memo(({
           </td>
         )}
 
-        <td className="py-3 px-4 text-sm text-gray-300 whitespace-nowrap">
+        <td className="py-3 px-4 text-center text-sm text-gray-300 whitespace-nowrap">
           {item.last_updated || formatLastUpdated(item.updated_at)}
         </td>
 
@@ -1418,7 +1416,7 @@ export default function SubscriptionsPage() {
           {/* Table Container */}
           <div className="overflow-hidden rounded-xl border border-white/10 backdrop-blur-sm">
             <div className="max-h-[500px] overflow-y-auto overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400/50 scrollbar-track-gray-800/50">
-              <table className={`w-full table-fixed ${isClient ? 'min-w-[1200px]' : 'min-w-[2400px]'}`}>
+              <table className={`w-full ${isClient ? 'min-w-[1200px]' : 'min-w-[2400px]'}`}>
                 <thead>
                   <tr className="bg-white/5 border-b border-white/10">
                     <th className="py-3 px-4 text-left w-[48px]">
@@ -1429,53 +1427,54 @@ export default function SubscriptionsPage() {
                         className="w-4 h-4 rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500/50 cursor-pointer"
                       />
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[60px]">
+                    <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 w-[60px]">
                       S.NO
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[220px]">
+                    <th className="py-3 px-4 text-left text-xs font-semibold text-gray-400 w-[400px]">
                       Product
                     </th>
                     {!isClient && (
-                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[200px]">
+                      <th className="py-3 px-4 text-left text-xs font-semibold text-gray-400 w-[250px]">
                         Client
                       </th>
                     )}
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[200px]">
+                    <th className="py-3 px-4 text-left text-xs font-semibold text-gray-400 w-[220px]">
                       Vendor
                     </th>
-                    <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 w-[220px]">
+                    <th className="py-3 px-4 text-center text-xs font-semibold text-gray-400 min-w-[200px] w-[200px]">
                       Amount
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[160px]">
+                    <th className="py-3 px-4 text-center text-xs font-semibold text-gray-400 w-[270px] whitespace-nowrap">
                       Renewal Date
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[120px]">
+                    <th className="py-3 px-4 text-center text-xs font-semibold text-gray-400 w-[270px] whitespace-nowrap">
                       Days Left
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[160px]">
+                    <th className="py-3 px-4 text-center text-xs font-semibold text-gray-400 w-[270px] whitespace-nowrap">
                       Deletion Date
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[140px]">
+
+                    <th className="py-3 px-4 text-center text-xs font-semibold text-gray-400 w-[270px]">
                       Days to Delete
                     </th>
                     {!isClient && (
                       <>
-                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[140px]">
+                        <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 w-[140px] grace-period-column">
                           Grace Period
                         </th>
-                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[160px]">
+                        <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 w-[270px] whitespace-nowrap">
                           Due Date
                         </th>
                       </>
                     )}
 
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[140px]">
+                    <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 w-[140px]">
                       Status
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[220px]">
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[220px] remarks-column">
                       Remarks
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[150px]">
+                    <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 w-[270px] whitespace-nowrap">
                       Last Updated
                     </th>
                     <th className="py-3 px-4 text-right text-sm font-medium text-gray-300 w-[160px]">
@@ -1496,7 +1495,7 @@ export default function SubscriptionsPage() {
                     {/* Add New Row */}
                     {addingNew && (
                       <tr key="new-row" className="border-b border-white/5 bg-blue-500/5">
-                        <td className="py-3 px-4"></td>
+                        <td className="py-3 px-4 overflow-hidden"></td>
                         <td className="py-3 px-4 text-sm text-gray-300">
                           New
                         </td>
@@ -1583,7 +1582,7 @@ export default function SubscriptionsPage() {
                             placeholder="Vendor"
                           />
                         </td>
-                        <td className="py-3 px-4">
+                        <td className="py-3 px-4 min-w-[200px] w-[200px]">
                           <CurrencyAmountInput
                             currency={newRecordData.currency || "INR"}
                             amount={newRecordData.amount}
@@ -1645,9 +1644,9 @@ export default function SubscriptionsPage() {
                               />
                             </td>
                             {/* Due Date → X days pill */}
-                            <td className="py-3 px-4">
+                            <td className="py-3 px-4 grace-period-column">
                               {newRecordData.grace_period && Number(newRecordData.grace_period) > 0 ? (
-                                <div className={`px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(newRecordData.grace_period)}`}>
+                                <div className={`px-[10px] py-[6px] min-w-[110px] rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(newRecordData.grace_period)}`}>
                                   {newRecordData.grace_period} days
                                 </div>
                               ) : (
@@ -1668,7 +1667,7 @@ export default function SubscriptionsPage() {
                           </div>
 
                         </td>
-                        <td className="py-3 px-4">
+                        <td className="py-3 px-4 remarks-column">
                           <input
                             type="text"
                             value={newRecordData.remarks}

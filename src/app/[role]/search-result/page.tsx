@@ -215,16 +215,16 @@ export default function SearchResultsPage({ query, onSearchChange }: { query?: s
             <table className="w-full min-w-[1000px]">
               <thead>
                 <tr className="border-b border-[rgba(255,255,255,var(--glass-border-opacity))]">
-                  <th className="text-left py-3 px-4 text-xs font-medium text-[var(--text-tertiary)] w-[60px]">
+                  <th className="text-center py-3 px-4 text-xs font-medium text-[var(--text-tertiary)] w-[60px]">
                     S.NO
                   </th>
                   <th className="text-left py-3 px-4 text-xs font-medium text-[var(--text-tertiary)]">
                     Type
                   </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-[var(--text-tertiary)]">
+                  <th className="text-center py-3 px-4 text-xs font-medium text-[var(--text-tertiary)]">
                     Expire Date
                   </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-[var(--text-tertiary)]">
+                  <th className="text-center py-3 px-4 text-xs font-medium text-[var(--text-tertiary)]">
                     Days to Expire
                   </th>
                   <th className="text-left py-3 px-4 text-xs font-medium text-[var(--text-tertiary)]">
@@ -233,13 +233,13 @@ export default function SearchResultsPage({ query, onSearchChange }: { query?: s
                   <th className="text-left py-3 px-4 text-xs font-medium text-[var(--text-tertiary)]">
                     Product
                   </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-[var(--text-tertiary)]">
+                  <th className="text-center py-3 px-4 text-xs font-medium text-[var(--text-tertiary)]">
                     Status
                   </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-[var(--text-tertiary)]">
+                  <th className="text-center py-3 px-4 text-xs font-medium text-[var(--text-tertiary)]">
                     Grace Period
                   </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-[var(--text-tertiary)]">
+                  <th className="text-center py-3 px-4 text-xs font-medium text-[var(--text-tertiary)]">
                     Due Date
                   </th>
                 </tr>
@@ -266,16 +266,16 @@ export default function SearchResultsPage({ query, onSearchChange }: { query?: s
                     key={`${item.id}-${index}`}
                     className="border-b border-[rgba(255,255,255,var(--glass-border-opacity))] hover:bg-[rgba(255,255,255,var(--ui-opacity-5))] transition-colors"
                   >
-                    <td className="py-3 px-4 text-sm text-[var(--text-secondary)]">
+                    <td className="py-3 px-4 text-center text-sm text-[var(--text-secondary)]">
                       {(pagination.page * pagination.rowsPerPage) + index + 1}
                     </td>
                     <td className="py-3 px-4 text-sm text-white">
                       {item.record_type}
                     </td>
-                    <td className="py-3 px-4 text-sm text-[var(--text-secondary)]">
+                    <td className="py-3 px-4 text-center text-sm text-[var(--text-secondary)]">
                       {formatLastUpdated(item.created_at)} {/* In backend it's mostly mapped over created_at currently */}
                     </td>
-                    <td className="py-3 px-4 text-sm text-[var(--text-secondary)]">
+                    <td className="py-3 px-4 text-center text-sm text-[var(--text-secondary)]">
                       {item.days_to_expired !== null ? `${item.days_to_expired} days` : '-'}
                     </td>
                     <td className="py-3 px-4 text-sm text-[var(--text-secondary)]">
@@ -284,21 +284,21 @@ export default function SearchResultsPage({ query, onSearchChange }: { query?: s
                     <td className="py-3 px-4 text-sm text-[var(--text-secondary)]">
                       {item.product_name || '-'}
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-3 px-4 text-center">
                       {item.status === 1 ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-500/20 text-green-400">
+                        <span className="inline-flex items-center justify-center px-2 py-0.5 rounded text-xs font-medium bg-green-500/20 text-green-400">
                           Active
                         </span>
                       ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-500/20 text-gray-400">
+                        <span className="inline-flex items-center justify-center px-2 py-0.5 rounded text-xs font-medium bg-gray-500/20 text-gray-400">
                           Inactive
                         </span>
                       )}
                     </td>
-                    <td className="py-3 px-4 text-sm text-[var(--text-secondary)]">
+                    <td className="py-3 px-4 text-center text-sm text-[var(--text-secondary)]">
                       {item.grace_period !== undefined ? `${item.grace_period} days` : '-'}
                     </td>
-                    <td className="py-3 px-4 text-sm text-[var(--text-secondary)]">
+                    <td className="py-3 px-4 text-center text-sm text-[var(--text-secondary)]">
                       {item.due_date ? formatLastUpdated(item.due_date) : '-'}
                     </td>
                   </tr>

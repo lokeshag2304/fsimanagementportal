@@ -1062,3 +1062,39 @@ input[type="number"] {
   text-overflow: ellipsis;
   max-width: 250px;
 }
+
+/* ========================================
+   TABLE ALIGNMENT & COLUMN WIDTH FIXES
+   ======================================== */
+
+.grace-period-column,
+td.grace-period-column,
+th.grace-period-column {
+  text-align: center !important;
+  display: table-cell;
+  vertical-align: middle;
+}
+
+.grace-period-column span {
+  display: inline-block;
+  text-align: center;
+  width: 100%;
+}
+
+.remarks-column {
+  min-width: 220px;
+  max-width: 320px;
+  white-space: normal !important;
+  word-break: break-word;
+  overflow: visible !important;
+  text-overflow: unset !important;
+}
+
+td.remarks-column {
+  padding-right: 16px !important;
+  padding-left: 12px !important;
+}
+
+table {
+  table-layout: auto !important;
+}

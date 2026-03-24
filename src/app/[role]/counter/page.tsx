@@ -930,11 +930,11 @@ export default function CounterPage() {
           <div className="overflow-hidden rounded-xl border border-white/10 backdrop-blur-sm">
             {/* Table */}
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full table-fixed min-w-[1860px] border-collapse">
                 <thead>
                   <tr className="bg-white/5 border-b border-white/10">
                     {!isClient && (
-                      <th className="py-3 px-4 text-left w-12">
+                      <th className="py-3 px-4 text-left w-[60px]">
                         <input
                           type="checkbox"
                           checked={isAllSelected}
@@ -943,47 +943,47 @@ export default function CounterPage() {
                         />
                       </th>
                     )}
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-14">
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[60px]">
                       S.NO
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[180px]">
                       Client
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[220px]">
                       Product
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[100px] w-32">
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[160px]">
                       Vendor
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[100px]">
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[80px]">
                       Count
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[140px]">
                       Validity Date
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
+                    <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 w-[120px]">
                       Days to Expire
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
+                    <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 w-[120px]">
                       Status
                     </th>
                     {!isClient && (
-                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[120px]">
+                      <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 w-[120px]">
                         Grace Period
                       </th>
                     )}
                     {!isClient && (
-                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">
+                      <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 w-[140px]">
                         Due Date
                       </th>
                     )}
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[180px]">
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[160px]">
                       Remarks
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[180px]">
+                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[180px]">
                       Last Updated
                     </th>
-                    <th className="py-3 px-4 text-right text-sm font-medium text-gray-300 min-w-[140px]">
+                    <th className="py-3 px-4 text-right text-sm font-medium text-gray-300 w-[120px]">
                       Actions
                     </th>
                   </tr>
@@ -1002,11 +1002,11 @@ export default function CounterPage() {
                       {/* Add New Row */}
                       {addingNew && (
                         <tr className="border-b border-white/5 bg-blue-500/5">
-                          <td className="py-3 px-4"></td>
+                          <td className="py-3 px-4 overflow-hidden"></td>
                           <td className="py-3 px-4 text-sm text-gray-300">
                             New
                           </td>
-                          <td className="py-3 px-4">
+                          <td className="py-3 px-4 overflow-hidden">
                             <ApiDropdown
                               endpoint="get-clients"
                               value={
@@ -1031,7 +1031,7 @@ export default function CounterPage() {
                               className="min-h-[32px]"
                             />
                           </td>
-                          <td className="py-3 px-4">
+                          <td className="py-3 px-4 overflow-hidden">
                             <ApiDropdown
                               endpoint="get-products"
                               value={
@@ -1056,7 +1056,7 @@ export default function CounterPage() {
                               className="min-h-[32px]"
                             />
                           </td>
-                          <td className="py-3 px-4">
+                          <td className="py-3 px-4 overflow-hidden">
                             <ApiDropdown
                               endpoint="get-venders"
                               value={
@@ -1081,7 +1081,7 @@ export default function CounterPage() {
                               className="min-h-[32px]"
                             />
                           </td>
-                          <td className="py-3 px-4">
+                          <td className="py-3 px-4 overflow-hidden">
                             <input
                               type="number"
                               value={newRecordData.counter_count}
@@ -1091,7 +1091,7 @@ export default function CounterPage() {
                               placeholder="Auto"
                             />
                           </td>
-                          <td className="py-3 px-4">
+                          <td className="py-3 px-4 overflow-hidden">
                             <input
                               type="date"
                               value={newRecordData.valid_till}
@@ -1105,7 +1105,7 @@ export default function CounterPage() {
                               style={{ minHeight: "32px" }}
                             />
                           </td>
-                          <td className="py-3 px-4">
+                          <td className="py-3 px-4 overflow-hidden">
                             <input
                               type="number"
                               value={calculateDays(newRecordData.valid_till)}
@@ -1114,7 +1114,7 @@ export default function CounterPage() {
                               style={{ minHeight: "32px" }}
                             />
                           </td>
-                          <td className="py-3 px-4">
+                          <td className="py-3 px-4 overflow-hidden">
                             <div className="w-40">
                               <GlassSelect
                                 options={[
@@ -1142,7 +1142,7 @@ export default function CounterPage() {
                             </div>
                           </td>
                           {!isClient && (
-                            <td className="py-3 px-4">
+                            <td className="py-3 px-4 overflow-hidden">
                               <input
                                 type="date"
                                 value={(newRecordData as any).grace_end_date || ""}
@@ -1156,7 +1156,7 @@ export default function CounterPage() {
                           {!isClient && (
                             <td className="py-3 px-4">
                               {newRecordData.grace_period && Number(newRecordData.grace_period) > 0 ? (
-                                <div className={`px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(newRecordData.grace_period)}`}>
+                                <div className={`px-[10px] py-[6px] min-w-[110px] rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(newRecordData.grace_period)}`}>
                                   {newRecordData.grace_period} days
                                 </div>
                               ) : (
@@ -1437,7 +1437,7 @@ export default function CounterPage() {
                                       {(() => {
                                         const gp = editData[item.id]?.grace_period ?? item.grace_period ?? 0;
                                         return Number(gp) > 0 ? (
-                                          <div className={`px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(gp)}`}>
+                                          <div className={`px-2 py-1 min-w-[70px] rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(gp)}`}>
                                             {gp} days
                                           </div>
                                         ) : (
@@ -1512,7 +1512,7 @@ export default function CounterPage() {
                                   </td>
                                   <td className="py-3 px-4">
                                     <div
-                                      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${calculateDays(item.valid_till) < 0
+                                      className={`inline-flex items-center justify-center gap-2 px-[10px] py-[6px] min-w-[110px] rounded-full text-xs font-medium backdrop-blur-sm border ${calculateDays(item.valid_till) < 0
                                         ? "bg-red-500/20 text-red-400 border-red-500/20"
                                         : calculateDays(item.valid_till) <= 30
                                           ? "bg-orange-500/20 text-orange-400 border-orange-500/20"
@@ -1522,9 +1522,9 @@ export default function CounterPage() {
                                       {isNaN(calculateDays(item.valid_till)) ? 'NaN' : calculateDays(item.valid_till)} days
                                     </div>
                                   </td>
-                                  <td className="py-3 px-4">
+                                  <td className="py-3 px-4 text-center">
                                     <div
-                                      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${getStatusColor(item.status)} ${item.status === 1
+                                      className={`inline-flex items-center justify-center px-[10px] py-[6px] min-w-[110px] rounded-full text-xs font-medium backdrop-blur-sm border ${getStatusColor(item.status)} ${item.status === 1
                                         ? "bg-green-500/20 border-green-500/20"
                                         : "bg-red-500/20 border-red-500/20"
                                         }`}
@@ -1545,9 +1545,9 @@ export default function CounterPage() {
                                     </td>
                                   )}
                                   {!isClient && (
-                                    <td className="py-3 px-4">
+                                    <td className="py-3 px-4 text-center overflow-hidden text-ellipsis whitespace-nowrap">
                                       {item.grace_period && Number(item.grace_period) > 0 ? (
-                                        <div className={`px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(item.grace_period)}`}>
+                                        <div className={`px-2 py-1 min-w-[70px] rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(item.grace_period)}`}>
                                           {item.grace_period} days
                                         </div>
                                       ) : (
@@ -1555,7 +1555,7 @@ export default function CounterPage() {
                                       )}
                                     </td>
                                   )}
-                                  <td className="py-3 px-4">
+                                  <td className="py-3 px-4 text-center overflow-hidden text-ellipsis whitespace-nowrap">
                                     <div className="flex items-center justify-between gap-2 overflow-hidden">
                                       <span className="text-sm text-gray-300 truncate max-w-[150px]">
                                         {(item?.latest_remark?.remark as string) || (item.remarks as string) || '--'}
@@ -1580,7 +1580,7 @@ export default function CounterPage() {
                                 </>
                               )}
 
-                              <td className="py-3 px-4">
+                              <td className="py-3 px-4 text-center overflow-hidden text-ellipsis whitespace-nowrap">
                                 <div
                                   className="flex items-center justify-end gap-2"
                                   onClick={(e) => e.stopPropagation()}

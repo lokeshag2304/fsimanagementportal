@@ -632,7 +632,7 @@ export default function ProductsPage() {
                         className="w-4 h-4 rounded border-gray-300 bg-gray-700 text-blue-600 focus:ring-blue-500 cursor-pointer"
                       />
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[80px]">
+                    <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 min-w-[80px]">
                       S.NO
                     </th>
                     <th
@@ -648,7 +648,7 @@ export default function ProductsPage() {
                         )}
                       </div>
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[150px]">
+                    <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 min-w-[150px]">
                       Created At
                     </th>
                     <th className="py-3 px-4 text-right text-sm font-medium text-gray-300 min-w-[120px]">
@@ -701,7 +701,7 @@ export default function ProductsPage() {
                             className="w-4 h-4 rounded border-gray-300 bg-gray-700 text-blue-600 focus:ring-blue-500 cursor-pointer"
                           />
                         </td>
-                        <td className="py-3 px-4 text-sm text-gray-300">
+                        <td className="py-3 px-4 text-center text-sm text-gray-300">
                           {startItem + index}
                         </td>
                         <td className="py-3 px-4">
@@ -725,7 +725,7 @@ export default function ProductsPage() {
                             </span>
                           )}
                         </td>
-                        <td className="py-3 px-4 text-sm text-gray-300">
+                        <td className="py-3 px-4 text-center text-sm text-gray-300">
                           {formatDate(item.created_at)}
                         </td>
                         <td className="py-3 px-4">

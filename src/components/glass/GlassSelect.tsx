@@ -43,6 +43,7 @@ const glassSelectStyles = {
       color: dark ? "#ffffff" : "#111827",
       borderRadius: "0.75rem",
       minHeight: "30px",
+      padding: "0 2px",
       boxShadow: state.isFocused
         ? "0 0 0 2px rgba(59,130,246,0.25)"
         : "none",
@@ -135,6 +136,11 @@ const glassSelectStyles = {
     overflow: "hidden",
     textOverflow: "ellipsis",
     transform: "none",
+    display: "inline-flex",
+    alignItems: "center",
+    flexShrink: 1,
+    flexGrow: 1,
+    maxWidth: "100%",
   }),
 
   valueContainer: (base: any) => ({
@@ -142,6 +148,17 @@ const glassSelectStyles = {
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
+    display: "inline-flex",
+    alignItems: "center",
+    flexWrap: "nowrap" as any,
+    flexShrink: 1,
+    padding: "0 4px",
+  }),
+
+  container: (base: any) => ({
+    ...base,
+    minWidth: "140px",
+    maxWidth: "100%",
   }),
 
   placeholder: (base: any) => ({

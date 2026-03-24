@@ -55,7 +55,7 @@ export function CurrencyAmountInput({
   };
 
   return (
-    <div className="flex flex-row items-center justify-center gap-2 w-full">
+    <div className="flex flex-row items-center justify-start gap-2 w-full">
       <div className="relative w-8 h-8 flex-shrink-0 group">
         <select
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
@@ -80,8 +80,8 @@ export function CurrencyAmountInput({
         type="number"
         value={amount}
         onChange={(e) => onAmountChange(e.target.value)}
-        className="w-full px-3 py-1.5 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm transition-colors"
-        style={{ minHeight: "32px", width: "calc(100% - 2rem - 0.5rem)" }}
+        className="flex-1 w-0 px-3 py-1.5 bg-white/5 border border-blue-500/30 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/30 backdrop-blur-sm transition-colors"
+        style={{ minHeight: "32px" }}
         placeholder="0.00"
         min="0"
         step="0.01"

@@ -10,22 +10,22 @@ import {
   Trash2,
   Search,
   Plus,
-  Upload,
-  History,
-  Calendar,
+  Shield,
   Globe,
   User,
   Package,
-  Clock,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
   Loader2,
   Save,
   X,
-  Shield,
-  DollarSign,
+  Upload,
+  History,
+  Clock,
   Eye,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Calendar,
+  DollarSign,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/useToast";
@@ -905,7 +905,7 @@ export default function SSLPage() {
           <div className="overflow-hidden rounded-xl border border-white/10 backdrop-blur-sm">
             {/* Table */}
             <div className="overflow-x-auto">
-              <table className={`w-full table-fixed ${isClient ? 'min-w-[1000px]' : 'min-w-[2000px]'}`}>
+              <table className={`w-full ${isClient ? 'min-w-[1000px]' : 'min-w-[2400px]'}`}>
                 <thead>
                   <tr className="bg-white/5 border-b border-white/10 uppercase tracking-wider">
                     {user?.role === "SuperAdmin" && (
@@ -918,71 +918,71 @@ export default function SSLPage() {
                         />
                       </th>
                     )}
-                    <th className={`py-3 px-4 text-left text-xs font-semibold text-gray-400 ${isClient ? 'w-[80px]' : 'w-[70px]'}`}>
+                    <th className={`py-3 px-4 text-center text-xs font-semibold text-gray-400 ${isClient ? 'w-[80px]' : 'w-[70px]'}`}>
                       S.NO
                     </th>
-                    <th className={`py-3 px-4 text-left text-xs font-semibold text-gray-400 ${isClient ? 'w-[220px]' : 'w-[200px]'}`}>
+                    <th className={`py-3 px-4 text-left text-xs font-semibold text-gray-400 ${isClient ? 'w-[400px]' : 'w-[400px]'}`}>
                       Domain Name
                     </th>
                     {user?.role === "SuperAdmin" && (
-                      <th className="py-3 px-4 text-left text-xs font-semibold text-gray-400 w-[180px]">
-                        Client
-                      </th>
+                        <th className="py-3 px-4 text-left text-xs font-semibold text-gray-400 w-[250px]">
+                          Client
+                        </th>
                     )}
-                    <th className={`py-3 px-4 text-left text-xs font-semibold text-gray-400 ${isClient ? 'w-[200px]' : 'w-[180px]'}`}>
+                    <th className={`py-3 px-4 text-left text-xs font-semibold text-gray-400 ${isClient ? 'w-[400px]' : 'w-[400px]'}`}>
                       Product
                     </th>
                     {user?.role === "SuperAdmin" && (
-                      <th className="py-3 px-4 text-left text-xs font-semibold text-gray-400 w-[150px]">
-                        Vendor
-                      </th>
+                        <th className="py-3 px-4 text-left text-xs font-semibold text-gray-400 w-[220px]">
+                          Vendor
+                        </th>
                     )}
                     {user?.role === "SuperAdmin" && (
-                      <th className="py-3 px-4 text-center text-xs font-semibold text-gray-400 w-[220px]">
+                      <th className="py-3 px-4 text-center text-xs font-semibold text-gray-400 min-w-[200px] w-[200px]">
                         Amount
                       </th>
                     )}
-                    <th className={`py-3 px-4 text-left text-xs font-semibold text-gray-400 ${isClient ? 'w-[160px]' : 'w-[140px]'}`}>
+                    <th className="py-3 px-4 text-center text-xs font-semibold text-gray-400 w-[270px] whitespace-nowrap">
                       Renewal Date
                     </th>
-                    <th className={`py-3 px-4 text-left text-xs font-semibold text-gray-400 ${isClient ? 'w-[140px]' : 'w-[120px]'}`}>
+                    <th className="py-3 px-4 text-center text-xs font-semibold text-gray-400 w-[270px] whitespace-nowrap">
                       Days to Expire
                     </th>
                     {user?.role === "SuperAdmin" && (
-                      <th className="py-3 px-4 text-left text-xs font-semibold text-gray-400 w-[140px]">
+                      <th className="py-3 px-4 text-center text-xs font-semibold text-gray-400 w-[270px] whitespace-nowrap">
                         Deletion Date
                       </th>
                     )}
                     {user?.role === "SuperAdmin" && (
-                      <th className="py-3 px-4 text-left text-xs font-semibold text-gray-400 w-[120px]">
+                      <th className="py-3 px-4 text-center text-xs font-semibold text-gray-400 w-[270px]">
                         Days to Delete
                       </th>
                     )}
                     {user?.role === "SuperAdmin" && (
                       <>
-                        <th className="py-3 px-4 text-left text-xs font-semibold text-gray-400 w-[140px]">
-                          Grace Period
+                        <th className="py-3 px-4 text-center text-xs font-semibold text-gray-400 w-[270px] whitespace-nowrap">
+                          Grace End Date
                         </th>
-                        <th className="py-3 px-4 text-left text-xs font-semibold text-gray-400 w-[160px]">
+                        <th className="py-3 px-4 text-center text-xs font-semibold text-gray-400 w-[270px] grace-period-column whitespace-nowrap">
                           Due Date
                         </th>
                       </>
                     )}
-                    <th className={`py-3 px-4 text-center text-xs font-semibold text-gray-400 ${isClient ? 'w-[120px]' : 'w-[150px]'}`}>
+                    <th className="py-3 px-4 text-center text-xs font-semibold text-gray-400 w-[220px]">
                       Status
                     </th>
                     {user?.role === "SuperAdmin" && (
-                      <th className="py-3 px-4 text-left text-xs font-semibold text-gray-400 w-[200px]">
+                      <th className="py-3 px-4 text-left text-xs font-semibold text-gray-400 w-[220px] remarks-column">
                         Remarks
                       </th>
                     )}
                     {user?.role === "SuperAdmin" && (
-                      <th className="py-3 px-4 text-left text-xs font-semibold text-gray-400 w-[180px]">
+                      <th className="py-3 px-4 text-center text-xs font-semibold text-gray-400 w-[270px] whitespace-nowrap">
                         Last Updated
                       </th>
                     )}
                     {user?.role === "SuperAdmin" && (
-                      <th className="py-3 px-4 text-right text-xs font-semibold text-gray-400 w-[120px]">
+                      <th className="py-3 px-4 text-right text-xs font-semibold text-gray-400 w-[220px]">
                         Action
                       </th>
                     )}
@@ -1001,7 +1001,7 @@ export default function SSLPage() {
                   ) : (<React.Fragment>
                       {addingNew && (
                         <tr key="new-row" className="border-b border-white/5 bg-blue-500/5">
-                          <td className="py-3 px-4"></td>
+                          <td className="py-3 px-4 overflow-hidden"></td>
                           <td className="py-3 px-4 text-sm text-gray-300">
                             New
                           </td>
@@ -1082,7 +1082,7 @@ export default function SSLPage() {
                               className="min-h-[32px]"
                             />
                           </td>
-                          <td className="py-3 px-4">
+                          <td className="py-3 px-4 overflow-hidden">
                             <ApiDropdown
                               endpoint="get-venders"
                               value={
@@ -1107,7 +1107,7 @@ export default function SSLPage() {
                               className="min-h-[32px]"
                             />
                           </td>
-                          <td className="py-3 px-4">
+                          <td className="py-3 px-4 min-w-[200px] w-[200px]">
                             <CurrencyAmountInput
                               currency={newRecordData.currency || "INR"}
                               amount={newRecordData.amount}
@@ -1115,7 +1115,7 @@ export default function SSLPage() {
                               onAmountChange={(val) => handleNewRecordChange("amount", val)}
                             />
                           </td>
-                          {/* <td className="py-3 px-4">
+                          {/* <td className="py-3 px-4 overflow-hidden">
                             <input
                               type="date"
                               value={newRecordData.renewal_date}
@@ -1129,7 +1129,7 @@ export default function SSLPage() {
                               style={{ minHeight: "32px" }}
                             />
                           </td> */}
-                          <td className="py-3 px-4">
+                          <td className="py-3 px-4 overflow-hidden">
                             <input
                               type="date"
                               value={newRecordData.expiry_date}
@@ -1193,7 +1193,7 @@ export default function SSLPage() {
                                 />
                               </td>
                               {/* Due Date — shows computed days */}
-                              <td className="py-3 px-4">
+                              <td className="py-3 px-4 grace-period-column">
                                 {newRecordData.grace_period && Number(newRecordData.grace_period) > 0 ? (
                                   <div className={`px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 text-blue-300`}>
                                     {newRecordData.grace_period} days
@@ -1204,7 +1204,7 @@ export default function SSLPage() {
                               </td>
                             </>
                           )}
-                          <td className="py-3 px-4">
+                          <td className="py-3 px-4 overflow-hidden">
                             <div className="w-full">
                               <GlassSelect
                                 options={statusOptions}
@@ -1217,7 +1217,7 @@ export default function SSLPage() {
                             </div>
                           </td>
                           {user?.role === "SuperAdmin" && (
-                            <td className="py-3 px-4">
+                            <td className="py-3 px-4 overflow-hidden remarks-column">
                               <input
                                 type="text"
                                 value={newRecordData.remarks}
@@ -1231,34 +1231,37 @@ export default function SSLPage() {
                             </td>
                           )}
                           {user?.role === "SuperAdmin" && (
-                            <td className="py-3 px-4 text-sm text-gray-300">
+                            <td className="py-3 px-4 text-sm text-gray-300 whitespace-nowrap">
                               {newRecordData?.updated_at_custom
                                 ? newRecordData?.updated_at_custom
                                 : "--"}
                             </td>
                           )}
                           {user?.role === "SuperAdmin" && (
-                            <td className="py-3 px-4">
-                              <div className="flex items-center justify-end gap-2">
+                            <td className="py-3 px-4 overflow-hidden text-right">
+                              <div className="flex items-center justify-end gap-2 px-2">
                                 <GlassButton
                                   onClick={handleSaveNew}
                                   disabled={isSaving}
-                                  className="p-1.5 min-w-0 bg-green-500/20 hover:bg-green-500/30"
+                                  className="p-1.5 min-w-0 bg-blue-500/10 hover:bg-blue-500/30 border border-blue-500/20 shadow-[0_0_10px_rgba(59,130,246,0.1)] group/btn relative overflow-hidden"
                                   title="Save"
                                 >
                                   {isSaving ? (
-                                    <Loader2 className="w-4 h-4 animate-spin text-green-400" />
+                                    <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
                                   ) : (
-                                    <Save className="w-4 h-4 text-green-400" />
+                                    <div className="relative flex items-center justify-center">
+                                      <Save className="w-4 h-4 text-blue-400 transition-transform duration-300 group-hover/btn:scale-110" />
+                                      <div className="absolute inset-0 bg-blue-400/20 blur-sm rounded-full scale-0 group-hover/btn:scale-150 transition-transform duration-500"></div>
+                                    </div>
                                   )}
                                 </GlassButton>
                                 <GlassButton
                                   onClick={handleCancelAdd}
                                   disabled={isSaving}
-                                  className="p-1.5 min-w-0 bg-red-500/20 hover:bg-red-500/30"
+                                  className="p-1.5 min-w-0 bg-red-500/5 hover:bg-red-500/20 border border-red-500/10 transition-all duration-300 group/cancel"
                                   title="Cancel"
                                 >
-                                  <X className="w-4 h-4 text-red-400" />
+                                  <X className="w-4 h-4 text-red-400/70 group-hover/cancel:text-red-400 transition-colors" />
                                 </GlassButton>
                               </div>
                             </td>
@@ -1293,7 +1296,7 @@ export default function SSLPage() {
                                 }`}
                             >
                               {user?.role === "SuperAdmin" && (
-                                <td className="py-3 px-4">
+                                <td className="py-3 px-4 overflow-hidden">
                                   <input
                                     type="checkbox"
                                     checked={selectedItems.includes(item.id)}
@@ -1304,7 +1307,7 @@ export default function SSLPage() {
                                   />
                                 </td>
                               )}
-                              <td className="py-3 px-4 text-sm text-gray-300">
+                              <td className="py-3 px-4 text-center text-sm text-gray-300">
                                 {startItem + index}
                               </td>
 
@@ -1312,7 +1315,7 @@ export default function SSLPage() {
                               {editingId === item.id ? (
                                 <>
                                   {/* Domain */}
-                                  <td className="py-3 px-4">
+                                  <td className="py-3 px-4 overflow-hidden">
                                     <ApiDropdown
                                       endpoint="get-domains"
                                       value={
@@ -1345,7 +1348,7 @@ export default function SSLPage() {
 
                                   {/* Client */}
                                   {user?.role === "SuperAdmin" && (
-                                    <td className="py-3 px-4">
+                                    <td className="py-3 px-4 overflow-hidden">
                                       <ApiDropdown
                                         endpoint="get-clients"
                                         value={
@@ -1443,7 +1446,7 @@ export default function SSLPage() {
 
                                   {/* Amount */}
                                   {user?.role === "SuperAdmin" && (
-                                    <td className="py-3 px-4">
+                                    <td className="py-3 px-4 min-w-[200px] w-[200px]">
                                       <CurrencyAmountInput
                                         currency={editData[item.id]?.currency || item.currency || "INR"}
                                         amount={editData[item.id]?.amount ?? item.amount ?? ""}
@@ -1565,7 +1568,7 @@ export default function SSLPage() {
                                         />
                                       </td>
                                       {/* Due Date — shows computed days */}
-                                      <td className="py-3 px-4">
+                                      <td className="py-3 px-4 grace-period-column">
                                         {(() => {
                                           const graceDays = editData[item.id]?.grace_period ?? item.grace_period ?? 0;
                                           return Number(graceDays) > 0 ? (
@@ -1626,7 +1629,7 @@ export default function SSLPage() {
 
                                   {/* Last Updated (Read-only) */}
                                   {user?.role === "SuperAdmin" && (
-                                    <td className="py-3 px-4 text-sm text-gray-300">
+                                    <td className="py-3 px-4 text-center text-sm text-gray-300 whitespace-nowrap">
                                       {item.last_updated || formatLastUpdated(item.updated_at)}
                                     </td>
                                   )}
@@ -1637,7 +1640,7 @@ export default function SSLPage() {
                                   <td className="py-3 px-4">
                                     <div className="flex items-center gap-2">
                                       <Globe className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                                      <span className="text-sm text-white font-medium">
+                                      <span className="text-sm text-white font-medium whitespace-nowrap">
                                         {item.domain_name || "N/A"}
                                       </span>
                                     </div>
@@ -1648,7 +1651,7 @@ export default function SSLPage() {
                                     <td className="py-3 px-4">
                                       <div className="flex items-center gap-2">
                                         <User className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                                        <span className="text-sm text-white font-medium">
+                                        <span className="text-sm text-white font-medium whitespace-nowrap">
                                           {item.client_name || "N/A"}
                                         </span>
                                       </div>
@@ -1659,7 +1662,7 @@ export default function SSLPage() {
                                   <td className="py-3 px-4">
                                     <div className="flex items-center gap-2">
                                       <Package className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                                      <span className="text-sm text-white font-medium">
+                                      <span className="text-sm text-white font-medium whitespace-nowrap">
                                         {item.product_name}
                                       </span>
                                     </div>
@@ -1678,8 +1681,8 @@ export default function SSLPage() {
 
                                   {/* Amount */}
                                   {user?.role === "SuperAdmin" && (
-                                    <td className="py-3 px-4 text-xs text-gray-300">
-                                      <div className="flex items-center justify-center gap-1 font-medium text-white">
+                                    <td className="py-3 px-4 text-center text-xs text-gray-300">
+                                      <div className="inline-flex items-center justify-center gap-[6px] font-medium text-white">
                                         <span className="text-[#BC8969]">{getCurrencySymbol(item.currency)}</span>
                                         {item.amount || "0.00"}
                                       </div>
@@ -1694,17 +1697,16 @@ export default function SSLPage() {
                                 </td> */}
 
                                   {/* Expiry Date */}
-                                  <td className="py-3 px-4 text-sm text-gray-300">
-                                    <div className="flex items-center gap-2">
-                                      {/* <Calendar className="w-4 h-4 text-gray-400" /> */}
+                                  <td className="py-3 px-4 text-center text-sm text-gray-300 whitespace-nowrap">
+                                    <div className="flex items-center justify-center gap-2">
                                       {formatDate(item.expiry_date)}
                                     </div>
                                   </td>
 
                                   {/* Days to Expire */}
-                                  <td className="py-3 px-4">
+                                  <td className="py-3 px-4 text-center">
                                     <div
-                                      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${calculateDays(item.expiry_date) < 0
+                                      className={`inline-flex items-center justify-center px-[10px] py-[6px] min-w-[110px] rounded-full text-xs font-medium backdrop-blur-sm border ${calculateDays(item.expiry_date) < 0
                                         ? "bg-red-500/20 text-red-400 border-red-500/20"
                                         : calculateDays(item.expiry_date) <= 30
                                           ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/20"
@@ -1718,8 +1720,8 @@ export default function SSLPage() {
 
                                   {/* Deletion Date */}
                                   {user?.role === "SuperAdmin" && (
-                                    <td className="py-3 px-4 text-sm text-gray-300">
-                                      <div className="flex items-center gap-2">
+                                    <td className="py-3 px-4 text-center text-sm text-gray-300 whitespace-nowrap">
+                                      <div className="flex items-center justify-center gap-2">
                                         {item.deletion_date ? formatDate(item.deletion_date) : "--"}
                                       </div>
                                     </td>
@@ -1727,7 +1729,7 @@ export default function SSLPage() {
 
                                   {/* Days to Delete */}
                                   {user?.role === "SuperAdmin" && (
-                                    <td className="py-3 px-4">
+                                    <td className="py-3 px-4 text-center">
                                       {item.deletion_date ? (
                                         <div className={`px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-gray-500/10 border-gray-500/20 ${getDaysToColor(item.days_to_delete)}`}>
                                           {item.days_to_delete} days
@@ -1740,7 +1742,7 @@ export default function SSLPage() {
                                   {user?.role === "SuperAdmin" && (
                                     <>
                                       {/* Grace Period view — show end date derived from grace_period + renewal_date */}
-                                      <td className="py-3 px-4 text-sm text-gray-300">
+                                      <td className="py-3 px-4 text-center text-sm text-gray-300 whitespace-nowrap">
                                         {(() => {
                                           if (!item.grace_period || !item.renewal_date) return <span className="text-gray-500">--</span>;
                                           const rDate = new Date(item.renewal_date);
@@ -1750,7 +1752,7 @@ export default function SSLPage() {
                                         })()}
                                       </td>
                                       {/* Due Date → display as X days */}
-                                      <td className="py-3 px-4">
+                                      <td className="py-3 px-4 text-center grace-period-column">
                                         {item.grace_period && Number(item.grace_period) > 0 ? (
                                           <div className={`px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(item.grace_period)}`}>
                                             {item.grace_period} days
@@ -1765,7 +1767,7 @@ export default function SSLPage() {
                                   {/* Status */}
                                   <td className="py-3 px-4 text-center">
                                     <div
-                                      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${item.status === 1
+                                      className={`inline-flex items-center justify-center px-[10px] py-[6px] min-w-[110px] rounded-full text-xs font-medium backdrop-blur-sm border ${item.status === 1
                                         ? "bg-green-500/20 text-green-400 border-green-500/20"
                                         : "bg-red-500/20 text-red-400 border-red-500/20"
                                         }`}
@@ -1777,9 +1779,9 @@ export default function SSLPage() {
 
                                   {/* Remarks */}
                                   {user?.role === "SuperAdmin" && (
-                                    <td className="py-3 px-4">
+                                    <td className="py-3 px-4 remarks-column">
                                       <div className="flex items-center gap-2">
-                                        <span className="text-sm text-gray-300 truncate max-w-[150px]">
+                                        <span className="text-sm text-gray-300">
                                           {item.remarks || "--"}
                                         </span>
                                         {item.has_remark_history && (
@@ -1800,7 +1802,7 @@ export default function SSLPage() {
 
                                   {/* Last Updated */}
                                   {user?.role === "SuperAdmin" && (
-                                    <td className="py-3 px-4 text-sm text-gray-300">
+                                    <td className="py-3 px-4 text-center text-sm text-gray-300 whitespace-nowrap">
                                       {item.last_updated || formatLastUpdated(item.updated_at)}
                                     </td>
                                   )}
@@ -1808,52 +1810,61 @@ export default function SSLPage() {
                               )}
 
                               {user?.role === "SuperAdmin" && (
-                                <td className="py-3 px-4">
-                                  <div className="flex items-center justify-end gap-2">
-                                    {editingId === item.id ? (
-                                      <>
-                                        <GlassButton
-                                          onClick={() => handleSave(item.id)}
-                                          disabled={isSaving}
-                                          className="p-1.5 min-w-0 bg-green-500/20 hover:bg-green-500/30"
-                                          title="Save"
-                                        >
-                                          {isSaving ? (
-                                            <Loader2 className="w-4 h-4 animate-spin text-green-400" />
-                                          ) : (
-                                            <Save className="w-4 h-4 text-green-400" />
-                                          )}
-                                        </GlassButton>
-                                        <GlassButton
-                                          onClick={handleCancelEdit}
-                                          disabled={isSaving}
-                                          className="p-1.5 min-w-0 bg-red-500/20 hover:bg-red-500/30"
-                                          title="Cancel"
-                                        >
-                                          <X className="w-4 h-4 text-red-400" />
-                                        </GlassButton>
-                                      </>
-                                    ) : (
-                                      <>
-                                        <GlassButton
-                                          onClick={() => handleEdit(item)}
-                                          className="p-1.5 min-w-0 hover:bg-white/10"
-                                          title="Edit"
-                                        >
-                                          <Edit className="w-4 h-4 text-white hover:text-blue-400 transition-colors" />
-                                        </GlassButton>
-                                        <GlassButton
-                                          onClick={() => handleDeleteClick(item.id)}
-                                          className="p-1.5 min-w-0 hover:bg-red-500/20"
-                                          title="Delete"
-                                        >
-                                          <Trash2 className="w-4 h-4 text-red-400 hover:text-red-300 transition-colors" />
-                                        </GlassButton>
-                                      </>
-                                    )}
-                                  </div>
-                                </td>
-                              )}
+                                  <td className="py-3 px-4 whitespace-nowrap">
+                                    <div className="flex items-center justify-end gap-2">
+                                      {editingId === item.id ? (
+                                        <>
+                                          <GlassButton
+                                            onClick={() => handleSave(item.id)}
+                                            disabled={isSaving}
+                                            className="p-1.5 min-w-0 bg-blue-500/10 hover:bg-blue-500/30 border border-blue-500/20 shadow-[0_0_10px_rgba(59,130,246,0.1)] group/btn relative overflow-hidden"
+                                            title="Save"
+                                          >
+                                            {isSaving ? (
+                                              <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
+                                            ) : (
+                                              <div className="relative flex items-center justify-center">
+                                                <Save className="w-4 h-4 text-blue-400 transition-transform duration-300 group-hover/btn:scale-110" />
+                                              </div>
+                                            )}
+                                          </GlassButton>
+                                          <GlassButton
+                                            onClick={handleCancelEdit}
+                                            disabled={isSaving}
+                                            className="p-1.5 min-w-0 bg-red-500/5 hover:bg-red-500/20 border border-red-500/10 group/cancel"
+                                            title="Cancel"
+                                          >
+                                            <X className="w-4 h-4 text-red-400/70 group-hover/cancel:text-red-400" />
+                                          </GlassButton>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <GlassButton
+                                            onClick={() => handleViewDetails(item)}
+                                            className="p-1.5 min-w-0 hover:bg-blue-500/20 border border-transparent hover:border-blue-500/30 transition-all duration-300 group/eye"
+                                            title="View Details"
+                                          >
+                                            <Eye className="w-4 h-4 text-gray-400 group-hover:text-blue-400 transition-colors" />
+                                          </GlassButton>
+                                          <GlassButton
+                                            onClick={() => handleEdit(item)}
+                                            className="p-1.5 min-w-0 hover:bg-white/10 border border-transparent hover:border-white/20 transition-all duration-300 group/edit"
+                                            title="Edit"
+                                          >
+                                            <Edit className="w-4 h-4 text-gray-400 group-hover:text-blue-400 transition-colors" />
+                                          </GlassButton>
+                                          <GlassButton
+                                            onClick={() => handleDeleteClick(item.id)}
+                                            className="p-1.5 min-w-0 hover:bg-red-500/20 border border-transparent hover:border-red-500/30 transition-all duration-300 group/delete"
+                                            title="Delete"
+                                          >
+                                            <Trash2 className="w-4 h-4 text-gray-400 group-hover:text-red-400 transition-colors" />
+                                          </GlassButton>
+                                        </>
+                                      )}
+                                    </div>
+                                  </td>
+                                )}
 
 
                             </tr>

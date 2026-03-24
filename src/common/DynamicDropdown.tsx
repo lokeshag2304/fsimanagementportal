@@ -319,11 +319,13 @@ export const glassSelectStyles = {
       minHeight: "36px",
       borderRadius: "8px",
       boxShadow: "none",
+      padding: "0 2px",
       fontSize: "12px",
       cursor: "pointer",
       "&:hover": {
         borderColor: "#3b82f6",
       },
+      flexWrap: "nowrap" as any,
     }
   },
 
@@ -404,16 +406,39 @@ export const glassSelectStyles = {
     fontSize: "12px",
     whiteSpace: "nowrap",
     position: "relative" as any,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
     transform: "none",
+    display: "inline-flex",
+    alignItems: "center",
+    flexShrink: 1,
+    flexGrow: 1,
+    maxWidth: "calc(100% - 35px)",
+    overflow: "visible",
   }),
 
   valueContainer: (base: any) => ({
     ...base,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
     whiteSpace: "nowrap",
+    display: "flex",
+    alignItems: "center",
+    flexWrap: "nowrap" as any,
+    flexShrink: 1,
+    padding: "0 4px",
+    overflow: "hidden",
+  }),
+
+  indicatorsContainer: (base: any) => ({
+    ...base,
+    flexShrink: 0,
+    display: "flex",
+    alignItems: "center",
+    paddingRight: "4px",
+  }),
+
+  container: (base: any) => ({
+    ...base,
+    minWidth: "140px",
+    width: "100%",
+    maxWidth: "100%",
   }),
 
   /* PLACEHOLDER */

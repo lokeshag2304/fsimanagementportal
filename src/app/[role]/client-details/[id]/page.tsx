@@ -388,14 +388,14 @@ export default function DynamicDetailsPage({
                   <table className="w-full">
                     <thead>
                       <tr className="bg-white/5 border-b border-white/10">
-                        <th className="py-4 px-6 text-left text-sm font-medium text-gray-300">ID</th>
+                        <th className="py-4 px-6 text-center text-sm font-medium text-gray-300">ID</th>
                         <th className="py-4 px-6 text-left text-sm font-medium text-gray-300">Service Type</th>
                         <th className="py-4 px-6 text-left text-sm font-medium text-gray-300">Products</th>
-                        <th className="py-4 px-6 text-left text-sm font-medium text-gray-300">Status</th>
-                        <th className="py-4 px-6 text-left text-sm font-medium text-gray-300">Grace Period</th>
-                        <th className="py-4 px-6 text-left text-sm font-medium text-gray-300">Due Date</th>
-                        <th className="py-4 px-6 text-left text-sm font-medium text-gray-300">Created Date</th>
-                        <th className="py-4 px-6 text-left text-sm font-medium text-gray-300">Days Left</th>
+                        <th className="py-4 px-6 text-center text-sm font-medium text-gray-300">Status</th>
+                        <th className="py-4 px-6 text-center text-sm font-medium text-gray-300">Grace Period</th>
+                        <th className="py-4 px-6 text-center text-sm font-medium text-gray-300">Due Date</th>
+                        <th className="py-4 px-6 text-center text-sm font-medium text-gray-300">Created Date</th>
+                        <th className="py-4 px-6 text-center text-sm font-medium text-gray-300">Days Left</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -405,8 +405,8 @@ export default function DynamicDetailsPage({
                           className="border-b border-white/5 hover:bg-white/[0.02] transition-colors cursor-pointer"
                           onClick={() => handleRecentItemClick(item)}
                         >
-                          <td className="py-4 px-6">
-                            <div className="flex items-center gap-2">
+                          <td className="py-4 px-6 text-center">
+                            <div className="flex items-center justify-center gap-2">
                               <div className="p-2 rounded-lg bg-white/5">
                                 <span className="text-sm font-medium text-white">#{item.id}</span>
                               </div>
@@ -428,26 +428,26 @@ export default function DynamicDetailsPage({
                               </span>
                             </div>
                           </td>
-                          <td className="py-4 px-6">
-                            <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(item.status, item.days_to_expired)}`}>
+                          <td className="py-4 px-6 text-center">
+                            <span className={`inline-flex items-center justify-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(item.status, item.days_to_expired)}`}>
                               {item.status}
                             </span>
                           </td>
-                          <td className="py-4 px-6">
+                          <td className="py-4 px-6 text-center">
                             <span className="text-sm text-gray-300">{item.grace_period !== undefined ? `${item.grace_period} days` : '0 days'}</span>
                           </td>
-                          <td className="py-4 px-6">
+                          <td className="py-4 px-6 text-center">
                             <span className="text-sm text-gray-300">{item.due_date ? new Date(item.due_date).toLocaleDateString() : '-'}</span>
                           </td>
-                          <td className="py-4 px-6">
-                            <div className="flex items-center gap-2">
+                          <td className="py-4 px-6 text-center">
+                            <div className="flex items-center justify-center gap-2">
                               <Calendar className="w-4 h-4 text-gray-400" />
                               <span className="text-sm text-gray-300">{item.created_at}</span>
                             </div>
                           </td>
                           
-                          <td className="py-4 px-6">
-                            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${
+                          <td className="py-4 px-6 text-center">
+                            <div className={`inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${
                               item.days_to_expired < 0 
                                 ? "bg-red-500/20 text-red-400 border border-red-500/20"
                                 : item.days_to_expired <= 7

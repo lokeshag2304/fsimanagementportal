@@ -269,6 +269,7 @@ export default function HostingPage() {
       deletion_date: "",
       days_to_delete: "",
       grace_period: "0",
+      grace_end_date: "",
       due_date: ""
     })
   }
@@ -409,6 +410,7 @@ export default function HostingPage() {
           deletion_date: "",
           days_to_delete: "",
           grace_period: "0",
+          grace_end_date: "",
           due_date: ""
         })
       } else {
@@ -810,23 +812,23 @@ export default function HostingPage() {
                     <th className={`py-3 px-4 text-left text-sm font-medium text-gray-300 ${isClient ? 'w-[80px]' : 'w-[70px]'}`}>
                       S.NO
                     </th>
-                    <th className={`py-3 px-4 text-left text-sm font-medium text-gray-300 ${isClient ? 'w-[220px]' : 'w-[200px]'}`}>
+                    <th className={`py-3 px-4 text-left text-sm font-medium text-gray-300 ${isClient ? 'w-[300px]' : 'w-[300px]'}`}>
                       Domain
                     </th>
                     {user?.role === "SuperAdmin" && (
-                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[180px]">
-                        Client
-                      </th>
+                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[250px]">
+                          Client
+                        </th>
                     )}
-                    <th className={`py-3 px-4 text-left text-sm font-medium text-gray-300 ${isClient ? 'w-[200px]' : 'w-[180px]'}`}>
+                    <th className={`py-3 px-4 text-left text-sm font-medium text-gray-300 ${isClient ? 'w-[300px]' : 'w-[300px]'}`}>
                       Product
                     </th>
                     {user?.role === "SuperAdmin" && (
-                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[150px]">
-                        Vendor
-                      </th>
+                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[220px]">
+                          Vendor
+                        </th>
                     )}
-                    <th className={`py-3 px-4 text-left text-sm font-medium text-gray-300 ${isClient ? 'w-[160px]' : 'w-[140px]'}`}>
+                    <th className={`py-3 px-4 text-center text-sm font-medium text-gray-300 ${isClient ? 'w-[160px]' : 'w-[140px]'}`}>
                       Renewal Date
                     </th>
                     {user?.role === "SuperAdmin" && (
@@ -834,23 +836,23 @@ export default function HostingPage() {
                         Amount
                       </th>
                     )}
-                    <th className={`py-3 px-4 text-left text-sm font-medium text-gray-300 ${isClient ? 'w-[140px]' : 'w-[120px]'}`}>
+                    <th className={`py-3 px-4 text-center text-sm font-medium text-gray-300 ${isClient ? 'w-[140px]' : 'w-[120px]'}`}>
                       Days to Expire
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[140px]">
+                    <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 w-[140px]">
                       Deletion Date
                     </th>
                     {user?.role === "SuperAdmin" && (
-                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[120px]">
+                      <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 w-[120px]">
                         Days to Delete
                       </th>
                     )}
                     {user?.role === "SuperAdmin" && (
                       <>
-                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[140px]">
-                          Grace Period
+                        <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 w-[140px]">
+                          Grace End Date
                         </th>
-                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[160px]">
+                        <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 w-[130px]">
                           Due Date
                         </th>
                       </>
@@ -864,12 +866,12 @@ export default function HostingPage() {
                       </th>
                     )}
                     {user?.role === "SuperAdmin" && (
-                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[140px]">
+                      <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 w-[140px]">
                         Deleted Date
                       </th>
                     )}
                     {user?.role === "SuperAdmin" && (
-                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[180px]">
+                      <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 w-[180px]">
                         Last Updated
                       </th>
                     )}
@@ -894,11 +896,11 @@ export default function HostingPage() {
                       {/* Add New Row */}
                       {addingNew && (
                         <tr key="new-row" className="border-b border-white/5 bg-blue-500/5">
-                          {user?.role === "SuperAdmin" && <td className="py-3 px-4"></td>}
+                          {user?.role === "SuperAdmin" && <td className="py-3 px-4 overflow-hidden"></td>}
                           <td className="py-3 px-4 text-sm text-gray-300">
                             New
                           </td>
-                          <td className="py-3 px-4">
+                          <td className="py-3 px-4 overflow-hidden">
                             <ApiDropdown
                               endpoint="get-domains"
                               value={
@@ -924,7 +926,7 @@ export default function HostingPage() {
                             />
                           </td>
                           {user?.role === "SuperAdmin" && (
-                            <td className="py-3 px-4">
+                            <td className="py-3 px-4 overflow-hidden">
                               <ApiDropdown
                                 endpoint="get-clients"
                                 value={
@@ -951,7 +953,7 @@ export default function HostingPage() {
                             </td>
                           )}
                           {user?.role === "SuperAdmin" && (
-                            <td className="py-3 px-4">
+                            <td className="py-3 px-4 overflow-hidden">
                               <ApiDropdown
                                 endpoint="get-products"
                                 value={
@@ -978,7 +980,7 @@ export default function HostingPage() {
                             </td>
                           )}
                           {user?.role === "SuperAdmin" && (
-                            <td className="py-3 px-4">
+                            <td className="py-3 px-4 overflow-hidden">
                               <ApiDropdown
                                 endpoint="get-venders"
                                 value={
@@ -1004,7 +1006,7 @@ export default function HostingPage() {
                               />
                             </td>
                           )}
-                          <td className="py-3 px-4">
+                          <td className="py-3 px-4 overflow-hidden">
                             <input
                               type="date"
                               value={newRecordData.expiry_date}
@@ -1014,7 +1016,7 @@ export default function HostingPage() {
                             />
                           </td>
                           {user?.role === "SuperAdmin" && (
-                            <td className="py-3 px-4">
+                            <td className="py-3 px-4 overflow-hidden">
                               <CurrencyAmountInput
                                 currency={newRecordData.currency || "INR"}
                                 amount={newRecordData.amount}
@@ -1023,7 +1025,7 @@ export default function HostingPage() {
                               />
                             </td>
                           )}
-                          <td className="py-3 px-4">
+                          <td className="py-3 px-4 overflow-hidden">
                             <input
                               type="number"
                               value={String(calculateDays(newRecordData.expiry_date)) === "NaN" ? "" : calculateDays(newRecordData.expiry_date)}
@@ -1032,7 +1034,7 @@ export default function HostingPage() {
                               style={{ minHeight: '32px' }}
                             />
                           </td>
-                          <td className="py-3 px-4">
+                          <td className="py-3 px-4 overflow-hidden">
                             <input
                               type="date"
                               value={newRecordData.deletion_date}
@@ -1042,7 +1044,7 @@ export default function HostingPage() {
                             />
                           </td>
                           {user?.role === "SuperAdmin" && (
-                            <td className="py-3 px-4">
+                            <td className="py-3 px-4 overflow-hidden">
                               <input
                                 type="number"
                                 value={newRecordData.days_to_delete}
@@ -1056,7 +1058,7 @@ export default function HostingPage() {
                           {user?.role === "SuperAdmin" && (
                             <>
                               {/* Grace End Date — identical to Deletion Date picker */}
-                              <td className="py-3 px-4">
+                              <td className="py-3 px-4 overflow-hidden">
                                 <input
                                   type="date"
                                   value={(newRecordData as any).grace_end_date || ""}
@@ -1067,7 +1069,7 @@ export default function HostingPage() {
                                 />
                               </td>
                               {/* Due Date → X days pill */}
-                              <td className="py-3 px-4">
+                              <td className="py-3 px-4 overflow-hidden">
                                 {newRecordData.grace_period && Number(newRecordData.grace_period) > 0 ? (
                                   <div className={`px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(newRecordData.grace_period)}`}>
                                     {newRecordData.grace_period} days
@@ -1106,7 +1108,7 @@ export default function HostingPage() {
                             </td>
                           )}
                           {user?.role === "SuperAdmin" && (
-                            <td className="py-3 px-4">
+                            <td className="py-3 px-4 overflow-hidden">
                               <input
                                 type="text"
                                 value={newRecordData.remarks}
@@ -1136,7 +1138,7 @@ export default function HostingPage() {
                             </td>
                           )}
                           {user?.role === "SuperAdmin" && (
-                            <td className="py-3 px-4">
+                            <td className="py-3 px-4 overflow-hidden">
                               <div className="flex items-center justify-end gap-2">
                                 <GlassButton
                                   onClick={handleSaveNew}
@@ -1364,7 +1366,7 @@ export default function HostingPage() {
                                       {(() => {
                                         const gp = editData[item.id]?.grace_period ?? item.grace_period ?? 0;
                                         return Number(gp) > 0 ? (
-                                          <div className={`px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(gp)}`}>
+                                          <div className={`px-[10px] py-[6px] min-w-[110px] rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(gp)}`}>
                                             {gp} days
                                           </div>
                                         ) : (
@@ -1472,21 +1474,21 @@ export default function HostingPage() {
                                   </td>
                                 )}
                                 {user?.role === "SuperAdmin" && (
-                                  <td className="py-3 px-4 text-sm text-gray-300">
+                                  <td className="py-3 px-4 text-center text-xs text-gray-300">
                                     <div className="flex items-center justify-center gap-1 font-medium text-white">
                                       <span className="text-[#BC8969]">{getCurrencySymbol(item.currency)}</span>
                                       {item.amount || "0.00"}
                                     </div>
                                   </td>
                                 )}
-                                <td className="py-3 px-4 text-sm text-gray-300">
-                                  <div className="flex items-center gap-2">
+                                <td className="py-3 px-4 text-center text-sm text-gray-300">
+                                  <div className="flex items-center justify-center gap-2">
                                     <Calendar className="w-4 h-4 text-gray-400" />
                                     {formatDate(item.expiry_date)}
                                   </div>
                                 </td>
-                                <td className="py-3 px-4">
-                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${calculateDays(item.expiry_date) < 0
+                                <td className="py-3 px-4 text-center">
+                                  <div className={`inline-flex items-center justify-center px-[10px] py-[6px] min-w-[110px] rounded-full text-xs font-medium backdrop-blur-sm border ${calculateDays(item.expiry_date) < 0
                                     ? 'bg-red-500/20 text-red-400 border-red-500/20'
                                     : calculateDays(item.expiry_date) <= 30
                                       ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/20'
@@ -1495,18 +1497,18 @@ export default function HostingPage() {
                                     {calculateDays(item.expiry_date)} days
                                   </div>
                                 </td>
-                                <td className="py-3 px-4 text-sm text-gray-300">
+                                <td className="py-3 px-4 text-center text-sm text-gray-300">
                                   {item.deletion_date ? formatDate(item.deletion_date) : "--"}
                                 </td>
                                 {user?.role === "SuperAdmin" && (
-                                  <td className="py-3 px-4 text-sm text-gray-300">
+                                  <td className="py-3 px-4 text-center text-sm text-gray-300">
                                     {calculateDays(item.deletion_date as string)}
                                   </td>
                                 )}
                                 {user?.role === "SuperAdmin" && (
                                   <>
                                     {/* Grace Period view — show derived end date */}
-                                    <td className="py-3 px-4 text-sm text-gray-300">
+                                    <td className="py-3 px-4 text-center text-sm text-gray-300">
                                       {(() => {
                                         if (!item.grace_period || !item.expiry_date) return <span className="text-gray-500">--</span>;
                                         const rd = new Date(item.expiry_date);
@@ -1516,9 +1518,9 @@ export default function HostingPage() {
                                       })()}
                                     </td>
                                     {/* Due Date → X days pill */}
-                                    <td className="py-3 px-4">
+                                    <td className="py-3 px-4 text-center">
                                       {item.grace_period && Number(item.grace_period) > 0 ? (
-                                        <div className={`px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(item.grace_period)}`}>
+                                        <div className={`px-[10px] py-[6px] min-w-[110px] rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(item.grace_period)}`}>
                                           {item.grace_period} days
                                         </div>
                                       ) : (
@@ -1528,7 +1530,7 @@ export default function HostingPage() {
                                   </>
                                 )}
                                 <td className="py-3 px-4 text-center">
-                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${getStatusColor(item.status)} ${item.status === 1 ? 'bg-green-500/20 border-green-500/20' : 'bg-red-500/20 border-red-500/20'
+                                  <div className={`inline-flex items-center justify-center px-[10px] py-[6px] min-w-[110px] rounded-full text-xs font-medium backdrop-blur-sm border ${getStatusColor(item.status)} ${item.status === 1 ? 'bg-green-500/20 border-green-500/20' : 'bg-red-500/20 border-red-500/20'
                                     }`}>
                                     {getStatusIcon(item.status)}
                                     {getStatusText(item.status)}

@@ -611,12 +611,12 @@ export default function DomainPage() {
                         className="w-4 h-4 rounded border-gray-300 bg-gray-700 text-blue-600 focus:ring-blue-500 cursor-pointer"
                       />
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[60px]">S.NO</th>
+                    <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 min-w-[60px]">S.NO</th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[160px]">Domain Name</th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[140px]">Renewal Date</th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[100px]">Days Left</th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[100px]">Status</th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[160px]">Last Updated</th>
+                    <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 min-w-[140px]">Renewal Date</th>
+                    <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 min-w-[100px]">Days Left</th>
+                    <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 min-w-[100px]">Status</th>
+                    <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 min-w-[160px]">Last Updated</th>
                     <th className="py-3 px-4 text-right text-sm font-medium text-gray-300 min-w-[100px]">Actions</th>
                   </tr>
                 </thead>
@@ -666,7 +666,7 @@ export default function DomainPage() {
                             className="w-4 h-4 rounded border-gray-300 bg-gray-700 text-blue-600 focus:ring-blue-500 cursor-pointer"
                           />
                         </td>
-                        <td className="py-3 px-4 text-sm text-gray-300">
+                        <td className="py-3 px-4 text-center text-sm text-gray-300">
                           {startItem + index}
                         </td>
                         <td className="py-3 px-4">
@@ -677,10 +677,10 @@ export default function DomainPage() {
                             </span>
                           </div>
                         </td>
-                        <td className="py-3 px-4 text-sm text-gray-300">
+                        <td className="py-3 px-4 text-center text-sm text-gray-300">
                           {item.renewal_date ? new Date(item.renewal_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '-'}
                         </td>
-                        <td className="py-3 px-4">
+                        <td className="py-3 px-4 text-center">
                           {item.days_left !== null && item.days_left !== undefined ? (
                             <span className={`text-sm font-medium ${item.days_left < 0 ? 'text-red-400' :
                               item.days_left <= 30 ? 'text-yellow-400' :
@@ -692,13 +692,13 @@ export default function DomainPage() {
                             <span className="text-sm text-gray-500">-</span>
                           )}
                         </td>
-                        <td className="py-3 px-4">
-                          <span className={`text-xs px-2 py-1 rounded-full ${item.status === 1 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                        <td className="py-3 px-4 text-center">
+                          <span className={`inline-flex items-center justify-center text-xs px-2 py-1 rounded-full ${item.status === 1 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
                             }`}>
                             {item.status === 1 ? 'Active' : 'Inactive'}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-sm text-gray-300">
+                        <td className="py-3 px-4 text-center text-sm text-gray-300">
                           {item.last_updated || '-'}
                         </td>
                         <td className="py-3 px-4">

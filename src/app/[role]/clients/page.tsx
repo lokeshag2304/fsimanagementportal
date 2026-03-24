@@ -744,10 +744,10 @@ export default function ClientsPage() {
                         className="w-4 h-4 rounded border-gray-300 bg-gray-700 text-blue-600 focus:ring-blue-500 cursor-pointer"
                       />
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[80px]">
+                    <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 min-w-[80px]">
                       S.NO
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[60px]">
+                    <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 min-w-[60px]">
                       Profile
                     </th>
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[150px]">
@@ -762,10 +762,10 @@ export default function ClientsPage() {
                     <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[150px]">
                       Address
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[150px]">
+                    <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 min-w-[150px]">
                       Created At
                     </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 min-w-[100px]">
+                    <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 min-w-[100px]">
                       OTP
                     </th>
                     <th className="py-3 px-4 text-right text-sm font-medium text-gray-300 min-w-[120px]">
@@ -818,11 +818,11 @@ export default function ClientsPage() {
                             className="w-4 h-4 rounded border-gray-300 bg-gray-700 text-blue-600 focus:ring-blue-500 cursor-pointer"
                           />
                         </td>
-                        <td className="py-3 px-4 text-sm text-gray-300">
+                        <td className="py-3 px-4 text-center text-sm text-gray-300">
                           {startItem + index}
                         </td>
-                        <td className="py-3 px-4">
-                          <div className="w-10 h-10 rounded-full overflow-hidden bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)]">
+                        <td className="py-3 px-4 text-center">
+                          <div className="w-10 h-10 rounded-full overflow-hidden bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] mx-auto">
                             {item.profile ? (
                               <img
                                 src={`${ASSETS_URL}/${item.profile}`}
@@ -881,13 +881,13 @@ export default function ClientsPage() {
                         </td>
 
                         {/* Created At field */}
-                        <td className="py-3 px-4 text-sm text-gray-300">
+                        <td className="py-3 px-4 text-center text-sm text-gray-300">
                           {formatDate(item.created_at)}
                         </td>
 
                         {/* OTP Status */}
-                        <td className="py-3 px-4">
-                          <span className={`text-xs px-2 py-1 rounded-full ${item.otp_enabled == 1 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                        <td className="py-3 px-4 text-center">
+                          <span className={`inline-flex items-center justify-center text-xs px-2 py-1 rounded-full ${item.otp_enabled == 1 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
                             {item.otp_enabled == 1 ? 'Enabled' : 'Disabled'}
                           </span>
                         </td>

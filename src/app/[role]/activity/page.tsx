@@ -278,11 +278,11 @@ export default function ActivityPage() {
             <table className="w-full text-left border-collapse min-w-[1000px]">
               <thead>
                 <tr className="border-[rgba(255,255,255,0.05)] text-sm font-medium text-gray-300">
-                  <th className="py-4 px-4 font-semibold w-16">S.NO</th>
+                  <th className="py-4 px-4 font-semibold w-16 text-center">S.NO</th>
                   <th className="py-4 px-4 font-semibold">Admin</th>
-                  <th className="py-4 px-4 font-semibold text-center sm:text-left">Action</th>
+                  <th className="py-4 px-4 font-semibold text-center">Action</th>
                   <th className="py-4 px-4 font-semibold">Details</th>
-                  <th className="py-4 px-4 font-semibold text-right">Timestamp</th>
+                  <th className="py-4 px-4 font-semibold text-center">Timestamp</th>
                 </tr>
               </thead>
               <tbody>
@@ -332,14 +332,14 @@ export default function ActivityPage() {
 
                     return (
                       <tr key={activity.id} className="border-t border-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.02)] transition-colors text-sm">
-                        <td className="py-4 px-4 text-gray-400 font-medium whitespace-nowrap">
+                        <td className="py-4 px-4 text-gray-400 font-medium whitespace-nowrap text-center">
                           {(pagination.page * pagination.rowsPerPage) + index + 1}
                         </td>
                         <td className="py-4 px-4 whitespace-nowrap">
                           <div className="text-white font-medium">{activity.creator_name || "System"}</div>
                           <div className="text-gray-500 text-xs mt-0.5">{activity.role || "Unknown"}</div>
                         </td>
-                        <td className="py-4 px-4 whitespace-nowrap text-center sm:text-left">
+                        <td className="py-4 px-4 whitespace-nowrap text-center">
                           <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border ${getActionColor(activity.action_type)} ${getActionBgColor(activity.action_type)}`}>
                             {getActionIcon(activity.module)}
                             <span>{activity.module} {activity.action_type === 'CREATE' ? 'Created' : activity.action_type === 'UPDATE' ? 'Updated' : activity.action_type === 'DELETE' ? 'Deleted' : activity.action_type === 'EXPORT' ? 'Exported' : activity.action_type === 'IMPORT' ? 'Imported' : activity.action_type}</span>
@@ -375,8 +375,8 @@ export default function ActivityPage() {
                             )}
                           </div>
                         </td>
-                        <td className="py-4 px-4 text-gray-300 whitespace-nowrap text-right text-xs">
-                          <div className="flex items-center justify-end gap-1.5">
+                        <td className="py-4 px-4 text-gray-300 whitespace-nowrap text-center text-xs">
+                          <div className="flex items-center justify-center gap-1.5">
                             <Clock className="w-3.5 h-3.5 text-gray-400" />
                             <span>{activity.created_at}</span>
                           </div>

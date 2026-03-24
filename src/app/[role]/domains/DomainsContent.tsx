@@ -868,7 +868,7 @@ export default function DomainsPage() {
           <div className="overflow-hidden rounded-xl border border-white/10 backdrop-blur-sm">
             {/* Table */}
             <div className="overflow-x-auto">
-              <table className={`w-full table-fixed ${isClient ? 'min-w-[1000px]' : 'min-w-[2000px]'}`}>
+              <table className={`w-full ${isClient ? 'min-w-[1000px]' : 'min-w-[2000px]'}`}>
                 <thead>
                   <tr className="bg-white/5 border-b border-white/10">
                     {user?.role === "SuperAdmin" && (
@@ -884,63 +884,63 @@ export default function DomainsPage() {
                     <th className={`py-3 px-4 text-left text-sm font-medium text-gray-300 ${isClient ? 'w-[80px]' : 'w-[70px]'}`}>
                       S.NO
                     </th>
-                    <th className={`py-3 px-4 text-left text-sm font-medium text-gray-300 ${isClient ? 'w-[220px]' : 'w-[200px]'}`}>
-                      Domain Name
+                    <th className={`py-3 px-4 text-left text-sm font-medium text-gray-300 ${isClient ? 'w-[300px]' : 'w-[300px]'}`}>
+                      {isClient ? 'Domain' : 'Domain Name'}
                     </th>
-                    <th className={`py-3 px-4 text-left text-sm font-medium text-gray-300 ${isClient ? 'w-[200px]' : 'w-[180px]'}`}>
+                    <th className={`py-3 px-4 text-left text-sm font-medium text-gray-300 ${isClient ? 'w-[300px]' : 'w-[300px]'}`}>
                       Product
                     </th>
                     {user?.role === "SuperAdmin" && (
-                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[180px]">
+                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[250px]">
                         Client
                       </th>
                     )}
                     {user?.role === "SuperAdmin" && (
-                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[150px]">
+                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[220px]">
                         Vendor
                       </th>
                     )}
                     {user?.role === "SuperAdmin" && (
-                      <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 w-[220px]">
+                      <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 w-[120px]">
                         Amount
                       </th>
                     )}
-                    <th className={`py-3 px-4 text-left text-sm font-medium text-gray-300 ${isClient ? 'w-[160px]' : 'w-[140px]'}`}>
+                    <th className={`py-3 px-4 text-center text-sm font-medium text-gray-300 ${isClient ? 'w-[140px]' : 'w-[140px]'}`}>
                       Renewal Date
                     </th>
-                    <th className={`py-3 px-4 text-left text-sm font-medium text-gray-300 ${isClient ? 'w-[140px]' : 'w-[120px]'}`}>
+                    <th className={`py-3 px-4 text-center text-sm font-medium text-gray-300 ${isClient ? 'w-[120px]' : 'w-[120px]'}`}>
                       Days to Expire
                     </th>
                     {user?.role === "SuperAdmin" && (
-                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[140px]">
+                      <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 w-[140px]">
                         Deletion Date
                       </th>
                     )}
                     {user?.role === "SuperAdmin" && (
-                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[120px]">
+                      <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 w-[120px]">
                         Days to Delete
                       </th>
                     )}
                     {user?.role === "SuperAdmin" && (
                       <>
-                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[140px]">
+                        <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 w-[130px]">
                           Grace Period
                         </th>
-                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[160px]">
+                        <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 w-[160px] grace-period-column">
                           Due Date
                         </th>
                       </>
                     )}
-                    <th className={`py-3 px-4 text-center text-sm font-medium text-gray-300 ${isClient ? 'w-[120px]' : 'w-[140px]'}`}>
+                    <th className={`py-3 px-4 text-center text-sm font-medium text-gray-300 ${isClient ? 'w-[150px]' : 'w-[150px]'}`}>
                       Domain Protect
                     </th>
                     {user?.role === "SuperAdmin" && (
-                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[200px]">
+                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[160px] remarks-column">
                         Remarks
                       </th>
                     )}
                     {user?.role === "SuperAdmin" && (
-                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-300 w-[180px]">
+                      <th className="py-3 px-4 text-center text-sm font-medium text-gray-300 w-[180px]">
                         Last Updated
                       </th>
                     )}
@@ -965,11 +965,11 @@ export default function DomainsPage() {
                       {/* Add New Row */}
                       {addingNew && (
                         <tr key="new-row" className="border-b border-white/5 bg-blue-500/5">
-                          {user?.role === "SuperAdmin" && <td className="py-3 px-4"></td>}
+                          {user?.role === "SuperAdmin" && <td className="py-3 px-4 overflow-hidden"></td>}
                           <td className="py-3 px-4 text-sm text-gray-300">
                             New
                           </td>
-                          <td className="py-3 px-4">
+                          <td className="py-3 px-4 overflow-hidden">
                             <input
                               type="text"
                               value={newRecordData.name}
@@ -980,7 +980,7 @@ export default function DomainsPage() {
                             />
                           </td>
                           {user?.role === "SuperAdmin" && (
-                            <td className="py-3 px-4">
+                            <td className="py-3 px-4 overflow-hidden">
                               <ApiDropdown
                                 endpoint="get-products"
                                 value={
@@ -1007,7 +1007,7 @@ export default function DomainsPage() {
                             </td>
                           )}
                           {user?.role === "SuperAdmin" && (
-                            <td className="py-3 px-4">
+                            <td className="py-3 px-4 overflow-hidden">
                               <ApiDropdown
                                 endpoint="get-clients"
                                 value={
@@ -1034,7 +1034,7 @@ export default function DomainsPage() {
                             </td>
                           )}
                           {user?.role === "SuperAdmin" && (
-                            <td className="py-3 px-4">
+                            <td className="py-3 px-4 overflow-hidden">
                               <ApiDropdown
                                 endpoint="get-venders"
                                 value={
@@ -1061,7 +1061,7 @@ export default function DomainsPage() {
                             </td>
                           )}
                           {user?.role === "SuperAdmin" && (
-                            <td className="py-3 px-4">
+                            <td className="py-3 px-4 overflow-hidden pr-[50px]">
                               <CurrencyAmountInput
                                 currency={newRecordData.currency || "INR"}
                                 amount={newRecordData.amount}
@@ -1070,7 +1070,7 @@ export default function DomainsPage() {
                               />
                             </td>
                           )}
-                          <td className="py-3 px-4">
+                          <td className="py-3 px-4 overflow-hidden">
                             <input
                               type="date"
                               value={newRecordData.renewal_date}
@@ -1079,7 +1079,7 @@ export default function DomainsPage() {
                               style={{ minHeight: '32px' }}
                             />
                           </td>
-                          <td className="py-3 px-4">
+                          <td className="py-3 px-4 overflow-hidden">
                             <input
                               type="text"
                               value={newRecordData.days_left ?? ""}
@@ -1088,7 +1088,7 @@ export default function DomainsPage() {
                               style={{ minHeight: '32px' }}
                             />
                           </td>
-                          <td className="py-3 px-4">
+                          <td className="py-3 px-4 overflow-hidden">
                             <input
                               type="date"
                               value={newRecordData.deletion_date}
@@ -1109,7 +1109,7 @@ export default function DomainsPage() {
                           )}
                           {user?.role === "SuperAdmin" && (
                             <>
-                              <td className="py-3 px-4">
+                              <td className="py-3 px-4 overflow-hidden">
                                 <input
                                   type="date"
                                   value={(newRecordData as any).grace_end_date || ""}
@@ -1119,7 +1119,7 @@ export default function DomainsPage() {
                                   style={{ minHeight: "32px" }}
                                 />
                               </td>
-                              <td className="py-3 px-4">
+                              <td className="py-3 px-4 overflow-hidden grace-period-column">
                                 {newRecordData.grace_period && Number(newRecordData.grace_period) > 0 ? (
                                   <div className={`px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(newRecordData.grace_period)}`}>
                                     {newRecordData.grace_period} days
@@ -1150,7 +1150,7 @@ export default function DomainsPage() {
                             </div>
                           </td>
                           {user?.role === "SuperAdmin" && (
-                            <td className="py-3 px-4">
+                            <td className="py-3 px-4 overflow-hidden remarks-column">
                               <input
                                 type="text"
                                 value={newRecordData.remarks}
@@ -1169,7 +1169,7 @@ export default function DomainsPage() {
                             </td>
                           )}
                           {user?.role === "SuperAdmin" && (
-                            <td className="py-3 px-4">
+                            <td className="py-3 px-4 overflow-hidden text-ellipsis whitespace-nowrap">
                               <div className="flex items-center justify-end gap-2">
                                 <GlassButton
                                   onClick={handleSaveNew}
@@ -1230,7 +1230,7 @@ export default function DomainsPage() {
                             }`}
                           >
                             {user?.role === "SuperAdmin" && (
-                              <td className="py-3 px-4">
+                              <td className="py-3 px-4 overflow-hidden text-ellipsis whitespace-nowrap">
                                 <input
                                   type="checkbox"
                                   checked={selectedItems.includes(item.id)}
@@ -1250,7 +1250,7 @@ export default function DomainsPage() {
                             
                             {editingId === item.id ? (
                               <>
-                                <td className="py-3 px-4">
+                                <td className="py-3 px-4 overflow-hidden text-ellipsis whitespace-nowrap">
                                   <input
                                     type="text"
                                     value={editData[item.id]?.name ?? item.name ?? ""}
@@ -1259,7 +1259,7 @@ export default function DomainsPage() {
                                     style={{ minHeight: "32px" }}
                                   />
                                 </td>
-                                <td className="py-3 px-4">
+                                <td className="py-3 px-4 overflow-hidden text-ellipsis whitespace-nowrap">
                                   <ApiDropdown
                                     endpoint="get-products"
                                     value={
@@ -1279,7 +1279,7 @@ export default function DomainsPage() {
                                   />
                                 </td>
                                   {user?.role === "SuperAdmin" && (
-                                    <td className="py-3 px-4">
+                                    <td className="py-3 px-4 overflow-hidden text-ellipsis whitespace-nowrap">
                                       <ApiDropdown
                                         endpoint="get-clients"
                                         value={
@@ -1300,7 +1300,7 @@ export default function DomainsPage() {
                                     </td>
                                   )}
                                 {user?.role === "SuperAdmin" && (
-                                  <td className="py-3 px-4">
+                                  <td className="py-3 px-4 overflow-hidden text-ellipsis whitespace-nowrap">
                                     <ApiDropdown
                                       endpoint="get-venders"
                                       value={
@@ -1321,7 +1321,7 @@ export default function DomainsPage() {
                                   </td>
                                 )}
                                 {user?.role === "SuperAdmin" && (
-                                  <td className="py-3 px-4">
+                                  <td className="py-3 px-4 overflow-hidden text-ellipsis whitespace-nowrap pr-[50px]">
                                     <CurrencyAmountInput
                                       currency={editData[item.id]?.currency || item.currency || "INR"}
                                       amount={editData[item.id]?.amount ?? item.amount ?? ""}
@@ -1330,7 +1330,7 @@ export default function DomainsPage() {
                                     />
                                   </td>
                                 )}
-                                <td className="py-3 px-4">
+                                <td className="py-3 px-4 overflow-hidden text-ellipsis whitespace-nowrap">
                                   <input
                                     type="date"
                                     value={editData[item.id]?.renewal_date || item.renewal_date || ""}
@@ -1339,7 +1339,7 @@ export default function DomainsPage() {
                                     style={{ minHeight: "32px" }}
                                   />
                                 </td>
-                                <td className="py-3 px-4">
+                                <td className="py-3 px-4 overflow-hidden text-ellipsis whitespace-nowrap">
                                   <input
                                     type="text"
                                     value={editData[item.id]?.days_left ?? item.days_left ?? ""}
@@ -1349,7 +1349,7 @@ export default function DomainsPage() {
                                   />
                                 </td>
                                 {user?.role === "SuperAdmin" && (
-                                  <td className="py-3 px-4">
+                                  <td className="py-3 px-4 overflow-hidden text-ellipsis whitespace-nowrap">
                                     <input
                                       type="date"
                                       value={editData[item.id]?.deletion_date ?? item.deletion_date ?? ""}
@@ -1371,7 +1371,7 @@ export default function DomainsPage() {
                                 )}
                                 {user?.role === "SuperAdmin" && (
                                   <>
-                                    <td className="py-3 px-4">
+                                    <td className="py-3 px-4 overflow-hidden text-ellipsis whitespace-nowrap">
                                       <input
                                         type="date"
                                         value={(editData[item.id] as any)?.grace_end_date || ""}
@@ -1381,11 +1381,11 @@ export default function DomainsPage() {
                                         style={{ minHeight: "32px" }}
                                       />
                                     </td>
-                                    <td className="py-3 px-4">
+                                    <td className="py-3 px-4 overflow-hidden text-ellipsis whitespace-nowrap grace-period-column">
                                       {(() => {
                                         const gp = editData[item.id]?.grace_period ?? item.grace_period ?? 0;
                                         return Number(gp) > 0 ? (
-                                          <div className={`px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(gp)}`}>
+                                          <div className={`px-[10px] py-[6px] min-w-[110px] rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(gp)}`}>
                                             {gp} days
                                           </div>
                                         ) : (
@@ -1407,8 +1407,7 @@ export default function DomainsPage() {
                                     />
                                   </div>
                                 </td>
-                                {user?.role === "SuperAdmin" && (
-                                  <td className="py-3 px-4">
+                                  <td className="py-3 px-4 overflow-hidden text-ellipsis whitespace-nowrap remarks-column">
                                     <input
                                       type="text"
                                       value={editData[item.id]?.remarks || (item?.latest_remark?.remark as string) || ''}
@@ -1417,7 +1416,6 @@ export default function DomainsPage() {
                                       style={{ minHeight: "32px" }}
                                     />
                                   </td>
-                                )}
                                 {user?.role === "SuperAdmin" && (
                                   <td className="py-3 px-4 text-sm text-gray-300 whitespace-nowrap">
                                     {(item as any).last_updated || formatLastUpdated(item.updated_at)}
@@ -1426,7 +1424,7 @@ export default function DomainsPage() {
                               </>
                             ) : (
                               <>
-                                <td className="py-3 px-4">
+                                <td className="py-3 px-4 overflow-hidden text-ellipsis whitespace-nowrap">
                                   <div className="flex items-center gap-2">
                                     <Globe className="w-4 h-4 text-gray-400 flex-shrink-0" />
                                     <span className="text-sm text-white font-medium">
@@ -1434,7 +1432,7 @@ export default function DomainsPage() {
                                     </span>
                                   </div>
                                 </td>
-                                 <td className="py-3 px-4">
+                                 <td className="py-3 px-4 overflow-hidden text-ellipsis whitespace-nowrap">
                                    <div className="flex items-center gap-2">
                                      <Package className="w-4 h-4 text-gray-400 flex-shrink-0" />
                                      <span className="text-sm text-white font-medium">
@@ -1453,28 +1451,28 @@ export default function DomainsPage() {
                                   </td>
                                 )}
                                 {user?.role === "SuperAdmin" && (
-                                  <td className="py-3 px-4 text-sm text-gray-300">
-                                    <div className="flex items-center justify-center gap-1 font-medium text-white">
+                                  <td className="py-3 px-4 text-center overflow-hidden text-ellipsis whitespace-nowrap">
+                                    <div className="inline-flex items-center justify-center gap-[6px] font-medium text-white">
                                       <span className="text-[#BC8969]">{getCurrencySymbol(item.currency)}</span>
                                       {item.amount || "0.00"}
                                     </div>
                                   </td>
                                 )}
-                                <td className="py-3 px-4 text-sm text-gray-300">
+                                <td className="py-3 px-4 text-center overflow-hidden text-ellipsis whitespace-nowrap">
                                   {item.renewal_date ? formatDate(item.renewal_date) : "--"}
                                 </td>
-                                <td className="py-3 px-4">
-                                  <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${getDaysToColor(item.days_left)}`}>
+                                <td className="py-3 px-4 text-center overflow-hidden text-ellipsis whitespace-nowrap">
+                                  <div className={`inline-flex items-center justify-center px-[10px] py-[6px] min-w-[110px] rounded-full text-xs font-medium backdrop-blur-sm border ${getDaysToColor(item.days_left)}`}>
                                     {item.days_left ?? "--"}
                                   </div>
                                 </td>
                                  {user?.role === "SuperAdmin" && (
-                                   <td className="py-3 px-4 text-sm text-gray-300">
+                                   <td className="py-3 px-4 text-center overflow-hidden text-ellipsis whitespace-nowrap">
                                      {item.deletion_date ? formatDate(item.deletion_date) : "--"}
                                    </td>
                                  )}
                                 {user?.role === "SuperAdmin" && (
-                                  <td className="py-3 px-4 whitespace-nowrap">
+                                  <td className="py-3 px-4 text-center whitespace-nowrap">
                                     <span className={`text-sm ${getDaysToColor(item.days_to_delete)}`}>
                                       {item.days_to_delete ?? "--"}
                                     </span>
@@ -1482,7 +1480,7 @@ export default function DomainsPage() {
                                 )}
                                 {user?.role === "SuperAdmin" && (
                                   <>
-                                    <td className="py-3 px-4 text-sm text-gray-300">
+                                    <td className="py-3 px-4 text-center overflow-hidden text-ellipsis whitespace-nowrap">
                                       {(() => {
                                         if (!item.renewal_date || !item.grace_period) return "--";
                                         const date = new Date(item.renewal_date);
@@ -1491,9 +1489,9 @@ export default function DomainsPage() {
                                         return formatDate(date.toISOString().split('T')[0]);
                                       })()}
                                     </td>
-                                    <td className="py-3 px-4">
+                                    <td className="py-3 px-4 overflow-hidden whitespace-nowrap">
                                       {item.grace_period && Number(item.grace_period) > 0 ? (
-                                        <div className={`px-2 py-1 rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(item.grace_period)}`}>
+                                        <div className={`px-[10px] py-[6px] min-w-[110px] rounded-md text-xs font-medium border inline-flex items-center justify-center bg-blue-500/10 border-blue-500/20 ${getDaysToColor(item.grace_period)}`}>
                                           {item.grace_period} days
                                         </div>
                                       ) : (
@@ -1503,14 +1501,14 @@ export default function DomainsPage() {
                                   </>
                                 )}
                                  <td className="py-3 px-4 text-center">
-                                   <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium backdrop-blur-sm border ${
+                                   <div className={`inline-flex items-center justify-center px-[10px] py-[6px] min-w-[110px] rounded-full text-xs font-medium backdrop-blur-sm border ${
                                      Number(item.domain_protected) === 1 ? 'bg-green-500/20 text-green-400 border-green-500/20' : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/20'
                                    }`}>
                                      {getDomainProtectText(item.domain_protected)}
                                    </div>
                                  </td>
                                 {user?.role === "SuperAdmin" && (
-                                  <td className="py-3 px-4">
+                                  <td className="py-3 px-4 overflow-hidden text-ellipsis whitespace-nowrap">
                                     <div className="flex items-center justify-between gap-2 overflow-hidden">
                                       <span className="text-sm text-gray-300 truncate max-w-[150px]">
                                         {(item?.latest_remark?.remark as string) || (item.remarks as string) || '--'}
